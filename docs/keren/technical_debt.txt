@@ -1,0 +1,10 @@
+'''
+Note here all places in the code where you compromised of "right" coding.
+'''
+
+1. constants: Use another data structure for Tasks and Contrasts
+2. constants: Organize
+3. PredictController: consider implement it without a class (just pass the relevant properties from hand to hand)
+4. Move constants.py to Shared_Utils and handle the importing
+5. Implement Tasks selection with TreeView instead of TreeWidget
+6. Find another place for Subject class instead of PredictModel.py
