@@ -1,7 +1,7 @@
-from linalg_utils import *
+from sharedutils.linalg_utils import *
 import numpy as np
 import tensorflow as tf
-from constants import *
+from sharedutils.constants import *
 
 
 '''
