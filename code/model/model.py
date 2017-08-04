@@ -58,5 +58,6 @@ class Model:
 
         return {task : predicted_maps[:,i] for i, task in enumerate(self.tasks)}
 
-
+    def predict(self, subject):
+        return
 

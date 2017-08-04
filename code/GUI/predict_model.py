@@ -1,39 +1,61 @@
 from PyQt5.QtCore import QFile, QIODevice
 from sharedutils.constants import *
-from sharedutils.string_utils import get_id, get_fetures_path
+from sharedutils.string_utils import *
 import os
+from model.model import Model
+from sharedutils.subject import Subject
 
 class PredictModel:
-    def __init__(self, inputFilesString, outputDir, contrasts):
-        self.inputFiles = inputFilesString[1:].split(',')
-        print(self.inputFiles)
-        self.outputDir = outputDir
-        self.contrasts = contrasts
+    def __init__(self, input_files_str, output_dir, tasks):
+        self.input_files = input_files_str[1:].split(',')
+        self.output_dir = output_dir
+        self.tasks = tasks
 
-    def findExistingFeatures(self):
+    def find_existing_features(self):
         f = QFile(CONFIG_PATH)
         f.open(QIODevice.ReadOnly)
-        featuresDir = f.readAll()
+        features_dir = f.readAll()
         f.close()
 
-        existFeatsInpuFiles = []
-        for fileName in self.inputFiles:
-            print(1)
-            id = get_id(fileName)
-            print(fileName)
+        exist_feats_input_files = []
+        for file_name in self.input_files:
+            id = get_id(file_name)
             path = get_fetures_path(id)
             if os.path.isfile(path):
-                existFeatsInpuFiles.append(fileName)
+                exist_feats_input_files.append(file_name)
 
-        return existFeatsInpuFiles
+        return exist_feats_input_files
 
-    def extractFeatures(self, existingFeatures):
-        for file in self.inputFiles:
-            if file not in existingFeatures:
+    def extract_features(self, existing_features):
+        for file in self.input_files:
+            if file not in existing_features:
                 print(file)
 
-    def predict(self):
-        return
 
+    def prepare_subjects(self):
+        '''
+        prepare subject objects whose prediction is desired, based on the processed input from the user
+        in the Predict tab, stored in this (self) PredictModel object.
+        :return: list of Subject
+        '''
+        subjects = []
+        for file_path in self.input_files:
+
+            subject = Subject()
+            subject.id = get_id(file_path)
+            subject.output_path = get_full_path(self.output_dir, subject.id)
+            subject.input_path = file_path
+            subject.features_path = get_fetures_path(subject.id)
+
+
+
+            return
+
+
+    def predict(self):
+        prediction_model = Model()
+        subjects = self.prepare_subjects()
+        for subject in subjects:
+            prediction_model.predict(subject)
 
 

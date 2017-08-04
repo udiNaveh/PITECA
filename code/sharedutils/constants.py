@@ -37,7 +37,7 @@ PATHS.WB_TUTORIAL_DATA = r"D:\Projects\HCP_WB_Tutorial_1.0\HCP_WB_Tutorial_1.0" 
 
 from enum import Enum
 
-class Contrasts(Enum):
+class Task(Enum):
     FACES = 1
     SHAPES = 2
     FACES_SHAPES = 3
@@ -86,14 +86,14 @@ class Contrasts(Enum):
     PLACE_AVG = 46
     TOOL_AVG = 47
 
-class Tasks(Enum):
-    EMOTION = [Contrasts(i) for i in range(1, 4)]
-    GAMBLING = [Contrasts(i) for i in range(4, 7)]
-    LANGUAGE = [Contrasts(i) for i in range(7, 10)]
-    MOTOR = [Contrasts(i) for i in range(10, 23)]
-    RELATIONAL = [Contrasts(i) for i in range(23, 26)]
-    SOCIAL = [Contrasts(i) for i in range(26, 29)]
-    WM = [Contrasts(i) for i in range(29, 48)]
+class Domain(Enum):
+    EMOTION = [Task(i) for i in range(1, 4)]
+    GAMBLING = [Task(i) for i in range(4, 7)]
+    LANGUAGE = [Task(i) for i in range(7, 10)]
+    MOTOR = [Task(i) for i in range(10, 23)]
+    RELATIONAL = [Task(i) for i in range(23, 26)]
+    SOCIAL = [Task(i) for i in range(26, 29)]
+    WM = [Task(i) for i in range(29, 48)]
 
 '''
 Strings
