@@ -1,10 +1,9 @@
 import os
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import *
-from sharedutils.constants import Contrasts, Tasks
+from sharedutils.constants import Domain, Task
 from GUI.predict_model import PredictModel
 from misc.existingFeatsDlg import UIExistFeats
-
 
 class PredictController:
 
@@ -25,10 +24,10 @@ class PredictController:
         dir = QtWidgets.QFileDialog.getExistingDirectory()
         if dir:
             self.ui.outputDirLineEdit.setText(dir)
-            #TODO: consider editing scenarios
+            # TODO: consider editing scenarios
 
 
-    def findCheckedContrasts(self):
+    def findCheckedTasks(self):
         contrasts = dict()
         root = self.ui.tasksTree.invisibleRootItem()
         signalCount = root.childCount()
@@ -42,8 +41,8 @@ class PredictController:
                 child = signal.child(n)
 
                 if child.checkState(0) == QtCore.Qt.Checked:
-                    checkedSweeps.append(Contrasts[child.text(0)])
-            contrasts[Tasks[signal.text(0)]] = checkedSweeps
+                    checkedSweeps.append(Domain[child.text(0)])
+            contrasts[Task[signal.text(0)]] = checkedSweeps
         return contrasts
 
 
@@ -56,18 +55,6 @@ class PredictController:
     def onRunPredictClicked(self):
         inputFiles = self.ui.inputFilesLineEdit.text()
         outputDir = self.ui.outputDirLineEdit.text()
-        contrasts = self.findCheckedContrasts()
-        predictModel = PredictModel(inputFiles, outputDir, contrasts)
-        existingFeatures = predictModel.findExistingFeatures()
-
-        self.ui.existingFeatsDlg = QtWidgets.QDialog()
-        self.ui.existingFeatsDlg.setWindowModality(Qt.ApplicationModal)
-        self.ui.existingFeatsUi = UIExistFeats(existingFeatures)
-        self.ui.existingFeatsUi.setupUi(self.ui.existingFeatsDlg)
-        self.ui.existingFeatsUi.contButton.clicked.connect(self.onContClicked)
-        self.existingFeatsDlg.show()
-
-
-        predictModel.extractFeatures(existingFeatures)
+        tasks = self.findCheckedTasks()
+        predictModel = PredictModel(inputFiles, outputDir, tasks)
         predictModel.predict()
-        return

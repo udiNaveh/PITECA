@@ -7,7 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from constants import Tasks
+from sharedutils.constants import Domain
 
 class Ui_MainView(object):
     def setupUi(self, MainView):
@@ -139,14 +139,14 @@ class Ui_MainView(object):
         _translate = QtCore.QCoreApplication.translate
         ### code added manually ###
         self.tasksTree.headerItem().setText(0, _translate("MainView", "Tasks"))
-        for task in Tasks:
+        for domain in Domain:
             taskItem = QtWidgets.QTreeWidgetItem(self.tasksTree)
-            taskItem.setText(0, task.name)
-            for contrast in task.value:
+            taskItem.setText(0, domain.name)
+            for task in domain.value:
                 contrastItem = QtWidgets.QTreeWidgetItem(taskItem)
                 contrastItem.setCheckState(0, QtCore.Qt.Checked)
                 contrastItem.setCheckState(0, QtCore.Qt.Unchecked)
-                contrastItem.setText(0, contrast.name)
+                contrastItem.setText(0, task.name)
         ######
         MainView.setWindowTitle(_translate("MainView", "MainWindow"))
         self.selectInputFilesLabel.setText(_translate("MainView", "Select R-fMRI data:"))
