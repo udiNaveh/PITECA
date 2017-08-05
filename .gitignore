@@ -69,3 +69,4 @@ fabric.properties
 # Other files to ignore
 
 *.pyc
+.idea
