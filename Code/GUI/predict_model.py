@@ -2,7 +2,7 @@ from PyQt5.QtCore import QFile, QIODevice
 from sharedutils.constants import *
 from sharedutils.string_utils import *
 import os
-from model.model import Model
+from model.models import Model
 from sharedutils.subject import Subject
 
 class PredictModel:

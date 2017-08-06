@@ -33,6 +33,9 @@ PATHS.DATA_DIR = path.join(PATHS.PITECA_DIR, 'Data')
 PATHS.GARBAGE = path.join(PATHS.DATA_DIR, 'garbage')
 PATHS.MATLAB_CODE_DIR = path.join(PATHS.PITECA_DIR, 'Code', 'MATLAB')
 PATHS.WB_TUTORIAL_DATA = r"D:\Projects\HCP_WB_Tutorial_1.0\HCP_WB_Tutorial_1.0" # change with your own
+PATHS.SC_CLUSTERS = path.join(PATHS.DATA_DIR, 'SC_clusters.dtseries.nii')
+PATHS.ICA_LR_MATCHED = path.join(PATHS.DATA_DIR, 'ica_LR_MATCHED.dtseries.nii')
+PATHS.EXTRACTED_FEATURES_PATH = r"D:\Projects\PITECA\Data\extracted features"
 
 
 from enum import Enum
