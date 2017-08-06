@@ -99,9 +99,11 @@ class Domain(Enum):
 Strings
 '''
 DTSERIES_EXT = ".dtseries.nii"
-FEATS_EXT = "_features.py"
+FEATS_EXT = "_features"
+PREDICT_OUTPUT_EXT = "_predicted"
 
 """
 Hard coded values
 """
-CONFIG_PATH = "C:/Users/User/PycharmProjects/Sadna/PITECA/GUI/config.txt"
+TMP_FEATURES_PATH = "C:/Users/User/Sadna/src/git/PITECA/Code/misc/Mock Files/features"
+# TODO: use the path in the configurations instead
