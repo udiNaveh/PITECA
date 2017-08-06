@@ -1,9 +1,10 @@
 import os
+
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import *
-from sharedutils.constants import Domain, Task
+
 from GUI.predict_model import PredictModel
-from misc.existingFeatsDlg import UIExistFeats
+from sharedutils.constants import Domain, Task
+
 
 class PredictController:
 
@@ -41,8 +42,8 @@ class PredictController:
                 child = signal.child(n)
 
                 if child.checkState(0) == QtCore.Qt.Checked:
-                    checkedSweeps.append(Domain[child.text(0)])
-            contrasts[Task[signal.text(0)]] = checkedSweeps
+                    checkedSweeps.append(Task[child.text(0)])
+            contrasts[Domain[signal.text(0)]] = checkedSweeps
         return contrasts
 
 
@@ -56,5 +57,6 @@ class PredictController:
         inputFiles = self.ui.inputFilesLineEdit.text()
         outputDir = self.ui.outputDirLineEdit.text()
         tasks = self.findCheckedTasks()
+        print(tasks)
         predictModel = PredictModel(inputFiles, outputDir, tasks)
         predictModel.predict()

@@ -5,6 +5,7 @@ from os.path import join as join_path
 
 class Subject:
 
+
     def __init__(self, subject_id=None, output_path=None, input_path=None, features_exist=False, features_path=None,
                  predicted={}, actual = {}):
         self.subject_id = subject_id
@@ -32,3 +33,4 @@ def create_subjects(ids, extracted_featuresr_dir, outputpath):
                                 features_exist=True,
                                 output_path = outputpath))
     return subjects
+
