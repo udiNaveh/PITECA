@@ -1,14 +1,12 @@
 import os.path
-from py_matlab_utils import *
+from sharedutils.py_matlab_utils import *
 import matlab.engine
 from scipy.signal import detrend
 import numpy as np
-from constants import *
+from sharedutils.constants import *
 import cifti
-import io_utils
-import linalg_utils
-from py_matlab_utils import params_to_json
-import Package1.methods
+import sharedutils.io_utils as io_utils
+
 
 '''
 this module is to be used to run small tests and check ups when we write code, or just want to run a one-time 
@@ -23,45 +21,7 @@ Note though that this is not instead of real, robust unit tests that we will hav
 
 '''
 
-
-
-
-outfilename = 'params.json'
 rfmri_example_filename = 'rfMRI_REST1_LR_Atlas_MSMAll_hp2000_clean.dtseries.nii'
-
-
-def create_param_file2():
-    params = {}
-    params['DATA_DIR'] = DATA_DIR
-    params['ica_path'] = path.join(DATA_DIR, 'HCP_200', 'ica_LR_MATCHED.dtseries.nii')
-    params['subcortex_path'] = path.join(DATA_DIR, 'HCP_200', 'SC_clusters.dtseries.nii')
-    params['subjects'] = [{"ID" : '123', "input_file" : "", "features_file" : ""}]
-    params['extras'] = path.join(MATLAB_CODE_DIR, 'extras')
-
-    params_to_json('params.json', params)
-
-
-def create_param_file():
-    params = {}
-    params['inputdir'] = r'C:\Users\ASUS\Dropbox\PITECA\Data'
-    params['outputdir'] = r'C:\Users\ASUS\Dropbox\PITECA\Data\output'
-    keys, vals = zip(*{'123456_fmri.dtseries.nii' : '123456_fmri_features.dtseries.nii',
-                                    '123457_fmri.dtseries.nii' : '123457_fmri_features.dtseries.nii',
-                                    '123458_fmri.dtseries.nii': '123458_fmri_features.dtseries.nii'}.items())
-    params['subjects'] = []
-    nums = [123,145,1764,197, 3542]
-    for num in nums:
-        subf = {}
-        subf['id'] = str(num)
-        subf['input'] = str(num)+ '_' + 'input'
-        subf['output'] = str(num) + '_' + 'output'
-        subf['features'] = str(num) + '_' + 'features'
-        params['subjects'].append(subf)
-
-    params['input_output_files'] = (keys,vals)
-    params['threshold'] = 2.1
-    params['nvertices'] = 92342
-    params_to_json( r'C:\Users\ASUS\Dropbox\PITECA\Data\params3.json', params)
 
 
 def test_linalgutils_on_real_data():
