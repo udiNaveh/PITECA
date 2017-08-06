@@ -4,6 +4,8 @@ from sharedutils.constants import *
 import sharedutils.cmd_utils as cmd_utils
 import sharedutils.asynch_utils as asynch_utils
 import sharedutils.cmd_utils
+import scipy.io as sio
+import h5py
 
 '''
 All methods that read or write to files.
@@ -65,7 +67,7 @@ def open_features_file(path):
     return arr, (series, bm)
 
 
-def save_to_dtseries(filename, brain_model, mat, zeropad = False):
+def save_to_dtseries(filename, brain_model, mat, fill_with_zeros = False):
     '''
     save a dtseries.nii file given the data matrix and the brain model.
     The series axis is generated so as to fit the size of the matrix (every row is a time point).
@@ -74,18 +76,50 @@ def save_to_dtseries(filename, brain_model, mat, zeropad = False):
     :param filename: the file to save 
     :param brain_model: a Cifti.Axis.BrainModel object
     :param mat: the data matrix
-    :param zeropad: havn't implemented yet. The idea is that if we make prediction for only
+    :param fill_with_zeros: havn't implemented yet. The idea is that if we make prediction for only
       the cortex vertices, we can make a brain model that contains only the cortex vertices
       and save to a file like that (save disc space). On the other hand someone (like Ido) might want to have 
       all the 91282 vertices and just have zeros in the unused vertices.
     :return: 
     '''
-    assert len(np.shape(mat)) == 2
-    assert mat.shape[1] == brain_model.arr.size()
+    if len(np.shape(mat)) == 2:
+        assert mat.shape[1] == np.size(brain_model.arr)
+    elif len(np.shape(mat)) == 1:
+        mat = np.reshape(mat, [1, np.size(brain_model.arr)])
     series = cifti.Series(start=0, step=1, size=mat.shape[0])
+    if not filename.endswith(".dtseries.nii"):
+        filename += ".dtseries.nii"
     cifti.write(filename, mat, (series, brain_model))
-    return True
+    return filename
 
 def save_to_dscalar(filename, brain_model, mat, names, zeropad = False):
 
     pass
+
+
+
+
+def open_mat_file(filepath):
+    arrays = {}
+    try:
+        mat = sio.loadmat(filepath)
+        print("file {} loaded".format(filepath))
+        for key, val in mat.items():
+            if isinstance(val, np.ndarray):
+                arrays[key] = val
+    except NotImplementedError:
+        f = h5py.File(filepath)
+        print("file {} loaded".format(filepath))
+        for k, v in f.items():
+            arrays[k] = np.array(v)
+    return arrays
+
+
+def load_ndarray_from_mat(filepath, array_name = None):
+    arrays = open_mat_file(filepath)
+    if len(arrays)!=1:
+        if array_name in arrays:
+            return arrays[array_name]
+        raise ValueError("file must include only one array")
+    else:
+        return arrays.popitem()[1]

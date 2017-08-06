@@ -14,3 +14,12 @@ def get_fetures_path(id):
 
 def get_full_path(dir, file_name):
     return dir + "/" + file_name
+
+
+def zeropad(i, length):
+    assert type(i)==int
+    i = str(i)
+    n_zeros = length - len(str(i))
+    if n_zeros>0:
+        i = '0'*n_zeros + i
+    return i

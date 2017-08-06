@@ -1,7 +1,7 @@
 
 import os
 import subprocess
-import constants
+import sharedutils.constants
 import cifti
 
 
