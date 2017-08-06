@@ -1,5 +1,5 @@
 from sharedutils.constants import *
-from sharedutils.string_utils import *
+from sharedutils.general_utils import *
 from os.path import join as join_path
 
 

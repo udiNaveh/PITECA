@@ -8,7 +8,7 @@ from model.models import *
 import os
 import matplotlib.pyplot as plt
 import cifti
-import sharedutils.string_utils as string_utils
+import sharedutils.general_utils as general_utils
 
 '''
 rough translation of Ido's matlab code of the linear model. This is just a POC,
@@ -274,7 +274,7 @@ def run_regression():
     extracted_featuresr_path = r'D:\Projects\PITECA\Data\extracted features'
     subjects = []
     for i in range(1, 101):
-        id = string_utils.zeropad(i, 6)
+        id = general_utils.zeropad(i, 6)
         subjects.append(Subject(subject_id= id,
                                 features_path= os.path.join(extracted_featuresr_path, id + '_features.dtseries.nii'),
                                 features_exist=True))

@@ -1,5 +1,5 @@
 from sharedutils.constants import *
-from sharedutils.string_utils import *
+from sharedutils.general_utils import *
 from os.path import join as join_path
 
 
@@ -9,7 +9,7 @@ class Subject:
                  predicted={}, actual = {}):
         self.subject_id = subject_id
         self.output_path = output_path
-        self.input_path = input_path
+        self.input_path = None
         self.features_exist = features_exist
         self.features_path = features_path
         self.predicted = predicted # type: dict[Task, str]

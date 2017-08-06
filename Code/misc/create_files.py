@@ -3,7 +3,7 @@ import cifti
 from sharedutils.subject import  *
 from sharedutils.io_utils import  *
 from sharedutils.constants import *
-import sharedutils.string_utils as string_utils
+import sharedutils.general_utils as general_utils
 from model.models import LinearModel
 
 
@@ -21,7 +21,7 @@ def create_features_for_learning():
     with open('subjects_features.txt', 'r') as f:
         for i in range(100):
             subj_number = int(f.readline()) + 1
-            filename = string_utils.zeropad(subj_number, 6) + "_features.dtseries.nii"
+            filename = general_utils.zeropad(subj_number, 6) + "_features.dtseries.nii"
             filename = os.path.join(r'D:\Projects\PITECA\Data', filename)
             subj_features = all_features[STANDART_BM.CORTEX, i, :]
             save_to_dtseries(filename, bm, np.transpose(subj_features))
@@ -50,7 +50,7 @@ def create_actual_task_files():
     task_names = sorted(LinearModel.available_tasks.keys(), key= lambda key : LinearModel.available_tasks[key])
 
     for subj_index in range(1,30):
-        subject = Subject(subject_id=string_utils.zeropad(subj_index + 1, 6),
+        subject = Subject(subject_id=general_utils.zeropad(subj_index + 1, 6),
                           output_path=actual_path)
         for task_index in range(len(task_names)):
             mat = tasks[task_index, subj_index,:]
