@@ -9,8 +9,7 @@ from abc import ABC, abstractmethod
 
 
 # constants - use configs instead
-ica_both_lowdim_path = os.path.join(PATHS.DATA_DIR, 'HCP_200', 'ica_both_lowdim.dtseries.nii')
-betas_path = os.path.join(PATHS.DATA_DIR, 'regression_model','loo_betas_7_tasks', 'average_betas_100_subjects_7_tasks.npy')
+
 temperature = 3.5
 
 
@@ -52,7 +51,7 @@ class LinearModel(IModel):
         instance of LinearModel.
         :return: 
         '''
-        all_betas = np.load(betas_path)
+        all_betas = np.load(definitions.LINEAR_MODEL_BETAS_PATH)
         missing_tasks = []
         for task in self.tasks:
             if task not in LinearModel.available_tasks:
@@ -66,7 +65,7 @@ class LinearModel(IModel):
         tasks_indices = [LinearModel.available_tasks[t] for t in self.tasks]
         self.__betas = all_betas[tasks_indices,:,:]
 
-        ica_both_lowdim, (series, bm) = cifti.read(ica_both_lowdim_path)
+        ica_both_lowdim, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
         self.__spatial_filters_soft = tempered_filters = softmax(np.transpose(ica_both_lowdim)* temperature)
         return True
 
@@ -152,9 +151,9 @@ class FeatureExtractor:
         self.is_loaded = False
 
     def load(self):
-        arr, _ = open_cifti(PATHS.SC_CLUSTERS)
+        arr, _ = open_cifti(definitions.SC_CLUSTERS_PATH)
         self.matrices['SC_CLUSTERS'] = arr
-        arr, _ = open_cifti(PATHS.ICA_LR_MATCHED)
+        arr, _ = open_cifti(definitions.ICA_LR_MATCHED_PATH)
         self.matrices['ICA_LR_MATCHED'] = arr
         self.is_loaded = True
         return

@@ -16,7 +16,8 @@ class Subject:
         self.actual = actual # type: dict[Task, str]
 
     def get_predicted_task_filepath(self, task):
-        return join_path(self.output_path, "{0}_{1}_predicted".format(self.subject_id,task.full_name))
+        return join_path(self.output_path, task.domain, task.name,
+                         "{0}_{1}_predicted".format(self.subject_id, task.full_name))
 
     def get_predicted_actual_overlap_task_filepath(self, task, outputdir):
         return join_path(outputdir, "{0}_{1}_predicted_actual_overlap".format(self.subject_id,task.full_name))

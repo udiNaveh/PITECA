@@ -3,11 +3,6 @@ from sharedutils.subject import *
 import time
 import os
 
-BASE = r"D:\Projects\PITECA\Data"
-os.path.join(r"D:\Projects\PITECA\Data")
-ACTUAL = os.path.join(r"D:\Projects\PITECA\Data",'actual')
-FEATURES = os.path.join(r"D:\Projects\PITECA\Data",'extracted features')
-PREDICTIONS = os.path.join(r"D:\Projects\PITECA\Data",'predictions')
 
 
 def test_time_to_validate(dir):
@@ -27,5 +22,4 @@ def time_ciftiopen(cifti_filepath):
 
 
 if __name__ == "__main__":
-    all_correlations = np.load(r"C:\Users\ASUS\Dropbox\PITECA\Data\regression_model\loo_betas_7_tasks\all_correlations.npy")
-    print(all_correlations[:10,:10])
+    pass
