@@ -41,7 +41,7 @@ def create_param_file2():
     params_to_json('params.json', params)
 
 
-def create_param_file():
+def create_parameters_file():
     params = {}
     params['inputdir'] = r'C:\Users\ASUS\Dropbox\PITECA\Data'
     params['outputdir'] = r'C:\Users\ASUS\Dropbox\PITECA\Data\output'
@@ -64,14 +64,7 @@ def create_param_file():
     params_to_json( r'C:\Users\ASUS\Dropbox\PITECA\Data\params3.json', params)
 
 
-def test_linalgutils_on_real_data():
-    input_file = os.path.join(PATHS.DATA_DIR, rfmri_example_filename)
-    arr, axes = cifti.read(input_file)
-    features_001 = np.load('features_001.npy')
-    arr = np.transpose(features_001)
 
-    cifti.write('features_001.dtseries.nii', arr, axes)
-    return 0
 
 
 def get_betas():
