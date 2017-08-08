@@ -70,3 +70,4 @@ FEATS_EXT = "_features.py"
 Hard coded values
 """
 CONFIG_PATH = "C:/Users/User/PycharmProjects/Sadna/PITECA/GUI/config.txt"
+CONFLICTS_DEMO = "Try this"
