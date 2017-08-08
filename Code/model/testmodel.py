@@ -3,7 +3,7 @@ from os.path import join as join_path
 
 from model.models import LinearModel as LinearModel
 from sharedutils.subject import *
-from sharedutils.string_utils import *
+from sharedutils.general_utils import *
 from sharedutils.constants import *
 
 
