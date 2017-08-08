@@ -1,10 +1,9 @@
 from sharedutils.constants import *
-from sharedutils.string_utils import *
+from sharedutils.general_utils import *
 from os.path import join as join_path
 
 
 class Subject:
-
 
     def __init__(self, subject_id=None, output_path=None, input_path=None, features_exist=False, features_path=None,
                  predicted={}, actual = {}):
@@ -16,11 +15,8 @@ class Subject:
         self.predicted = predicted # type: dict[Task, str]
         self.actual = actual # type: dict[Task, str]
 
-    def predicted_task_filepath(self, task):
-        for d in Domain:
-            if task in d.value:
-                break
-        return join_path(self.output_path, "{0}_{1}_{2}_predicted".format(self.subject_id,d.name, task.name))
+    def get_predicted_task_filepath(self, task):
+        return join_path(self.output_path, "{0}_{1}_predicted".format(self.subject_id,task.full_name))
 
 
 

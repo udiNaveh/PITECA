@@ -23,13 +23,16 @@ for filename in prediction_files:
 class TestAnalyzer(unittest.TestCase):
 
 
-
+    #@unittest.skip("")
     def test_get_correlations(self):
         corrs, withmean, withcanonical = analyzer.get_predictions_correlations(subjects, Task.MATH_STORY, subjects[0].predicted[Task.MATH_STORY])
         self.assertTrue(np.allclose(np.diag(corrs), np.ones(len(subjects))))
         self.assertTrue(np.allclose(corrs[0,:], withcanonical))
         self.assertFalse(np.allclose(corrs[1, :], withcanonical))
         self.assertFalse(np.allclose(corrs[1, :], withmean))
+
+    def test_nothing(self):
+        self.assertTrue(-1<0)
 
 
 if __name__ == '__main__':

@@ -5,28 +5,46 @@ from sharedutils.io_utils import *
 from sharedutils.general_utils import *
 
 
-def get_subjects_task_predictions_matrix(subjects, task):
-    prediction_arrays = []
+def _get_task_maps_by_subject(subjects, task, getpath_func):
+    task_maps = {}
     for subject in subjects:
         assert type(subject) == Subject
 
-        subject_predicted_task_path = subject.predicted.get(task, None)
-        if subject_predicted_task_path is None:
-            raise RuntimeWarning("no prediction for subject {} for task {}".format(subject.subject_id, task.name))
+        subject_task_path = getpath_func(subject, task)
+        #subject.predicted.get(task, None)
+        if subject_task_path is None:
+            # @error_handle - for development. In release we should guarantee that every subject
+            # has the prediction?
+            raise RuntimeWarning("no filepath found for subject {} for task {}".format(subject.subject_id, task.name))
         else:
-            arr, (ax, bm) = open_cifti(subject_predicted_task_path)
-            prediction_arrays.append(arr)
+            arr, (ax, bm) = open_cifti(subject_task_path)
+            # @error_handle
+            task_maps[subject] = arr
+    return task_maps
 
-    if not all_same(prediction_arrays, lambda arr: np.shape(arr)):
+
+def get_predicted_task_maps_by_subject(subjects, task):
+    return _get_task_maps_by_subject(subjects, task, lambda s, t : s.predicted.get(task, None))
+
+
+def get_actual_task_maps_by_subject(subjects, task):
+    return _get_task_maps_by_subject(subjects, task, lambda s, t : s.actual.get(task, None))
+
+
+def __arrays_to_matrix(arrays):
+    arrays = list(arrays)
+    if not all_same(arrays, lambda arr: np.shape(arr)):
+        # @error_handle
         raise RuntimeWarning("not all files have the same brain model")
 
-    if len(prediction_arrays[0].shape)==2:
-        axis = 0 if np.size(prediction_arrays[0],axis=0)==1 else 1
-        return np.concatenate(prediction_arrays, axis=axis)
-    elif len(prediction_arrays[0].shape)==1:
-        return np.stack(prediction_arrays, axis=0)
+    if len(arrays[0].shape)==2:
+        axis = 0 if np.size(arrays[0],axis=0)==1 else 1
+        return np.concatenate(arrays, axis=axis)
+    elif len(arrays[0].shape)==1:
+        return np.stack(arrays, axis=0)
     else:
-        raise Exception("cannot produce prediction matrix for shape {}".format(prediction_arrays[0].shape))
+        # @error_handle
+        raise Exception("cannot produce matrix for shape {}".format(arrays[0].shape))
 
 
 def get_prediction_statistic(subjects, task, statfunc, outputpath = None):
@@ -64,22 +82,37 @@ def get_prediction_mean(subjects, task, outputpath):
 
 def get_predictions_correlations(subjects, task, other_path):
     n_subjects = len(subjects)
-    preds = get_subjects_task_predictions_matrix(subjects, task)
-    mean_pred = np.mean(preds, axis = 0)
+    subjects_predictions = get_predicted_task_maps_by_subject(subjects, task)
+    subjects_predictions_matrix = __arrays_to_matrix(
+        [subjects_predictions[s] for s in subjects])
+
+    mean_pred = np.mean(subjects_predictions_matrix, axis = 0)
     other_arr, (ax, bm) = open_cifti(other_path)
 
     # assume other_arr is of shape 1x91282
 
-    mat = np.concatenate((preds, mean_pred.reshape([1,STANDART_BM.N_CORTEX]), other_arr[:,:STANDART_BM.N_CORTEX]))
-    correlation_matrix = np.corrcoef(mat)
-    return (correlation_matrix[:n_subjects,:n_subjects], correlation_matrix[:n_subjects,-2],
-        correlation_matrix[:n_subjects,-1])
+    unified_mat = np.concatenate((subjects_predictions_matrix,
+                          mean_pred.reshape([1,STANDART_BM.N_CORTEX]),
+                          other_arr[:,:STANDART_BM.N_CORTEX]))
+    correlation_matrix = np.corrcoef(unified_mat)
+    return (correlation_matrix[:n_subjects,:n_subjects], # subject x subject correlations
+            correlation_matrix[:n_subjects,-2],  # correlations with group mean
+        correlation_matrix[:n_subjects,-1]) # correlations with other_arr
 
 
+def get_predicted_actual_correlations(subjects, task):
+    n_subjects = len(subjects)
+    subjects_predicted_maps = get_predicted_task_maps_by_subject(subjects, task)
+    subjects_actual_maps = get_actual_task_maps_by_subject(subjects, task)
+
+    # need to insure that maps are paired
+    subjects = [s for s in subjects_predicted_maps if s in subjects_actual_maps]
+    # @error_handel need to decide what to do if the above intersection is different from subjects
+    # i.e. some subjects don't have actual and predicted maps
+
+    predicted_matrix = __arrays_to_matrix([subjects_predicted_maps[s] for s in subjects])
+    actual_matrix = __arrays_to_matrix([subjects_actual_maps[s] for s in subjects])
 
 
+    #correlation_matrix = np.corrcoef(task[STANDART_BM.CORTEX, :], pred[STANDART_BM.CORTEX, :], rowvar=0)[:n_subjects, n_subjects:]
 
-if __name__ == "__main__":
-
-    create_subjects()
-    print(correlation_matrix.shape)

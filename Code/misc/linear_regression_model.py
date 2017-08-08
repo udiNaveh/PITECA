@@ -1,8 +1,8 @@
 import numpy as np
 from sklearn.preprocessing import normalize
-from py_matlab_utils import *
-from constants import *
-from linalg_utils import *
+from sharedutils.io_utils import *
+from sharedutils.constants import *
+from sharedutils.linalg_utils import *
 import os
 import matplotlib.pyplot as plt
 import cifti

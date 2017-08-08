@@ -89,6 +89,13 @@ class Task(Enum):
     PLACE_AVG = 46
     TOOL_AVG = 47
 
+    @property
+    def full_name(self):
+        for d in Domain:
+            if self in d.value:
+                break
+        return d.name + "_" + self.name
+
 class Domain(Enum):
     EMOTION = [Task(i) for i in range(1, 4)]
     GAMBLING = [Task(i) for i in range(4, 7)]
