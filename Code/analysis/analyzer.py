@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from sharedutils.subject import *
 from sharedutils.io_utils import *
@@ -17,7 +18,10 @@ def _get_task_maps_by_subject(subjects, task, getpath_func):
             # has the prediction?
             raise RuntimeWarning("no filepath found for subject {} for task {}".format(subject.subject_id, task.name))
         else:
+            start = time.time()
             arr, (ax, bm) = open_cifti(subject_task_path)
+            stop = time.time()
+            print("opening {0} took {1:.4f} seconds".format(subject_task_path, stop-start))
             # @error_handle
             task_maps[subject] = arr
     return task_maps
@@ -101,7 +105,15 @@ def get_predictions_correlations(subjects, task, other_path):
 
 
 def get_predicted_actual_correlations(subjects, task):
-    n_subjects = len(subjects)
+    '''
+    
+    :param subjects: type: List[Subject]
+    :param task: type: Enum.Task
+    :return:  a two-dimensional correlation matrix (nump.ndarray), in which the i,j
+    entry is the pearson correlation between the prediction of the i'th subject and
+    the actual activation of the j'th subject for task.
+    '''
+
     subjects_predicted_maps = get_predicted_task_maps_by_subject(subjects, task)
     subjects_actual_maps = get_actual_task_maps_by_subject(subjects, task)
 
@@ -109,10 +121,11 @@ def get_predicted_actual_correlations(subjects, task):
     subjects = [s for s in subjects_predicted_maps if s in subjects_actual_maps]
     # @error_handel need to decide what to do if the above intersection is different from subjects
     # i.e. some subjects don't have actual and predicted maps
-
+    n_subjects = len(subjects)
     predicted_matrix = __arrays_to_matrix([subjects_predicted_maps[s] for s in subjects])
     actual_matrix = __arrays_to_matrix([subjects_actual_maps[s] for s in subjects])
 
-
-    #correlation_matrix = np.corrcoef(task[STANDART_BM.CORTEX, :], pred[STANDART_BM.CORTEX, :], rowvar=0)[:n_subjects, n_subjects:]
+    correlation_matrix = np.corrcoef(actual_matrix[:, STANDART_BM.CORTEX],
+                                     predicted_matrix[:, STANDART_BM.CORTEX])[n_subjects:, :n_subjects]
+    return correlation_matrix
 
