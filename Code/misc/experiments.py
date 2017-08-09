@@ -15,7 +15,7 @@ this module is to be used to run small tests and check ups when we write code, o
 piece of code.
 It is better to have all the 'garbage' in one file, instead of spreading it across
 different files. So the best practice will be that other files in the directory are not runnable 
-(no main thread, all code is either constants or function defenitions). That way we can keep the real code
+(no main thread, all code is either constants or function definitions). That way we can keep the real code
 relatively clean.
 Note though that this is not instead of real, robust unit tests that we will have to write and use.
 

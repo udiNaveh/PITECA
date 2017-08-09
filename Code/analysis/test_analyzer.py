@@ -6,9 +6,10 @@ import analysis.analyzer as analyzer
 from sharedutils.subject import *
 
 
-predictions_dir = r"D:\Projects\PITECA\Data\predictions"
-actual_dir = r"D:\Projects\PITECA\Data\actual"
-overlap_dir =  r"D:\Projects\PITECA\Data\overlap"
+predictions_dir = os.path.join(definitions.PREDICTIONS_DIR, 'LANGUAGE', 'MATH_STORY')
+actual_dir = os.path.join(definitions.DATA_DIR, 'Tasks')
+overlap_dir = os.path.join(definitions.ANALYSIS_DIR, 'Overlap Maps')
+
 prediction_files = os.listdir(predictions_dir)
 subjects = []
 for filename in prediction_files:
