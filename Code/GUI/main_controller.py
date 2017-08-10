@@ -2,6 +2,7 @@ from GUI.predict_controller import PredictController
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QFile, QIODevice
 from GUI.views import Ui_MainView
+
 '''
 The main of PITECA project.
 Runs the app and connects user events on the Main Window of PITECA to their functionality.

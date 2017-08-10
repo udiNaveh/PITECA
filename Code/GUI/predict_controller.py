@@ -29,6 +29,9 @@ class PredictController:
 
 
     def findCheckedTasks(self):
+
+        # TODO: handle the case where no task is checked
+
         contrasts = dict()
         root = self.ui.tasksTree.invisibleRootItem()
         signalCount = root.childCount()
@@ -57,6 +60,5 @@ class PredictController:
         inputFiles = self.ui.inputFilesLineEdit.text()
         outputDir = self.ui.outputDirLineEdit.text()
         tasks = self.findCheckedTasks()
-        print(tasks)
         predictModel = PredictModel(inputFiles, outputDir, tasks)
-        predictModel.predict()
+        predictModel.run_prediction_flow(self.ui)

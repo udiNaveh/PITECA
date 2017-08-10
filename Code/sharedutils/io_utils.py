@@ -24,7 +24,7 @@ in the analysis module.
 def open_cifti(path):
     '''
     This is not properly handled yet
-    :param path: 
+    :param path:
     :return: arr, (axis, bm)
     '''
     try:
@@ -71,16 +71,16 @@ def save_to_dtseries(filename, brain_model, mat, fill_with_zeros = False):
     '''
     save a dtseries.nii file given the data matrix and the brain model.
     The series axis is generated so as to fit the size of the matrix (every row is a time point).
-    
-    
-    :param filename: the file to save 
+
+
+    :param filename: the file to save
     :param brain_model: a Cifti.Axis.BrainModel object
     :param mat: the data matrix
     :param fill_with_zeros: havn't implemented yet. The idea is that if we make prediction for only
       the cortex vertices, we can make a brain model that contains only the cortex vertices
-      and save to a file like that (save disc space). On the other hand someone (like Ido) might want to have 
+      and save to a file like that (save disc space). On the other hand someone (like Ido) might want to have
       all the 91282 vertices and just have zeros in the unused vertices.
-    :return: 
+    :return:
     '''
     if len(np.shape(mat)) == 2:
         assert mat.shape[1] == np.size(brain_model.arr)
