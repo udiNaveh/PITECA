@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 import sys, time, math
 from GUI.progress_thread import ProgressThread
 from GUI.popups.progressBarView import Ui_ProgressBar
-from model.models import Model
+from model.models import LinearModel
 from sharedutils.constants import *
 from sharedutils.dialog_utils import *
 from sharedutils.path_utils import *
@@ -11,33 +11,23 @@ from sharedutils.subject import Subject
 import os.path
 
 
-def _extract_filenames(input_files_str):
-    pathes = []
-    filenames = input_files_str[1:-1].split(', ')
-    for filename in filenames:
-        start = filename.index("'")
-        end = filename.rindex("'")
-        pathes.append(filename[start+1:end])
-    return pathes
-
-
 class PredictTabModel:
     def __init__(self, input_files_str, output_dir, tasks):
-        self.input_files = _extract_filenames(input_files_str)
+        self.input_files = extract_filenames(input_files_str)
         self.output_dir = output_dir
         self.tasks = tasks
         self.subjects = []
         self.subjects_with_feats = []
         self.prediction_model = None
 
-    def _prepare_subjects(self):
+    def __prepare_subjects(self):
         '''
         prepare subject objects whose prediction is desired, based on the processed input from the user
         in the Predict tab. In addition, prepare a list with subjects that already seem to have features.
         '''
         # set initial properties
         for file in self.input_files:
-            # TODO: if we enable editing in the Line Edit, we need to assert here that we have valid path
+            # TODO: if we enable editing in the Line Edit, we need to assert here that we have valid paths
             subject = Subject()
             subject.id = get_id(file)
             subject.output_path = get_output_path(self.output_dir, subject.id)
@@ -49,8 +39,8 @@ class PredictTabModel:
 
     def run_prediction_flow(self, ui):
         # Setup
-        self.prediction_model = Model(self.tasks)
-        self._prepare_subjects()
+        self.prediction_model = LinearModel(self.tasks)
+        self.__prepare_subjects()
 
         # Open a dialog to ask the user for permission to use existing features
         use_existing = False
@@ -73,8 +63,6 @@ class PredictTabModel:
         self.progress_thread = ProgressThread(self.prediction_model, self.subjects, self.progress_bar_ui.progressBar)
         # setup cancel button functionality
         self.progress_bar_ui.pushButton.clicked.connect(lambda: self.progress_thread.terminate()) # TODO: terminate() is not recommended
-        # setup exit functionality
-        self.progress_bar_ui
 
         # TODO: terminate working thread when dialog closed
         # TODO: change button text to 'Finished' or disable it when prediction completed

@@ -1,4 +1,4 @@
-from GUI.popups.dialogController import Dialog
+from GUI.popups.dialogs import Dialog
 
 '''
 This utility enables popup from any part of the code. 
