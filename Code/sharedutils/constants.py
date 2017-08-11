@@ -110,11 +110,20 @@ class Domain(Enum):
     WM = [Task(i) for i in range(29, 48)]
 
 '''
-Strings
+Extensions
 '''
 DTSERIES_EXT = ".dtseries.nii"
 FEATS_EXT = "_features"
 PREDICT_OUTPUT_EXT = "_predicted"
+
+'''
+Dialogs
+'''
+QUESTION_TITLE = "PITECA - Dialog"
+
+# Existing features
+EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \
+                  " \n Do you want to use the existing features?"
 
 """
 Hard coded values

@@ -15,14 +15,18 @@ class Subject:
         self.predicted = predicted # type: dict[Task, str]
         self.actual = actual # type: dict[Task, str]
 
+    def predicted_task_filepath(self, task):
+        for d in Domain:
+            if task in d.value:
+                break
+        return join_path(self.output_path, "{0}_{1}_{2}_predicted".format(self.subject_id,d.name, task.name))
+
     def get_predicted_task_filepath(self, task):
         return join_path(self.output_path, task.domain, task.name,
                          "{0}_{1}_predicted".format(self.subject_id, task.full_name))
 
     def get_predicted_actual_overlap_task_filepath(self, task, outputdir):
         return join_path(outputdir, "{0}_{1}_predicted_actual_overlap".format(self.subject_id,task.full_name))
-
-
 
 def create_subjects(ids, extracted_featuresr_dir, outputpath):
     subjects = []
