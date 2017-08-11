@@ -123,10 +123,10 @@ QUESTION_TITLE = "PITECA - Dialog"
 
 # Existing features
 EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \
-                  " \n Do you want to use the existing features?"
+                  " \nDo you want to use the existing features?"
 
 """
 Hard coded values
 """
-TMP_FEATURES_PATH = "C:/Users/User/Sadna/src/git/PITECA/Code/misc/Mock Files/features"
+TMP_FEATURES_PATH = "C:/sers/User/Sadna/src/git/PITECA/Data/ExtractedFeatures"
 # TODO: use the path in the configurations instead

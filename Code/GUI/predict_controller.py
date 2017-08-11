@@ -11,7 +11,6 @@ class PredictController:
     def __init__(self, ui):
         self.ui = ui
 
-
     def onBrowseInputFilesClicked(self):
         dlg = QtWidgets.QFileDialog()
         filters = "CIFTI (*.dtseries.nii)"
@@ -60,5 +59,8 @@ class PredictController:
         inputFiles = self.ui.inputFilesLineEdit.text()
         outputDir = self.ui.outputDirLineEdit.text()
         tasks = self.findCheckedTasks()
+        if (not inputFiles or not outputDir or not tasks):
+            print("provide input!") # @error_handling
+            return
         predictModel = PredictTabModel(inputFiles, outputDir, tasks)
         predictModel.run_prediction_flow(self.ui)
