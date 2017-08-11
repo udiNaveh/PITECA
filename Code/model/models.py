@@ -7,10 +7,11 @@ from sharedutils.io_utils import *
 import os.path
 from abc import ABC, abstractmethod
 
-ica_both_lowdim_path = os.path.join(PATHS.DATA_DIR, 'HCP_200', 'ica_both_lowdim.dtseries.nii')
-betas_path = os.path.join(PATHS.DATA_DIR, 'regression_model','loo_betas_7_tasks', 'average_betas_100_subjects_7_tasks.npy')
+
+# constants - use configs instead
 
 temperature = 3.5
+
 
 class IModel(ABC):
 
@@ -33,6 +34,9 @@ class LinearModel(IModel):
                        Task.FACES_SHAPES : 5,
                        Task.T : 6
                        }
+    # a mapping of currently available tasks in the model to their ordinal number in the
+    # data files related to the tasks. e.g. in the betas matrix the betas related to Task.REWARD
+    # are in the coordintas [4,:,:]
 
     def __init__(self, tasks):
         super(LinearModel, self).__init__(tasks)
@@ -42,17 +46,26 @@ class LinearModel(IModel):
         self.__is_loaded = False
 
     def __load(self):
-        all_betas = np.load(betas_path)
+        '''
+        Loads from disk all the data matrices needed for the model. This is done once per
+        instance of LinearModel.
+        :return: 
+        '''
+        all_betas = np.load(definitions.LINEAR_MODEL_BETAS_PATH)
         missing_tasks = []
         for task in self.tasks:
             if task not in LinearModel.available_tasks:
                 missing_tasks.append(task)
                 raise RuntimeWarning("no linear model for task {}".format(task.name))
+            # @error_handle. Notice that this is probably only for development,
+            # as the release version will include anyway only the tasks
+            # for which we have the model.
+
         self.tasks = [t for t in self.tasks if t not in missing_tasks]
         tasks_indices = [LinearModel.available_tasks[t] for t in self.tasks]
         self.__betas = all_betas[tasks_indices,:,:]
 
-        ica_both_lowdim, (series, bm) = cifti.read(ica_both_lowdim_path)
+        ica_both_lowdim, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
         self.__spatial_filters_soft = tempered_filters = softmax(np.transpose(ica_both_lowdim)* temperature)
         return True
 
@@ -74,13 +87,9 @@ class LinearModel(IModel):
         pred = np.sum(np.swapaxes(dotprod, 0, 1) * self.__spatial_filters_soft[:STANDART_BM.N_CORTEX,:], axis=2)
         for i,task in enumerate(self.tasks):
             predicted_task_activation = pred[i,:]
-            save_to_dtseries(subject.predicted_task_filepath(task), bm, predicted_task_activation)
-            prediction_paths[task] = save_to_dtseries(subject.predicted_task_filepath(task), bm, predicted_task_activation)
+            prediction_paths[task] = save_to_dtseries(subject.get_predicted_task_filepath(task), bm, predicted_task_activation)
 
         return prediction_paths
-
-
-
 
 
 class Model:
@@ -142,9 +151,9 @@ class FeatureExtractor:
         self.is_loaded = False
 
     def load(self):
-        arr, _ = open_cifti(PATHS.SC_CLUSTERS)
+        arr, _ = open_cifti(definitions.SC_CLUSTERS_PATH)
         self.matrices['SC_CLUSTERS'] = arr
-        arr, _ = open_cifti(PATHS.ICA_LR_MATCHED)
+        arr, _ = open_cifti(definitions.ICA_LR_MATCHED_PATH)
         self.matrices['ICA_LR_MATCHED'] = arr
         self.is_loaded = True
         return
@@ -160,7 +169,7 @@ class FeatureExtractor:
             return self.extract_features(subject)
 
     def extract_features(self,subject):
-        raise  NotImplementedError
+        raise NotImplementedError
 
 
 

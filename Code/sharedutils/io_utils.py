@@ -31,11 +31,12 @@ def open_cifti(path):
         return cifti.read(path)
     except FileNotFoundError:
         pass
-        # do something
+        # @error_handle
         return None
 
     except ValueError as e:
         if str(e) == 'Only CIFTI-2 files are supported':
+            # @error_handle
             answer, cifti2path = asynch_utils.do_convert_to_CIFTI2(path)
             if answer==False:
                 # write to logger that the file could not be opened because it was not cifti2
@@ -92,9 +93,10 @@ def save_to_dtseries(filename, brain_model, mat, fill_with_zeros = False):
     cifti.write(filename, mat, (series, brain_model))
     return filename
 
-def save_to_dscalar(filename, brain_model, mat, names, zeropad = False):
 
-    pass
+def save_to_dscalar(filename, brain_model, mat, names, zeropad = False):
+    raise NotImplementedError
+
 
 
 
