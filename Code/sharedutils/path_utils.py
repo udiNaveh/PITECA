@@ -13,12 +13,20 @@ def get_id(absolute_path):
 
 
 def get_output_path(output_dir, id):
-    filename = id + PREDICT_OUTPUT_EXT + "." + DTSERIES_EXT
+    filename = id + PREDICT_OUTPUT_EXT + DTSERIES_EXT
     return os.path.join(output_dir, filename)
 
 
 def get_features_path(id):
-    filename = id + FEATS_EXT + "." + DTSERIES_EXT
+    filename = id + FEATS_EXT + DTSERIES_EXT
     return os.path.join(TMP_FEATURES_PATH, filename)
 
 
+def extract_filenames(input_files_str):
+    pathes = []
+    filenames = input_files_str[1:-1].split(', ')
+    for filename in filenames:
+        start = filename.index("'")
+        end = filename.rindex("'")
+        pathes.append(filename[start+1:end])
+    return pathes

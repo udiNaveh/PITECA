@@ -5,6 +5,7 @@ import tensorflow as tf
 from sharedutils.constants import *
 from sharedutils.io_utils import *
 import os.path
+import definitions
 from abc import ABC, abstractmethod
 import definitions
 

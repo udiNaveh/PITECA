@@ -110,14 +110,23 @@ class Domain(Enum):
     WM = [Task(i) for i in range(29, 48)]
 
 '''
-Strings
+Extensions
 '''
 DTSERIES_EXT = ".dtseries.nii"
 FEATS_EXT = "_features"
 PREDICT_OUTPUT_EXT = "_predicted"
 
+'''
+Dialogs
+'''
+QUESTION_TITLE = "PITECA - Dialog"
+
+# Existing features
+EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \
+                  " \nDo you want to use the existing features?"
+
 """
 Hard coded values
 """
-TMP_FEATURES_PATH = "C:/Users/User/Sadna/src/git/PITECA/Code/misc/Mock Files/features"
+TMP_FEATURES_PATH = "C:/sers/User/Sadna/src/git/PITECA/Data/ExtractedFeatures"
 # TODO: use the path in the configurations instead
