@@ -6,7 +6,7 @@ from sharedutils.constants import *
 from sharedutils.io_utils import *
 import os.path
 from abc import ABC, abstractmethod
-
+import definitions
 
 # constants - use configs instead
 
@@ -170,6 +170,16 @@ class FeatureExtractor:
 
     def extract_features(self,subject):
         raise NotImplementedError
+        pinv_g = np.random.rand(STANDART_BM.N_TOTAL_VERTICES, 76)
+        arr, (series, bm) = open_cifti(subject.input_path)
+        data = detrend(variance_normalise(arr))
+        T = (data.dot(pinv_g))
+
+
+
+
+
+
 
 
 
