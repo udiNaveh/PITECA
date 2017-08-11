@@ -2,7 +2,7 @@ import os
 
 from PyQt5 import QtWidgets, QtCore
 
-from GUI.predict_model import PredictModel
+from GUI.predict_model import PredictTabModel
 from sharedutils.constants import Domain, Task
 
 
@@ -60,5 +60,5 @@ class PredictController:
         inputFiles = self.ui.inputFilesLineEdit.text()
         outputDir = self.ui.outputDirLineEdit.text()
         tasks = self.findCheckedTasks()
-        predictModel = PredictModel(inputFiles, outputDir, tasks)
+        predictModel = PredictTabModel(inputFiles, outputDir, tasks)
         predictModel.run_prediction_flow(self.ui)

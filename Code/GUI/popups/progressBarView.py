@@ -34,12 +34,3 @@ class Ui_ProgressBar(object):
         self.pushButton.setText(_translate("Dialog", "Cancel"))
 
 
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    Dialog = QtWidgets.QDialog()
-    ui = Ui_ProgressBar()
-    ui.setupUi(Dialog)
-    Dialog.show()
-    sys.exit(app.exec_())
-
