@@ -7,14 +7,14 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from sharedutils.constants import Domain
 
-class Ui_MainView(object):
+class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.resize(450, 570)
         Form.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
         icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("../../../../../../../Downloads/brain-512.gif"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         Form.setWindowIcon(icon)
         self.MainView = QtWidgets.QTabWidget(Form)
         self.MainView.setGeometry(QtCore.QRect(10, 10, 431, 541))
@@ -28,7 +28,6 @@ class Ui_MainView(object):
         self.browseInputFilesButton.setGeometry(QtCore.QRect(280, 60, 75, 23))
         self.browseInputFilesButton.setObjectName("browseInputFilesButton")
         self.inputFilesLineEdit = QtWidgets.QLineEdit(self.groupBox)
-        self.inputFilesLineEdit.setReadOnly(True)
         self.inputFilesLineEdit.setGeometry(QtCore.QRect(10, 60, 261, 20))
         self.inputFilesLineEdit.setObjectName("inputFilesLineEdit")
         self.selectInputFilesLabel = QtWidgets.QLabel(self.groupBox)
@@ -41,7 +40,6 @@ class Ui_MainView(object):
         self.selectOutputDirLabel.setGeometry(QtCore.QRect(10, 90, 151, 16))
         self.selectOutputDirLabel.setObjectName("selectOutputDirLabel")
         self.outputDirLineEdit = QtWidgets.QLineEdit(self.groupBox)
-        self.outputDirLineEdit.setReadOnly(True)
         self.outputDirLineEdit.setGeometry(QtCore.QRect(10, 110, 261, 20))
         self.outputDirLineEdit.setObjectName("outputDirLineEdit")
         self.tasksTree = QtWidgets.QTreeWidget(self.PredictView)
@@ -62,6 +60,7 @@ class Ui_MainView(object):
         self.domainComboBox = QtWidgets.QComboBox(self.AnalyzeView)
         self.domainComboBox.setGeometry(QtCore.QRect(90, 10, 111, 22))
         self.domainComboBox.setObjectName("domainComboBox")
+        self.domainComboBox.addItem("")
         self.selectTaskLabel = QtWidgets.QLabel(self.AnalyzeView)
         self.selectTaskLabel.setGeometry(QtCore.QRect(230, 10, 61, 16))
         self.selectTaskLabel.setObjectName("selectTaskLabel")
@@ -72,7 +71,6 @@ class Ui_MainView(object):
         self.selectPredictedLabel.setGeometry(QtCore.QRect(10, 50, 171, 16))
         self.selectPredictedLabel.setObjectName("selectPredictedLabel")
         self.selectPredictedLineEdit = QtWidgets.QLineEdit(self.AnalyzeView)
-        self.selectPredictedLineEdit.setReadOnly(True)
         self.selectPredictedLineEdit.setGeometry(QtCore.QRect(10, 70, 321, 20))
         self.selectPredictedLineEdit.setObjectName("selectPredictedLineEdit")
         self.browsePredictedButton = QtWidgets.QPushButton(self.AnalyzeView)
@@ -94,7 +92,6 @@ class Ui_MainView(object):
         self.comparisonCorrelationsRadioButton.setGeometry(QtCore.QRect(20, 320, 82, 17))
         self.comparisonCorrelationsRadioButton.setObjectName("comparisonCorrelationsRadioButton")
         self.addActualLineEdit = QtWidgets.QLineEdit(self.AnalyzeView)
-        self.addActualLineEdit.setReadOnly(True)
         self.addActualLineEdit.setGeometry(QtCore.QRect(10, 280, 321, 20))
         self.addActualLineEdit.setObjectName("addActualLineEdit")
         self.comparisonSignificantRadioButton = QtWidgets.QRadioButton(self.AnalyzeView)
@@ -103,12 +100,12 @@ class Ui_MainView(object):
         self.addActualLabel = QtWidgets.QLabel(self.AnalyzeView)
         self.addActualLabel.setGeometry(QtCore.QRect(10, 260, 251, 16))
         self.addActualLabel.setObjectName("addActualLabel")
-        self.runAnalyzeButton = QtWidgets.QPushButton(self.AnalyzeView)
-        self.runAnalyzeButton.setGeometry(QtCore.QRect(20, 200, 75, 23))
-        self.runAnalyzeButton.setObjectName("runAnalyzeButton")
-        self.runCompareButton = QtWidgets.QPushButton(self.AnalyzeView)
-        self.runCompareButton.setGeometry(QtCore.QRect(20, 380, 75, 23))
-        self.runCompareButton.setObjectName("runCompareButton")
+        self.pushButton_6 = QtWidgets.QPushButton(self.AnalyzeView)
+        self.pushButton_6.setGeometry(QtCore.QRect(20, 200, 75, 23))
+        self.pushButton_6.setObjectName("pushButton_6")
+        self.pushButton_7 = QtWidgets.QPushButton(self.AnalyzeView)
+        self.pushButton_7.setGeometry(QtCore.QRect(20, 380, 75, 23))
+        self.pushButton_7.setObjectName("pushButton_7")
         self.selectDomainLabel.raise_()
         self.domainComboBox.raise_()
         self.selectTaskLabel.raise_()
@@ -124,8 +121,8 @@ class Ui_MainView(object):
         self.addActualLineEdit.raise_()
         self.comparisonSignificantRadioButton.raise_()
         self.addActualLabel.raise_()
-        self.runAnalyzeButton.raise_()
-        self.runCompareButton.raise_()
+        self.pushButton_6.raise_()
+        self.pushButton_7.raise_()
         self.MainView.addTab(self.AnalyzeView, "")
         self.tab_2 = QtWidgets.QWidget()
         self.tab_2.setObjectName("tab_2")
@@ -266,23 +263,6 @@ class Ui_MainView(object):
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
-        self.tasksTree.headerItem().setText(0, _translate("MainView", "Tasks"))
-
-        """
-        Added manually
-        """
-        for domain in Domain:
-            taskItem = QtWidgets.QTreeWidgetItem(self.tasksTree)
-            taskItem.setText(0, domain.name)
-            for task in domain.value:
-                contrastItem = QtWidgets.QTreeWidgetItem(taskItem)
-                contrastItem.setCheckState(0, QtCore.Qt.Checked)
-                contrastItem.setCheckState(0, QtCore.Qt.Unchecked)
-                contrastItem.setText(0, task.name)
-            self.domainComboBox.addItem(domain.name)
-        self.taskComboBox.addItems(task.name for task in Domain.EMOTION.value)
-        """ End of Added manually """
-
         Form.setWindowTitle(_translate("Form", "PITECA"))
         self.groupBox.setTitle(_translate("Form", "Select Paths"))
         self.browseInputFilesButton.setText(_translate("Form", "Browse..."))
@@ -292,6 +272,7 @@ class Ui_MainView(object):
         self.runPredictButton.setText(_translate("Form", "Run"))
         self.MainView.setTabText(self.MainView.indexOf(self.PredictView), _translate("Form", "Predict"))
         self.selectDomainLabel.setText(_translate("Form", "Select Domain:"))
+        self.domainComboBox.setItemText(0, _translate("Form", "haha"))
         self.selectTaskLabel.setText(_translate("Form", "Select Task:"))
         self.selectPredictedLabel.setText(_translate("Form", "Select predicted activation files:"))
         self.browsePredictedButton.setText(_translate("Form", "Browse..."))
@@ -302,8 +283,8 @@ class Ui_MainView(object):
         self.comparisonCorrelationsRadioButton.setText(_translate("Form", "Correlations"))
         self.comparisonSignificantRadioButton.setText(_translate("Form", "Areas of significant activation"))
         self.addActualLabel.setText(_translate("Form", "Add actual activation files to compare:"))
-        self.runAnalyzeButton.setText(_translate("Form", "Analyze"))
-        self.runCompareButton.setText(_translate("Form", "Compare"))
+        self.pushButton_6.setText(_translate("Form", "Analyze"))
+        self.pushButton_7.setText(_translate("Form", "Compare"))
         self.MainView.setTabText(self.MainView.indexOf(self.AnalyzeView), _translate("Form", "Analyze Results"))
         self.label_16.setText(_translate("Form", "Select Task:"))
         self.pushButton_27.setText(_translate("Form", "Remove"))
@@ -360,4 +341,13 @@ class Ui_MainView(object):
         self.pushButton.setText(_translate("Form", "Apply"))
         self.MainView.setTabText(self.MainView.indexOf(self.tab_3), _translate("Form", "Settings"))
 
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    Form = QtWidgets.QWidget()
+    ui = Ui_Form()
+    ui.setupUi(Form)
+    Form.show()
+    sys.exit(app.exec_())
 
