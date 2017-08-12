@@ -7,13 +7,13 @@ from model.models import LinearModel
 from sharedutils.constants import *
 from sharedutils.dialog_utils import *
 from sharedutils.path_utils import *
-from sharedutils.subject import Subject
+from sharedutils.subject import create_subjects
 import os.path
 
 
 class PredictTabModel:
     def __init__(self, input_files_str, output_dir, tasks):
-        self.input_files = extract_filenames(input_files_str)
+        self.input_files_srt = input_files_str
         self.output_dir = output_dir
         self.tasks = tasks
         self.subjects = []
@@ -25,15 +25,9 @@ class PredictTabModel:
         prepare subject objects whose prediction is desired, based on the processed input from the user
         in the Predict tab. In addition, prepare a list with subjects that already seem to have features.
         '''
-        # set initial properties
-        for file in self.input_files:
-            # TODO: if we enable editing in the Line Edit, we need to assert here that we have valid paths
-            subject = Subject()
-            subject.id = get_id(file)
-            subject.output_path = get_output_path(self.output_dir, subject.id)
-            subject.input_path = file
-            subject.features_path = get_features_path(subject.id)
-            self.subjects.append(subject)
+        self.subjects = create_subjects(self.input_files_srt, self.output_dir)
+        for subject in self.subjects:
+            # TODO: if we enable editing in the Line Edit, we need to assert that we have valid paths
             if path.exists(subject.features_path):
                 self.subjects_with_feats.append(subject)
 

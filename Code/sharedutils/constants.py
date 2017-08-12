@@ -129,4 +129,5 @@ EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted featur
 Hard coded values
 """
 TMP_FEATURES_PATH = "C:/sers/User/Sadna/src/git/PITECA/Data/ExtractedFeatures"
-# TODO: use the path in the configurations instead
+TMP_ANALYSIS_PATH = "C:/sers/User/Sadna/src/git/PITECA/Data/Analysis"
+# TODO: use paths in the configurations instead
