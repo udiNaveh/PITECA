@@ -1,14 +1,10 @@
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import Qt, pyqtSignal
-import sys, time, math
-from GUI.progress_thread import ProgressThread
-from GUI.popups.progressBarView import Ui_ProgressBar
+from PyQt5.QtCore import Qt
+
+from GUI.popups.progress_dialog import ProgressDlg
 from model.models import LinearModel
 from sharedutils.constants import *
 from sharedutils.dialog_utils import *
-from sharedutils.path_utils import *
 from sharedutils.subject import create_subjects
-import os.path
 
 
 class PredictTabModel:
@@ -19,6 +15,7 @@ class PredictTabModel:
         self.subjects = []
         self.subjects_with_feats = []
         self.prediction_model = None
+        self.progress_thread = None
 
     def __prepare_subjects(self):
         '''
@@ -46,22 +43,17 @@ class PredictTabModel:
             for subject in self.subjects_with_feats:
                 subject.features_exist = True
 
-        # Start prediction process
-
         # prepare progress bar dialog
-        progress_bar_dlg = QtWidgets.QDialog()
+        progress_bar_dlg = ProgressDlg(self.prediction_model, self.subjects)
         progress_bar_dlg.setWindowModality(Qt.ApplicationModal)
-        self.progress_bar_ui = Ui_ProgressBar()
-        self.progress_bar_ui.setupUi(progress_bar_dlg)
-        # start a new thread to do the prediction
-        self.progress_thread = ProgressThread(self.prediction_model, self.subjects, self.progress_bar_ui.progressBar)
-        # setup cancel button functionality
-        self.progress_bar_ui.pushButton.clicked.connect(lambda: self.progress_thread.terminate()) # TODO: terminate() is not recommended
+        progress_bar_dlg.create_ui()
 
-        # TODO: terminate working thread when dialog closed
+        # TODO: terminate() is not recommended
         # TODO: change button text to 'Finished' or disable it when prediction completed
 
         # start work
         progress_bar_dlg.show()
-        self.progress_thread.start()
+        progress_bar_dlg.start_progress()
         progress_bar_dlg.exec_()
+
+
