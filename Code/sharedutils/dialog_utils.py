@@ -1,4 +1,4 @@
-from GUI.popups.dialogs import Dialog
+from GUI.popups.dialogs import QuestionDialog
 
 '''
 This utility enables popup from any part of the code. 
@@ -15,5 +15,5 @@ def ask_user(default_ans, title, question):
     :param question: The message shown
     :return: A boolean value specifies if user pushed The Yes button
     '''
-    dlg = Dialog(default_ans, title, question)
+    dlg = QuestionDialog(default_ans, title, question)
     return dlg.ans

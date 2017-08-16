@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QWidget, QMessageBox, QMainWindow, QLabel, QGridLayo
 
 
 
-class Dialog(QWidget):
+class QuestionDialog(QWidget):
     def __init__(self, default_ans, title, msg):
         super().__init__()
         self.title = title
