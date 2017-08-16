@@ -6,10 +6,10 @@ from sharedutils import path_utils
 
 class Subject:
 
-    def __init__(self, subject_id=None, output_path=None, input_path=None, features_path=None, features_exist=False,
+    def __init__(self, subject_id=None, output_dir=None, input_path=None, features_path=None, features_exist=False,
                  predicted={}, actual = {}):
         self.subject_id = subject_id
-        self.output_path = output_path
+        self.output_dir = output_dir
         self.input_path = input_path
         self.features_exist = features_exist
         self.features_path = features_path
@@ -20,10 +20,16 @@ class Subject:
         for d in Domain:
             if task in d.value:
                 break
-        return join_path(self.output_path, "{0}_{1}_{2}_predicted".format(self.subject_id,d.name, task.name))
+        return join_path(self.output_dir, "{0}_{1}_{2}_predicted".format(self.subject_id, d.name, task.name))
 
     def get_predicted_task_filepath(self, task):
-        return join_path(self.output_path, task.domain, task.name,
+        print(1)
+        print(task.name)
+        print(task.domain)
+        print(self.output_dir)
+        print(11)
+        print(task.full_name)
+        return join_path(self.output_dir, task.domain().name, task.name,
                          "{0}_{1}_predicted".format(self.subject_id, task.full_name))
 
     def get_predicted_actual_overlap_task_filepath(self, task, outputdir):
@@ -55,8 +61,7 @@ def create_subjects(input_files_str, output_dir):
     input_files = path_utils.extract_filenames(input_files_str)
     for input_path in input_files:
         id = path_utils.get_id(input_path)
-        output_path = path_utils.get_output_path(output_dir, id)
         features_path = path_utils.get_features_path(id)
-        subject = Subject(id, output_path, input_path, features_path)
+        subject = Subject(id, output_dir, input_path, features_path)
         subjects.append(subject)
     return subjects

@@ -4,7 +4,7 @@ from PyQt5 import QtWidgets, QtCore
 
 from GUI.predict_model import PredictTabModel
 from sharedutils.constants import Domain, Task # TODO: change this to import constants
-from sharedutils import gui_utils
+from sharedutils import gui_utils, general_utils
 
 
 class PredictController:
@@ -35,7 +35,12 @@ class PredictController:
                 if child.checkState(0) == QtCore.Qt.Checked:
                     checkedSweeps.append(Task[child.text(0)])
             contrasts[Domain[signal.text(0)]] = checkedSweeps
-        return contrasts
+
+        res = []
+        for task in contrasts.values():
+            for contrast in task:
+                res.append(contrast)
+        return res
 
 
     def onContClicked(self):
