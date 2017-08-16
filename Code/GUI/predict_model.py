@@ -17,6 +17,14 @@ class PredictTabModel:
         self.prediction_model = None
         self.progress_thread = None
 
+    def __prepare_tasks(self):
+        res = []
+        for task in self.tasks.values():
+            for contrast in task:
+                res.append(contrast)
+        return res
+
+
     def __prepare_subjects(self):
         '''
         prepare subject objects whose prediction is desired, based on the processed input from the user

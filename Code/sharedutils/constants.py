@@ -97,7 +97,7 @@ class Task(Enum):
 
     @property
     def full_name(self):
-        return self.domain.name + "_" + self.name
+        return self.domain().name + "_" + self.name
 
 
 class Domain(Enum):
