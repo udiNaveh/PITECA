@@ -3,7 +3,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QFile, QIODevice
 from GUI.views import Ui_MainView
 from GUI.analyze_controller import AnalyzeController
-from sharedutils import constants
+from sharedutils import constants, dialog_utils
 import sys
 import threading
 
@@ -57,9 +57,7 @@ def setup_functionality(ui):
 
 
 def piteca_excepthook(exctype, value, tb):
-    error_dialog = QtWidgets.QErrorMessage()
-    error_dialog.showMessage(str(value) + ". PITECA will be now closed")
-    error_dialog.exec_()
+    dialog_utils.print_error(str(value) + ". PITECA will be now closed")
     sys.exit()
 
 

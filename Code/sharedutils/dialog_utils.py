@@ -1,4 +1,5 @@
 from GUI.popups.dialogs import QuestionDialog
+from PyQt5 import QtWidgets
 
 '''
 This utility enables popup from any part of the code. 
@@ -17,3 +18,14 @@ def ask_user(default_ans, title, question):
     '''
     dlg = QuestionDialog(default_ans, title, question)
     return dlg.ans
+
+def print_error(msg):
+    '''
+    This function pops up an error message for the user.
+    The user can click OK or X to close the window.
+    :param msg: The error to be printed for the user.
+    '''
+
+    error_dialog = QtWidgets.QErrorMessage()
+    error_dialog.showMessage(msg)
+    error_dialog.exec_()

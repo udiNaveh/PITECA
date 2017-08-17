@@ -23,12 +23,6 @@ class Subject:
         return join_path(self.output_dir, "{0}_{1}_{2}_predicted".format(self.subject_id, d.name, task.name))
 
     def get_predicted_task_filepath(self, task):
-        print(1)
-        print(task.name)
-        print(task.domain)
-        print(self.output_dir)
-        print(11)
-        print(task.full_name)
         return join_path(self.output_dir, task.domain().name, task.name,
                          "{0}_{1}_predicted".format(self.subject_id, task.full_name))
 
@@ -55,7 +49,6 @@ def create_subjects(ids, extracted_featuresr_dir, outputpath):
 Function for Keren's needs
 (prediction flow + analysis flow)
 '''
-# TODO: move this function to predict_model, because this is the only place where it is used
 def create_subjects(input_files_str, output_dir):
     subjects = []
     input_files = path_utils.extract_filenames(input_files_str)
