@@ -4,7 +4,7 @@ from PyQt5 import QtWidgets, QtCore
 
 from GUI.predict_model import PredictTabModel
 from sharedutils.constants import Domain, Task # TODO: change this to import constants
-from sharedutils import gui_utils, general_utils, dialog_utils
+from sharedutils import general_utils, dialog_utils
 
 
 class PredictController:
@@ -13,10 +13,10 @@ class PredictController:
         self.ui = ui
 
     def onBrowseInputFilesClicked(self):
-        gui_utils.browse_files(self.ui.inputFilesLineEdit)
+        dialog_utils.browse_files(self.ui.inputFilesLineEdit)
 
     def onBrowseOutputDirClicked(self):
-        gui_utils.browse_dir(self.ui.outputDirLineEdit)
+        dialog_utils.browse_dir(self.ui.outputDirLineEdit)
 
     def findCheckedTasks(self):
 
@@ -42,12 +42,10 @@ class PredictController:
                 res.append(contrast)
         return res
 
-
     def onContClicked(self):
         self.ui.existingFeatsUi.update_ids_to_extract()
         self.ids_to_extract = self.ui.existingFeatsDlg.ids_to_extract
         self.ui.existingFeatsDlg.close()
-
 
     def onRunPredictClicked(self):
         inputFiles = self.ui.inputFilesLineEdit.text()

@@ -1,5 +1,5 @@
 from analysis import analyzer
-from sharedutils import constants, path_utils, subject, gui_utils, dialog_utils
+from sharedutils import constants, path_utils, subject, dialog_utils
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QCursor
 from PyQt5.QtCore import Qt
@@ -51,10 +51,10 @@ class AnalyzeController:
         self.ui.taskComboBox.addItems([task.name for task in domain.value])
 
     def onPredictedInputBrowseButtonClicked(self):
-        gui_utils.browse_files(self.ui.selectPredictedLineEdit)
+        dialog_utils.browse_files(self.ui.selectPredictedLineEdit)
 
     def onActualInputBrowseButtonClicked(self):
-        gui_utils.browse_files(self.ui.addActualLineEdit)
+        dialog_utils.browse_files(self.ui.addActualLineEdit)
 
     def onRunAnalysisButtonClicked(self):
         predicted_files_str = self.ui.selectPredictedLineEdit.text()
@@ -68,15 +68,18 @@ class AnalyzeController:
 
         if self.ui.analysisMeanRadioButton.isChecked():
             analyzer.get_prediction_mean(subjects, task, self.outputdir)
+
         elif self.ui.analysisCorrelationsRadioButton.isChecked():
             QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
             try: # TODO: I think no need for try/finally
                 analyzer.get_predictions_correlations(subjects, task, other_path=None) # TODO: get other path from somewhere...
             finally:
                 QApplication.restoreOverrideCursor()
+
         elif self.ui.analysisSignificantRadioButton.isChecked():
             pass # TODO: as I understand, there is not function for this in analyzer.
                  # Remove this option from GUI or add a function to analyzer
+
         else:
             dialog_utils.print_error("Please choose analysis")
             return
@@ -89,8 +92,10 @@ class AnalyzeController:
 
         if self.ui.comparisonCorrelationsRadioButton.isChecked():
             analyzer.get_predicted_actual_correlations(subjects, task)
+
         elif self.ui.comparisonSignificantRadioButton.isChecked():
             analyzer.get_significance_overlap_maps_for_subjects(subjects, task, self.outputdir)
+
         else:
             dialog_utils.print_error("Please choose a comparison functionality.")
             return

@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt
 
-from GUI.popups.progress_dialog import ProgressDlg
+from GUI.popups.predict_working_dlg_controller import PredictWorkingDlg
 from model.models import LinearModel
 from sharedutils.constants import *
 from sharedutils.dialog_utils import *
@@ -52,9 +52,8 @@ class PredictTabModel:
                 subject.features_exist = True
 
         # prepare progress bar dialog
-        progress_bar_dlg = ProgressDlg(self.prediction_model, self.subjects)
+        progress_bar_dlg = PredictWorkingDlg(self.prediction_model, self.subjects)
         progress_bar_dlg.setWindowModality(Qt.ApplicationModal)
-        progress_bar_dlg.create_ui()
 
         # TODO: terminate() is not recommended
         # TODO: change button text to 'Finished' or disable it when prediction completed
