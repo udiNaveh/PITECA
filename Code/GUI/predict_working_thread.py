@@ -3,12 +3,12 @@ from PyQt5 import QtCore
 import time, math
 
 
-class ProgressThread(QThread):
+class PredictWorkingThread(QThread):
 
     progress_update_sig = QtCore.pyqtSignal()
 
     def __init__(self, model, subjects, progress_bar, parent=None):
-        super(ProgressThread, self).__init__(parent)
+        super(PredictWorkingThread, self).__init__(parent)
         self.model = model
         self.subjects = subjects
         self.progress_bar = progress_bar

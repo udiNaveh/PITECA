@@ -3,6 +3,10 @@ from PyQt5.QtWidgets import QWidget, QMessageBox, QMainWindow, QLabel, QGridLayo
 
 
 class QuestionDialog(QWidget):
+    '''
+    Includes view + controller
+    '''
+
     def __init__(self, default_ans, title, msg):
         super().__init__()
         self.title = title
