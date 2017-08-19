@@ -58,7 +58,7 @@ def __arrays_to_matrix(arrays):
 def get_prediction_statistic(subjects, task, statfunc, outputpath = None):
     prediction_arrays = []
     for subject in subjects:
-        assert type(subject)==Subject
+        assert type(subject) == Subject
         subject_predicted_task_path = subject.predicted.get(task, None)
         if subject_predicted_task_path is None:
             raise RuntimeWarning("no prediction for subject {0} for task {1}".format(subject.subject_id, task.name))
@@ -93,7 +93,7 @@ def get_prediction_mean(subjects, task, outputpath):
 #region functions based on correlations
 
 
-def get_predictions_correlations(subjects, task, other_path):
+def get_predictions_correlations(subjects ,task, other_path):
     n_subjects = len(subjects)
     subjects_predictions = get_predicted_task_maps_by_subject(subjects, task)
     subjects_predictions_matrix = __arrays_to_matrix(

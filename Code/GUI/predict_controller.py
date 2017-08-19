@@ -3,7 +3,8 @@ import os
 from PyQt5 import QtWidgets, QtCore
 
 from GUI.predict_model import PredictTabModel
-from sharedutils.constants import Domain, Task
+from sharedutils.constants import Domain, Task # TODO: change this to import constants
+from sharedutils import general_utils, dialog_utils
 
 
 class PredictController:
@@ -12,24 +13,12 @@ class PredictController:
         self.ui = ui
 
     def onBrowseInputFilesClicked(self):
-        dlg = QtWidgets.QFileDialog()
-        filters = "CIFTI (*.dtseries.nii)"
-        files = dlg.getOpenFileNames(None, 'Select files', os.getcwd(), filters)[0]
-        if files:
-            self.ui.inputFilesLineEdit.setText(str(files))
-            # TODO: consider editing scenarios
-
+        dialog_utils.browse_files(self.ui.inputFilesLineEdit)
 
     def onBrowseOutputDirClicked(self):
-        dir = QtWidgets.QFileDialog.getExistingDirectory()
-        if dir:
-            self.ui.outputDirLineEdit.setText(dir)
-            # TODO: consider editing scenarios
-
+        dialog_utils.browse_dir(self.ui.outputDirLineEdit)
 
     def findCheckedTasks(self):
-
-        # TODO: handle the case where no task is checked
 
         contrasts = dict()
         root = self.ui.tasksTree.invisibleRootItem()
@@ -46,21 +35,24 @@ class PredictController:
                 if child.checkState(0) == QtCore.Qt.Checked:
                     checkedSweeps.append(Task[child.text(0)])
             contrasts[Domain[signal.text(0)]] = checkedSweeps
-        return contrasts
 
+        res = []
+        for task in contrasts.values():
+            for contrast in task:
+                res.append(contrast)
+        return res
 
     def onContClicked(self):
         self.ui.existingFeatsUi.update_ids_to_extract()
         self.ids_to_extract = self.ui.existingFeatsDlg.ids_to_extract
         self.ui.existingFeatsDlg.close()
 
-
     def onRunPredictClicked(self):
         inputFiles = self.ui.inputFilesLineEdit.text()
         outputDir = self.ui.outputDirLineEdit.text()
         tasks = self.findCheckedTasks()
         if (not inputFiles or not outputDir or not tasks):
-            print("provide input!") # @error_handling
+            dialog_utils.print_error("Please provide input.")
             return
         predictModel = PredictTabModel(inputFiles, outputDir, tasks)
         predictModel.run_prediction_flow(self.ui)

@@ -97,7 +97,7 @@ class Task(Enum):
 
     @property
     def full_name(self):
-        return self.domain.name + "_" + self.name
+        return self.domain().name + "_" + self.name
 
 
 class Domain(Enum):
@@ -128,5 +128,6 @@ EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted featur
 """
 Hard coded values
 """
-TMP_FEATURES_PATH = "C:/sers/User/Sadna/src/git/PITECA/Data/ExtractedFeatures"
-# TODO: use the path in the configurations instead
+TMP_FEATURES_PATH = "C:/Users/User/Sadna/src/git/PITECA/Code/misc/Mock Files/features"
+TMP_ANALYSIS_PATH = "C:/Users/User/Sadna/src/git/PITECA/Data/Analysis"
+# TODO: use paths in the configurations instead
