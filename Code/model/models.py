@@ -152,9 +152,9 @@ class FeatureExtractor:
         self.is_loaded = False
 
     def load(self):
-        arr, _ = open_cifti(definitions.SC_CLUSTERS_PATH)
+        arr = np.load(definitions.SC_CLUSTERS_PATH)
         self.matrices['SC_CLUSTERS'] = arr
-        arr, _ = open_cifti(definitions.ICA_LR_MATCHED_PATH)
+        arr = np.load(definitions.ICA_LR_MATCHED_PINV_PATH)
         self.matrices['ICA_LR_MATCHED'] = arr
         self.is_loaded = True
         return
@@ -169,12 +169,37 @@ class FeatureExtractor:
                 self.load()
             return self.extract_features(subject)
 
+
     def extract_features(self,subject):
-        raise NotImplementedError
-        pinv_g = np.random.rand(STANDART_BM.N_TOTAL_VERTICES, 76)
-        arr, (series, bm) = open_cifti(subject.input_path)
-        data = detrend(variance_normalise(arr))
-        T = (data.dot(pinv_g))
+        rfmri_data, (series, bm) = open_cifti(subject.input_path) # arr is time * 91k
+        n_vertices, t = rfmri_data.shape
+
+        # preprocess
+        rfmri_data_normalized = variance_normalise(rfmri_data) # % noise variance normalisation
+        data = detrend(rfmri_data_normalized) # subtract linear trend from time series each vertex
+
+        # perform dual regression to obtain individual cortical spatial maps
+        # step 1 - get subject's individual time series for each by network
+        ts_by_network = np.dot(data, self.matrices['ICA_LR_MATCHED'])  # time x 76
+        # step 2 - get subject's individual cortical spatial maps
+        LHRH = fsl_glm(ts_by_network, data).transpose() # 91k x 76
+
+        # create spatial maps for the whole brain
+        ROIS = np.zeros([STANDART_BM.N_TOTAL_VERTICES, 108])
+        #  left hemisphere networks
+        ROIS[: STANDART_BM.N_LH, : 38] = LHRH[: STANDART_BM.N_LH, : 38]
+        # right hemisphere networks
+        ROIS[STANDART_BM.N_LH : STANDART_BM.N_CORTEX , 38 :76] = \
+            LHRH[STANDART_BM.N_LH : STANDART_BM.N_CORTEX , 38 :76]
+        # for subcortical networks - use data of group
+        ROIS[:, 76:] = self.matrices['SC_CLUSTERS']
+        rfmri_data_normalized = demean(rfmri_data_normalized)  # remove mean from each column
+        # multiple regression - characteristic time series for each network
+        T2 = np.dot(np.linalg.pinv(ROIS), rfmri_data_normalized.transpose()) # 108 x time
+        # get the featires - correlation coefficient for each vertex with each netwrok
+        features_map = np.dot(normalize(T2, axis=1), normalize(rfmri_data_normalized, axis=0))
+        save_to_dtseries(subject.features_path, bm, features_map)
+        return features_map
 
 
 
