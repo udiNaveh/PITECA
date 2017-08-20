@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from sklearn.preprocessing import normalize
 import scipy.signal as spsignal
 
@@ -14,12 +15,16 @@ def variance_normalise(y, thres = 2.3, n = 30, mindev = 0.001):
 
     '''  
       documentation
-    :param y:  Txv threshold
-    :param n: num of sungular values?
+    :param y:  Txv matrix
+    :param thres:  threshold
+    :param n: num of singular values?
     :param mindev: minimal value in stddev
     :return: y after variance normalization
     '''
+    start = time.time()
     uu, ss, vv = ss_svds(y,n)
+    stop = time.time()
+    print ("svd took {0:.3f} seconds.".format(stop-start))
     vv = np.transpose(vv)
     vv[abs(vv) < thres*np.std(vv, ddof=1)] = 0
     std_devs = np.std(y - np.matmul(np.matmul(uu,ss), vv.transpose()), axis=0, ddof=1)
@@ -52,18 +57,14 @@ def demean_and_normalize(matrix, axis=0):
     return normalize(demean(matrix, axis=axis),'l2',axis=axis)
 
 
-def detrend(matrix):
-    return spsignal.detrend(matrix, 0)
+def detrend(matrix, axis = 0):
+    return spsignal.detrend(matrix, axis)
+
+
+
 
 def softmax(x, axis=0):
     """Compute the softmax function for each row of the input x.
-
-   
-
-    You should also make sure that your code works for a single
-    N-dimensional vector (treat the vector as a single row) and
-    for M x N matrices. This may be useful for testing later. Also,
-    make sure that the dimensions of the output match the input.
 
     Arguments:
     x -- A N dimensional vector or M x N dimensional numpy matrix.
@@ -90,3 +91,20 @@ def softmax(x, axis=0):
 
     assert x.shape == orig_shape
     return x
+
+def dim_0_dot(v1, v2):
+    assert len(v1.shape) == len(v2.shape) == 1
+    return v1.reshape([len(v1), 1]).dot(v2.reshape([1, len(v2)]))
+
+
+def fsl_glm(x, y):
+
+    beta = np.dot(np.linalg.pinv(x) , y)
+    res = y - np.dot(x,beta)
+    dof = np.size(y, 0) - np.linalg.matrix_rank(x)
+    if dof<1 :
+        raise ValueError("the rank of x is too small")
+    sigma_sq = np.sum(res**2, axis=0) / dof;
+    varcope = dim_0_dot(np.diag(np.linalg.inv((x.transpose().dot(x)))),  sigma_sq)
+    t = beta / np.sqrt(varcope)
+    return t
