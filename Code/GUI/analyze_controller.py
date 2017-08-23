@@ -1,14 +1,16 @@
-from analysis import analyzer
 from sharedutils import constants, path_utils, subject, dialog_utils
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QCursor
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5 import QtCore
+from GUI.popups import analysis_working_dlg_controller
+from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
+
 
 class AnalyzeController:
 
     def __init__(self, ui):
         self.ui = ui
-        self.outputdir = constants.TMP_ANALYSIS_PATH
 
     def __create_subjects(self, task, predicted_files_str, actual_files_str=None):
         '''
@@ -66,23 +68,32 @@ class AnalyzeController:
             dialog_utils.print_error("Please provide input.")
             return
 
+        # Prepare additional analysis parameters
+        analysis_task = None
+        outputdir = constants.TMP_ANALYSIS_PATH
+        other_path = None
+
         if self.ui.analysisMeanRadioButton.isChecked():
-            analyzer.get_prediction_mean(subjects, task, self.outputdir)
+            analysis_task = AnalysisTask.Analysis_Mean
 
         elif self.ui.analysisCorrelationsRadioButton.isChecked():
-            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-            try: # TODO: I think no need for try/finally
-                analyzer.get_predictions_correlations(subjects, task, other_path=None) # TODO: get other path from somewhere...
-            finally:
-                QApplication.restoreOverrideCursor()
+            analysis_task = AnalysisTask.Analysis_Correlations
+            # TODO: add other_path = ...
 
         elif self.ui.analysisSignificantRadioButton.isChecked():
-            pass # TODO: as I understand, there is not function for this in analyzer.
-                 # Remove this option from GUI or add a function to analyzer
+            # TODO: as I understand, there is not function for this in analyzer.
+            # Remove this option from GUI or add a function to analyzer
+            analysis_task = AnalysisTask.Analysis_Significance
 
         else:
             dialog_utils.print_error("Please choose analysis")
             return
+
+        thread = AnalysisWorkingThread(analysis_task, subjects, task, outputdir, other_path)
+        dlg = analysis_working_dlg_controller.AnalysisWorkingDlg()
+        dlg.show()
+        thread.progress_finished_sig.connect(lambda: dlg.close())
+        thread.start()
 
     def onRunComparisonButtonClicked(self):
         predicted_files_str = self.ui.selectPredictedLineEdit.text()
@@ -90,12 +101,24 @@ class AnalyzeController:
         subjects = self.__create_subjects(predicted_files_str, actual_files_str)
         task = constants.Task[self.ui.taskComboBox.currentText()]
 
+        # Prepare additional analysis parameters
+        analysis_task = None
+        outputdir = constants.TMP_ANALYSIS_PATH
+        other_path = None
+
         if self.ui.comparisonCorrelationsRadioButton.isChecked():
-            analyzer.get_predicted_actual_correlations(subjects, task)
+            analysis_task = AnalysisTask.Compare_Correlations
 
         elif self.ui.comparisonSignificantRadioButton.isChecked():
-            analyzer.get_significance_overlap_maps_for_subjects(subjects, task, self.outputdir)
+            analysis_task = AnalysisTask.Compare_Significance
 
         else:
             dialog_utils.print_error("Please choose a comparison functionality.")
             return
+
+        thread = AnalysisWorkingThread(analysis_task, subjects, task, outputdir, other_path)
+        dlg = analysis_working_dlg_controller.AnalysisWorkingDlg()
+        dlg.show()
+        thread.progress_finished_sig.connect(lambda: dlg.close())
+        thread.start()
+        # TODO: duplicated code with onAnalysisButtonClicked

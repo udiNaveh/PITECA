@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QThread, QObject
 from PyQt5 import QtCore
-import time, math
+import time
+import math
 
 
 class PredictWorkingThread(QThread):
