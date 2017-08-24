@@ -35,14 +35,14 @@ class Subject:
 '''
 Functions for Udi's needs
 '''
-def create_subjects(ids, extracted_featuresr_dir, outputpath):
+def create_subjects_udi(ids, extracted_featuresr_dir, outputpath):
     subjects = []
     for id in ids:
         id = zeropad(id, 6)
         subjects.append(Subject(subject_id=id,
                                 features_path=join_path(extracted_featuresr_dir, id + '_features.dtseries.nii'),
                                 features_exist=True,
-                                output_path = outputpath))
+                                output_dir = outputpath))
     return subjects
 
 '''

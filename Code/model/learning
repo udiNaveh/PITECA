@@ -1,0 +1,38 @@
+#network architecture:
+
+* num of hidden lyeres (1 or 2)
+* number of hidden units
+* activation function (RELU or something else)
+* loss function: add regularization? which type?
+
+
+# what is to be learned?
+
+using spatial filters explicitly
+* weights for every region independently - all tasks (shared weights accept last leyer)
+* weights for every region independently and for every task independently. learn each task in a separate time.
+* independent weights for task - but inside one big model (how can it be done?)
+
+using spatial filter implicitly
+1. use all n_subjects x n_cortext data points for learning one big model, and add the spatial filters as features:
+    a. use spatial filters 'as-is', after a softmax, or as sparse vector (equivalent to softmax with temperature 0)
+    b. concatenate to the other features / move through one leyer before (denser reprsentation?)
+    c. use the inner product architecture with the spatial filters : hidden layer of size n_filters , then inner product
+    with the spatial filters (after softmax).
+    d. use the spatail filters as variables - and initialize with the given values
+
+
+# where to start?
+0. re-implement the simple linear model - to save runtime.
+1. divide the 100 subjects to train/validation. need to choose k random partitions.
+2. for each partition - run the linear model of the training and get results for the validation.
+3. choose one region (spatial filter)
+    a. get the linear model loss for validation set
+    b. run non-linear model and compute loss on validation
+
+
+
+
+
+
+

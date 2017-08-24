@@ -67,7 +67,8 @@ class LinearModel(IModel):
         self.__betas = all_betas[tasks_indices,:,:]
 
         ica_both_lowdim, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
-        self.__spatial_filters_soft = tempered_filters = softmax(np.transpose(ica_both_lowdim)* temperature)
+        self.__spatial_filters_soft = softmax(np.transpose(ica_both_lowdim)* temperature)
+        self.__spatial_filters_hard = np.argmax(np.transpose(ica_both_lowdim), axis = 1)[:STANDART_BM.N_CORTEX]
         return True
 
     def __preprocess(self, subject_features):
@@ -76,7 +77,7 @@ class LinearModel(IModel):
         subject_features[:, 0] = 1.0
         return subject_features
 
-    def predict(self, subject):
+    def predict(self, subject, filters = 'soft', save = True):
         fe = self.__feature_extractor
         if not self.__is_loaded:
             self.__is_loaded = self.__load()
@@ -84,13 +85,28 @@ class LinearModel(IModel):
         prediction_paths = {}
         arr, bm = fe.get_features(subject)
         subject_feats = self.__preprocess(arr)
-        dotprod = subject_feats.dot(betas)
-        pred = np.sum(np.swapaxes(dotprod, 0, 1) * self.__spatial_filters_soft[:STANDART_BM.N_CORTEX,:], axis=2)
+        if filters == 'soft':
+            dotprod = subject_feats.dot(betas)
+            pred = np.sum(np.swapaxes(dotprod, 0, 1) * self.__spatial_filters_soft[:STANDART_BM.N_CORTEX,:], axis=2)
+        elif filters == 'hard':
+            pred = np.zeros([STANDART_BM.N_CORTEX, len(self.tasks)])
+            for j in range(np.size(self.__spatial_filters_soft, axis=1)):
+                ind = self.__spatial_filters_hard == j
+                M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
+                                    demean(subject_feats[ind, 1:])),axis=1)
+                #M = subject_feats[ind, :]
+                pred[ind, :] = M.dot((betas[:,:,j]).swapaxes(0,1))
+
+        if not save:
+            return pred
+
         for i,task in enumerate(self.tasks):
             predicted_task_activation = pred[i,:]
-            prediction_paths[task] = save_to_dtseries(subject.get_predicted_task_filepath(task), bm, predicted_task_activation)
-
+            if save:
+                prediction_paths[task] = save_to_dtseries(subject.get_predicted_task_filepath(task), bm, predicted_task_activation)
         return prediction_paths
+
+
 
 
 class Model:
