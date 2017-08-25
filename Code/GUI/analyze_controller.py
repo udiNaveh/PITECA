@@ -5,6 +5,8 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5 import QtCore
 from GUI.popups import analysis_working_dlg_controller
 from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
+from GUI.graphics import graphics
+import definitions
 
 
 class AnalyzeController:
@@ -41,11 +43,16 @@ class AnalyzeController:
             else:
                 # Add subjects the "actual" property
                 for file in actual_files:
-                    match_subject = next(subject for subject in subjects if subject.subject_id == path_utils.get_id(file))
+                    match_subject = next(
+                        subject for subject in subjects if subject.subject_id == path_utils.get_id(file))
                     match_subject.actual = file
 
         return subjects
 
+    def __handle_results(self, analysis_task, dlg, data):
+        dlg.close()
+        graphic_dlg = graphics.GraphicDlg(analysis_task, data)
+        graphic_dlg.show()
 
     def update_tasks(self):
         self.ui.taskComboBox.clear()
@@ -70,7 +77,7 @@ class AnalyzeController:
 
         # Prepare additional analysis parameters
         analysis_task = None
-        outputdir = constants.TMP_ANALYSIS_PATH
+        outputdir = definitions.ANALYSIS_DIR
         other_path = None
 
         if self.ui.analysisMeanRadioButton.isChecked():
@@ -92,7 +99,7 @@ class AnalyzeController:
         thread = AnalysisWorkingThread(analysis_task, subjects, task, outputdir, other_path)
         dlg = analysis_working_dlg_controller.AnalysisWorkingDlg()
         dlg.show()
-        thread.progress_finished_sig.connect(lambda: dlg.close())
+        thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results))
         thread.start()
 
     def onRunComparisonButtonClicked(self):
@@ -122,3 +129,4 @@ class AnalyzeController:
         thread.progress_finished_sig.connect(lambda: dlg.close())
         thread.start()
         # TODO: duplicated code with onAnalysisButtonClicked
+

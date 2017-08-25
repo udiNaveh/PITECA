@@ -46,3 +46,7 @@ def browse_dir(line_edit):
     if dir:
         line_edit.setText(dir)
         # TODO: consider editing scenarios
+
+
+def save_file(filters):
+    return QtWidgets.QFileDialog.getSaveFileName(None, 'Select files', os.getcwd(), filters)
