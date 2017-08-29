@@ -54,6 +54,11 @@ class AnalyzeController:
         graphic_dlg = graphics.GraphicDlg(analysis_task, data)
         graphic_dlg.show()
 
+    def __handle_unexpected_exception(self, dlg, thread):
+        dlg.close()
+        thread.quit()
+        dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG)
+
     def update_tasks(self):
         self.ui.taskComboBox.clear()
         domain = constants.Domain[self.ui.domainComboBox.currentText()]
@@ -79,7 +84,6 @@ class AnalyzeController:
         analysis_task = None
         outputdir = definitions.ANALYSIS_DIR
         other_path = None
-
         if self.ui.analysisMeanRadioButton.isChecked():
             analysis_task = AnalysisTask.Analysis_Mean
 
@@ -100,6 +104,7 @@ class AnalyzeController:
         dlg = analysis_working_dlg_controller.AnalysisWorkingDlg()
         dlg.show()
         thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results))
+        thread.exception_occurred_sig.connect(lambda: self.__handle_unexpected_exception(dlg, thread))
         thread.start()
 
     def onRunComparisonButtonClicked(self):

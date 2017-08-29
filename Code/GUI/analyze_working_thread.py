@@ -17,6 +17,8 @@ class AnalysisTask(Enum):
 class AnalysisWorkingThread(QThread):
 
     progress_finished_sig = QtCore.pyqtSignal()
+    exception_occurred_sig = QtCore.pyqtSignal()
+
 
     def __init__(self,
                  analysis_task,  # type: AnalysisTask
@@ -44,9 +46,7 @@ class AnalysisWorkingThread(QThread):
             self.results = analyzer.get_prediction_mean(self.subjects, self.task, self.outputdir)
 
         elif self.analysis_task == AnalysisTask.Analysis_Correlations:
-            # self.results = analyzer.get_predictions_correlations(self.subjects, self.task, self.other_path)
-            for i in range(1, 100000):
-                print(i)
+            self.results = analyzer.get_predictions_correlations(self.subjects, self.task, self.other_path)
 
         elif self.analysis_task == AnalysisTask.Analysis_Significance:
             pass

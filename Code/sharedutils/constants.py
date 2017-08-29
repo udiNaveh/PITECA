@@ -114,6 +114,8 @@ QUESTION_TITLE = "PITECA - Dialog"
 EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \
                   " \nDo you want to use the existing features?"
 
+UNEXPECTED_EXCEPTION_MSG = "An unexpected exception occurred."
+
 """
 Hard coded values
 """

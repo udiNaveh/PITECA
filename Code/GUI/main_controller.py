@@ -1,10 +1,11 @@
 from GUI.predict_controller import PredictController
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtCore import QFile, QIODevice
+from PyQt5.QtCore import QFile, QIODevice, QThread
 from GUI.views import Ui_MainView
 from GUI.analyze_controller import AnalyzeController
 from sharedutils import constants, dialog_utils
 import sys
+from threading import current_thread
 import threading
 
 
@@ -57,12 +58,18 @@ def setup_functionality(ui):
 
 
 def piteca_excepthook(exctype, value, tb):
-    dialog_utils.print_error(str(value) + ". PITECA will be now closed")
-    sys.exit()
+    if int(QThread.currentThreadId()) == main_thread_id:
+        dialog_utils.print_error(str(value) + ". PITECA will be now closed")
+        sys.exit()
+    else:
+        # The exception_occurred_sig should be defined in every thread class in PITECA
+        print(value) # TODO: remove this! Here only for development needs
+        QThread.currentThread().exception_occurred_sig.emit()
 
 
 if __name__ == "__main__":
     pass
+    main_thread_id = int(QThread.currentThreadId())
     setup_thread_excepthook()
     sys.excepthook = piteca_excepthook
     app = QtWidgets.QApplication(sys.argv)

@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QThread, QObject
+from PyQt5.QtCore import QThread
 from PyQt5 import QtCore
 import time
 import math
@@ -7,6 +7,7 @@ import math
 class PredictWorkingThread(QThread):
 
     progress_update_sig = QtCore.pyqtSignal()
+    exception_occurred_sig = QtCore.pyqtSignal() # TODO: This signal has to be defined in each thread of PITECA! Think of inheritance
 
     def __init__(self, model, subjects, progress_bar, parent=None):
         super(PredictWorkingThread, self).__init__(parent)
