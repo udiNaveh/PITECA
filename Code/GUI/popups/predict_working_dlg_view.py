@@ -19,7 +19,7 @@ class Ui_PredictWorkingDlg(object):
         self.progressBar.setObjectName("progressBar")
         self.verticalLayout.addWidget(self.progressBar)
         self.label = QtWidgets.QLabel(PredictWorkingDlg)
-        self.label.setText("")
+        self.label.setText("Work in progress...")
         self.label.setObjectName("label")
         self.verticalLayout.addWidget(self.label)
 

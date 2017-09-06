@@ -2,6 +2,7 @@ from sharedutils.constants import *
 from sharedutils.general_utils import *
 from os.path import join as join_path
 from sharedutils import path_utils
+import os
 
 
 class Subject:
@@ -23,8 +24,13 @@ class Subject:
         return join_path(self.output_dir, "{0}_{1}_{2}_predicted".format(self.subject_id, d.name, task.name))
 
     def get_predicted_task_filepath(self, task):
-        return join_path(self.output_dir, task.domain().name, task.name,
-                         "{0}_{1}_predicted".format(self.subject_id, task.full_name))
+        domain_path = join_path(self.output_dir, task.domain().name)
+        if not os.path.exists(domain_path):
+            os.mkdir(domain_path)
+        task_path = join_path(domain_path, task.name)
+        if not os.path.exists(task_path):
+            os.mkdir(task_path)
+        return join_path(task_path, "{0}_{1}_predicted".format(self.subject_id, task.full_name))
 
     def get_predicted_actual_overlap_task_filepath(self, task, outputdir):
         return join_path(outputdir, "{0}_{1}_predicted_actual_overlap".format(self.subject_id,task.full_name))
