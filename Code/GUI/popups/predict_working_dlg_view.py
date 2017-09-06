@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\User\Sadna\src\git\PITECA\Code\misc\progress_bar.ui'
+# Form implementation generated from reading ui file 'C:\Users\User\Sadna\src\git\PITECA\UI\progress_bar.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -8,30 +8,35 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_PredictWorkingDlg(object):
-    def setupUi(self, Dialog):
-        Dialog.setObjectName("Dialog")
-        Dialog.resize(303, 70)
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(Dialog)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.progressBar = QtWidgets.QProgressBar(Dialog)
+    def setupUi(self, PredictWorkingDlg):
+        PredictWorkingDlg.setObjectName("PredictWorkingDlg")
+        PredictWorkingDlg.resize(234, 64)
+        self.verticalLayout = QtWidgets.QVBoxLayout(PredictWorkingDlg)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.progressBar = QtWidgets.QProgressBar(PredictWorkingDlg)
         self.progressBar.setProperty("value", 0)
         self.progressBar.setObjectName("progressBar")
-        self.verticalLayout_2.addWidget(self.progressBar)
-        self.formLayout = QtWidgets.QFormLayout()
-        self.formLayout.setObjectName("formLayout")
-        self.pushButton = QtWidgets.QPushButton(Dialog)
-        self.pushButton.setObjectName("pushButton")
-        self.formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.pushButton)
-        self.verticalLayout_2.addLayout(self.formLayout)
+        self.verticalLayout.addWidget(self.progressBar)
+        self.label = QtWidgets.QLabel(PredictWorkingDlg)
+        self.label.setText("")
+        self.label.setObjectName("label")
+        self.verticalLayout.addWidget(self.label)
 
-        self.retranslateUi(Dialog)
-        QtCore.QMetaObject.connectSlotsByName(Dialog)
+        self.retranslateUi(PredictWorkingDlg)
+        QtCore.QMetaObject.connectSlotsByName(PredictWorkingDlg)
 
-    def retranslateUi(self, Dialog):
+    def retranslateUi(self, PredictWorkingDlg):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.pushButton.setText(_translate("Dialog", "Cancel"))
+        PredictWorkingDlg.setWindowTitle(_translate("PredictWorkingDlg", "Dialog"))
 
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    PredictWorkingDlg = QtWidgets.QDialog()
+    ui = Ui_PredictWorkingDlg()
+    ui.setupUi(PredictWorkingDlg)
+    PredictWorkingDlg.show()
+    sys.exit(app.exec_())
 
