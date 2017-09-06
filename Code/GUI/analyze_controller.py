@@ -102,6 +102,7 @@ class AnalyzeController:
 
         thread = AnalysisWorkingThread(analysis_task, subjects, task, outputdir, other_path)
         dlg = analysis_working_dlg_controller.AnalysisWorkingDlg()
+        dlg.setWindowModality(Qt.ApplicationModal)
         dlg.show()
         thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results))
         thread.exception_occurred_sig.connect(lambda: self.__handle_unexpected_exception(dlg, thread))

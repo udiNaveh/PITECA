@@ -1,5 +1,6 @@
 from GUI.popups.question_dlg import QuestionDialog
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import Qt
 import os
 
 '''
@@ -28,6 +29,7 @@ def print_error(msg):
     '''
 
     error_dialog = QtWidgets.QErrorMessage()
+    error_dialog.setWindowModality(Qt.ApplicationModal)
     error_dialog.showMessage(msg)
     error_dialog.exec_()
 
