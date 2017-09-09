@@ -119,9 +119,3 @@ UNEXPECTED_EXCEPTION_MSG = "An unexpected exception occurred."
 # Quit prograss
 ARE_YOU_SURE_MSG = "Are you sure you want to quit?"
 
-"""
-Hard coded values
-"""
-TMP_FEATURES_PATH = "C:/Users/User/Sadna/src/git/PITECA/Code/misc/Mock Files/features"
-TMP_ANALYSIS_PATH = "C:/Users/User/Sadna/src/git/PITECA/Data/Analysis"
-# TODO: use paths in the configurations instead

@@ -41,7 +41,6 @@ class AnalysisWorkingThread(QThread):
         self.wait()
 
     def run(self):
-
         if self.analysis_task == AnalysisTask.Analysis_Mean:
             self.results = analyzer.get_prediction_mean(self.subjects, self.task, self.outputdir)
 

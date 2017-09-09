@@ -9,20 +9,29 @@ import math
 import scipy.io as sio
 
 from sharedutils import dialog_utils
+from GUI.analyze_working_thread import AnalysisTask
 
 
-X_LABEL = "subjects_x"
-Y_LABEL = "subjects_y"
+SUBJECTS_X_LABEL = "subjects_x"
+SUBJECTS_Y_LABEL = "subjects_y"
+MEAN_Y_LABEL = "with mean"
+CANONICAL_Y_LABEL = "with canonical"
 
 
 def is_heatmap_location(event):
-    return event.inaxes.get_xlabel() == X_LABEL and event.inaxes.get_ylabel() == Y_LABEL
+    is_subjects_by_subjects = event.inaxes.get_xlabel() == SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == SUBJECTS_Y_LABEL
+    is_subjects_by_mean = event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == MEAN_Y_LABEL
+    is_subjects_by_canonical = event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == CANONICAL_Y_LABEL
+    return is_subjects_by_subjects or is_subjects_by_mean or is_subjects_by_canonical
 
 
 class GraphicDlg(QDialog):
-    def __init__(self, analysis_task, data, parent=None):
+    def __init__(self, analysis_task, data, subjects, parent=None):
         super(GraphicDlg, self).__init__(parent)
+        self.ids = [subject.subject_id for subject in subjects]
+        self.data = data
         self.data = np.asarray([[0.1,0.2,0.3],[0.4,0.5,0.6],[0.7,0.8,0.9]])
+        self.mock = np.asarray([[1, 2, 3]])
 
         # a figure instance to plot on
         self.figure = plt.figure()
@@ -37,35 +46,34 @@ class GraphicDlg(QDialog):
 
         # save button
         self.save_button = QtWidgets.QPushButton('Save data')
+        self.save_button.setMaximumWidth(100)
         self.save_button.clicked.connect(self.save_data)
 
-        # a label to show correlation
-        self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
-
         # set the layout
-        layout = QVBoxLayout()
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.canvas)
-        layout.addWidget(self.correlation_label)
-        layout.addWidget(self.save_button)
-        self.setLayout(layout)
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.toolbar)
+        self.layout.addWidget(self.canvas)
+        self.layout.addWidget(self.save_button)
+        self.setLayout(self.layout)
 
-        self.plot_barchart()
+        if analysis_task == AnalysisTask.Analysis_Correlations:
+            self.plot_heatmap()
+        if analysis_task == AnalysisTask.Compare_Correlations:
+            self.plot_heatmap()
 
 
     def onClick(self, event):
-
         if event.button == 1 and event.xdata and event.ydata:
             if is_heatmap_location(event):
                 subject_x_index = math.floor(event.xdata)
                 subject_y_index = math.floor(event.ydata)
                 correlation = self.data[subject_x_index, subject_y_index]
-                self.correlation_label.setText(
-                    "The correlation between subject {:.0f} and {:.0f} is {:.2f}"
-                        .format(subject_x_index, subject_y_index, correlation))
+                self.correlation_label.setText("Value: {:.2f}".format(correlation))
 
     def save_data(self):
         name, extension = dialog_utils.save_file('*.mat ;; *.numpy')
+        if name == '':
+            return
         extension = extension.split('.')[1]
 
         if extension == 'mat':
@@ -73,30 +81,50 @@ class GraphicDlg(QDialog):
         elif extension == 'numpy':
             self.data.tofile(name)
         else:
-            # @error_handling
-            print("oh oh")
+            raise Exception()
 
     def plot_heatmap(self):
+
+        # a label to show correlation
+        self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
+        self.layout.addWidget(self.correlation_label)
 
         self.figure.clear()
 
         # create an axis
-        ax = self.figure.gca()
-        ax.set_xlabel(X_LABEL)
-        ax.set_ylabel(Y_LABEL)
-        ax.set_xticks(np.arange(6) + 0.5)
-        ax.set_xticklabels([1, 2, 3])
-        ax.set_yticks(np.arange(6) + 0.5)
-        ax.set_yticklabels([1, 2, 3])
+        subjects_by_subjects_ax = self.figure.gca()
+        subjects_by_subjects_ax.set_xlabel(SUBJECTS_X_LABEL)
+        subjects_by_subjects_ax.set_ylabel(SUBJECTS_Y_LABEL)
+        subjects_by_subjects_ax.set_xticks(np.arange(6) + 0.5)
+        subjects_by_subjects_ax.set_xticklabels(self.ids)
+        subjects_by_subjects_ax.set_yticks(np.arange(6) + 0.5)
+        subjects_by_subjects_ax.set_yticklabels(self.ids)
 
         # plot data
         from mpl_toolkits.axes_grid1 import make_axes_locatable
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", "3%", pad="1%")
-        heatmap = ax.pcolor(self.data)
-        self.figure.colorbar(heatmap, cax=cax)
+        divider = make_axes_locatable(subjects_by_subjects_ax)
+        color_ax = divider.append_axes("right", "3%", pad="1%")
+        subjects_by_mean_ax = divider.append_axes("bottom", "7%", pad="30%")
+        subjects_by_canonical_ax = divider.append_axes("bottom", "7%", pad="25%")
+        heatmap_s_s = subjects_by_subjects_ax.pcolor(self.data)
+        self.figure.colorbar(heatmap_s_s, cax=color_ax)
+        self.figure.add_axes(subjects_by_mean_ax)
+        self.figure.add_axes(subjects_by_canonical_ax)
+        subjects_by_mean_ax.pcolor(self.mock)
+        subjects_by_canonical_ax.pcolor(self.mock)
 
-        # refresh canvas
+        subjects_by_mean_ax.set_ylabel(MEAN_Y_LABEL, rotation=0)
+        subjects_by_mean_ax.yaxis.set_label_coords(-0.08, +1)
+        subjects_by_mean_ax.set_xticks(np.arange(3) + 0.5)
+        subjects_by_mean_ax.set_xticklabels(self.ids)
+        subjects_by_mean_ax.set_yticks(np.arange(0))
+
+        subjects_by_canonical_ax.set_ylabel(CANONICAL_Y_LABEL, rotation=0)
+        subjects_by_canonical_ax.yaxis.set_label_coords(-0.05, +1)
+        subjects_by_canonical_ax.set_xticks(np.arange(3) + 0.5)
+        subjects_by_canonical_ax.set_xticklabels([1, 2, 3])
+        subjects_by_canonical_ax.set_yticks(np.arange(0))
+
         self.canvas.draw()
 
         self.canvas.mpl_connect('button_press_event', self.onClick)
@@ -108,13 +136,12 @@ class GraphicDlg(QDialog):
         ax = self.figure.gca()
 
         men_means = (20, 35, 30, 35, 27)
-        men_std = (2, 3, 4, 1, 2)
         N = 5
 
         ind = np.arange(N)  # the x locations for the groups
         width = 0.35  # the width of the bars
 
-        rects1 = ax.bar(ind, men_means, width, color='steelblue', yerr=men_std)
+        rects1 = ax.bar(ind, men_means, width, color='steelblue', yerr=men_means)
 
         women_means = (25, 32, 34, 20, 25)
         women_std = (3, 5, 2, 3, 3)
