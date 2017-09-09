@@ -33,6 +33,11 @@ def print_error(msg):
     error_dialog.showMessage(msg)
     error_dialog.exec_()
 
+def inform_user(msg):
+    msg_box = QtWidgets.QMessageBox()
+    msg_box.setText(msg)
+    msg_box.addButton(QtWidgets.QMessageBox.Ok)
+    msg_box.exec_()
 
 def browse_files(line_edit):
     dlg = QtWidgets.QFileDialog()

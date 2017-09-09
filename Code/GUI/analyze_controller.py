@@ -7,6 +7,7 @@ from GUI.popups import analysis_working_dlg_controller
 from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
 from GUI.graphics import graphics
 import definitions
+from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG
 
 
 class AnalyzeController:
@@ -49,15 +50,38 @@ class AnalyzeController:
 
         return subjects
 
-    def __handle_results(self, analysis_task, dlg, data):
+    def __handle_results(self, analysis_task, dlg, data, subjects):
         dlg.close()
-        graphic_dlg = graphics.GraphicDlg(analysis_task, data)
-        graphic_dlg.show()
+
+        # if analysis should create a CIFTI
+        if analysis_task == AnalysisTask.Analysis_Mean:
+            dialog_utils.inform_user("Done! Analysis result is saved in {}".format(definitions.ANALYSIS_DIR))
+
+        # if analysis should be displayed in graph
+        elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations]:
+            graphic_dlg = graphics.GraphicDlg(analysis_task, data, subjects)
+            graphic_dlg.setWindowModality(Qt.ApplicationModal)
+            graphic_dlg.show()
+
+        elif analysis_task == AnalysisTask.Analysis_Significance:
+            # TODO: how do we want to show this?
+            pass
+        elif analysis_task == AnalysisTask.Compare_Significance:
+            # TODO: how do we want to show this?
+            pass
+
+        else:
+            raise Exception(UNEXPECTED_EXCEPTION_MSG)
+
 
     def __handle_unexpected_exception(self, dlg, thread):
         dlg.close()
         thread.quit()
         dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG)
+
+    def wait_dlg_close_event(self, event, dlg, thread):
+        thread.terminate() # TODO: terminate() is not recommended, but quit() doesn't work for some reason
+        event.accept()
 
     def update_tasks(self):
         self.ui.taskComboBox.clear()
@@ -92,7 +116,7 @@ class AnalyzeController:
             # TODO: add other_path = ...
 
         elif self.ui.analysisSignificantRadioButton.isChecked():
-            # TODO: as I understand, there is not function for this in analyzer.
+            # TODO: as I understand, there is no function for this in analyzer.
             # Remove this option from GUI or add a function to analyzer
             analysis_task = AnalysisTask.Analysis_Significance
 
@@ -102,21 +126,27 @@ class AnalyzeController:
 
         thread = AnalysisWorkingThread(analysis_task, subjects, task, outputdir, other_path)
         dlg = analysis_working_dlg_controller.AnalysisWorkingDlg()
+        dlg.closeEvent = lambda event: self.wait_dlg_close_event(event, dlg, thread)
         dlg.setWindowModality(Qt.ApplicationModal)
         dlg.show()
-        thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results))
+        thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results, subjects))
         thread.exception_occurred_sig.connect(lambda: self.__handle_unexpected_exception(dlg, thread))
         thread.start()
 
     def onRunComparisonButtonClicked(self):
         predicted_files_str = self.ui.selectPredictedLineEdit.text()
-        actual_files_str = self.ui.selectPredictedLineEdit.text()
+        actual_files_str = self.ui.addActualLineEdit.text()
+
+        if not predicted_files_str or not actual_files_str:
+            dialog_utils.print_error("Please provide input.")
+            return
+
         subjects = self.__create_subjects(predicted_files_str, actual_files_str)
         task = constants.Task[self.ui.taskComboBox.currentText()]
 
         # Prepare additional analysis parameters
         analysis_task = None
-        outputdir = constants.TMP_ANALYSIS_PATH
+        outputdir = definitions.ANALYSIS_DIR
         other_path = None
 
         if self.ui.comparisonCorrelationsRadioButton.isChecked():
