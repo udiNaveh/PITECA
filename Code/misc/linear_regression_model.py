@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 import cifti
 import sharedutils.general_utils as general_utils
 import definitions
-from misc.dataset_utils import Dataset
+import random
+from misc.nn_model import *
 
 '''
 rough translation of Ido's matlab code of the linear model. This is just a POC,
@@ -92,35 +93,55 @@ def linear_regression_on_features_tf(subjects, filters, tasks, all_features):
         np.save(os.path.join(LOO_betas_path,"betas_subject_{}.npy".format(i)),betas)
     return
 
-def linear_regression_on_features_tf_on_all(subjects, filters, tasks, all_features):
+
+def get_selected_features_and_tasks(all_features, ind, tasks, mapping, subjects):
+    roi = [demean_and_normalize(all_features[ind, mapping[int(s.subject_id)], :], axis=0) for s in subjects]
+    roi_feats = np.concatenate(roi, axis=0)
+    roi_feats = np.concatenate((np.ones([np.size(roi_feats, 0), 1]), roi_feats), axis=1)
+    roi_tasks = [tasks[:, int(s.subject_id) - 1, ind] for s in subjects]
+    roi_tasks = np.concatenate(roi_tasks, axis=1)
+    roi_feats = demean_and_normalize(roi_feats, axis=0)
+    roi_feats[:, 0] = 1.0
+    return roi_feats, roi_tasks
+
+
+def linear_regression_on_features_tf_on_all(subjects_training, subjects_validation, filters, all_tasks, all_features=None):
     if all_features is None:
         all_features = np.load(AllFeatures_File)
+
+    all_features = all_features[:STANDART_BM.N_CORTEX,:]
+    all_tasks = all_tasks[:,:, :STANDART_BM.N_CORTEX]
     mapping = get_subject_to_feature_index_mapping(subjects_features_order)
     n_filters = np.size(filters, axis=1)
-    n_tasks = np.size(tasks, 0)
+    n_tasks = np.size(all_tasks, 0)
     n_features = NUM_FEATURES
     betas = np.zeros([NUM_FEATURES+1, n_tasks, n_filters])
-    for j in range(n_filters):
-        print("do regression for filter {}".format(j))
-        ind = filters[STANDART_BM.CORTEX,j] > 0
-        if np.size(np.nonzero(ind))<30:
-            continue
-        roi = [demean_and_normalize(all_features[ind, mapping[int(s.subject_id)], :], axis=0) for s in subjects]
-        roi_feats = np.concatenate(roi, axis=0)
-        roi_feats = np.concatenate((np.ones([np.size(roi_feats, 0), 1]), roi_feats), axis=1)
-        roi_tasks = [tasks[:, int(s.subject_id) - 1, ind] for s in subjects]
-        roi_tasks = np.concatenate(roi_tasks, axis=1)
-        roi_feats = demean_and_normalize(roi_feats,  axis=0)
-        roi_feats[:, 0] = 1.0
-        learned_betas = np.linalg.pinv(roi_feats).dot(roi_tasks.transpose())
-        predicted = np.dot(roi_feats, learned_betas)
-        loss = np.mean(np.square(predicted - roi_tasks.transpose()))
-        print("loss pinv = {0:.3f}".format(loss))
-        w1, b1, w2, b2  = learn_one_region(roi_feats, roi_tasks.transpose(),n_epochs=20 ,batch_size=50)
-        #predicted_tf = np.dot(roi_feats, learned_betas_tf)
-        loss_tf = np.mean(np.square(predicted_tf - roi_tasks.transpose()))
-        print("loss pinv = {0:.3f}, loss tf = {1:.3f}".format(loss, loss_tf))
-        #betas[:, :, j]
+    filter_sizes = [np.size(np.nonzero( filters[: STANDART_BM.N_CORTEX,j])) for j in range(n_filters)]
+    for task_idx in range(n_tasks):
+        task = all_tasks[task_idx:task_idx+1,:,:]
+        for j in range(n_filters):
+
+            ind = filters[: STANDART_BM.N_CORTEX,j] > 0
+            print("do regression for filter {} with {} vertices".format(j, np.size(np.nonzero(ind))))
+            if np.size(np.nonzero(ind))<30:
+                continue
+            roi_feats, roi_tasks = get_selected_features_and_tasks(all_features, ind, task, mapping, subjects_training)
+            roi_feats_val, roi_tasks_val = get_selected_features_and_tasks(all_features, ind, task, mapping, subjects_validation)
+            learned_betas = np.linalg.pinv(roi_feats).dot(roi_tasks.transpose())
+            predicted = np.dot(roi_feats, learned_betas)
+            predicted_val = np.dot(roi_feats_val, learned_betas)
+            loss = np.mean(np.square(predicted - roi_tasks.transpose()))
+            loss_val = np.mean(np.square(predicted_val - roi_tasks_val.transpose()))
+            print("training loss pinv = {0:.3f}".format(loss))
+            print("validation loss pinv = {0:.3f}".format(loss_val))
+
+            for l in  [i*1e-3 for i in [5]]:
+                training = (roi_feats, roi_tasks.transpose())
+                validation = (roi_feats_val, roi_tasks_val.transpose())
+                loss_tf_val, weights = learn_one_region(
+                    training, validation ,max_epochs=1000 ,batch_size=50, reg_lambda=l)
+                print("reg lambda = {0:.6f}".format(l))
+                print("validation loss tf = {0:.3f}".format(loss_tf_val))
 
 
     np.save(os.path.join(LOO_betas_path,"betas_regressed_on_all_tf.npy"),betas)
@@ -216,83 +237,89 @@ def basic_linear_regression_build(n_features, n_tasks):
         y_pred = tf.matmul(x,w)
         loss = tf.reduce_mean(tf.square(y_pred-y))
     return x, y, y_pred, loss
-
-def regression_with_one_hidden_leyer_build(n_features, n_tasks):
-    x = tf.placeholder(tf.float32, shape=(None, n_features), name='x')
-    y = tf.placeholder(tf.float32, shape=(None, n_tasks), name='y')
-
-    with tf.variable_scope('nlreg') as scope:
-        w1 = tf.Variable(tf.random_normal([n_features, n_features * 2]), name ='w1')
-        b1 = tf.Variable(tf.random_normal([n_features *2]), name ='b1')
-        w2 = tf.Variable(tf.random_normal([n_features *  2, n_tasks]), name ='w2')
-        b2 = tf.Variable(tf.random_normal([n_tasks]), name = 'b2')
-
-        hidden_layer = tf.nn.relu(tf.matmul(x, w1) + b1)
-        y_pred = tf.matmul(hidden_layer, w2 + b2)
-        loss = tf.reduce_mean(tf.square(y_pred-y))
-    return x, y, y_pred, loss
-
-
-def learn_one_region(features, activation, n_epochs, batch_size):
-    check_every = min(2 *int(np.size(features, 0) // batch_size), 5000)
-    dataset = Dataset(features, activation)
-    n_samples = np.size(features, 0)
-    x, y, y_pred, loss = regression_with_one_hidden_leyer_build(np.size(features, 1), np.size(activation, 1))
-    optimizer = tf.train.AdamOptimizer(0.05).minimize(loss)
-    init = tf.global_variables_initializer()
-    losses = np.zeros([check_every])
-    current_avg_loss = float('inf')
-    curr_loss = float('inf')
-    with tf.Session() as session:
-        session.run(init)
-        idx = 0
-        while dataset.epochs_completed < n_epochs:
-
-            x_batch, y_batch = dataset.next_batch(batch_size= batch_size)
-            feed_dict = {x: x_batch, y: y_batch}
-            losses[idx], _ = session.run([loss, optimizer], feed_dict=feed_dict)
-            idx +=1
-            if idx ==check_every:
-                idx=0
-                next_loss = session.run(loss, feed_dict={x: features, y: activation})
-                next_avg_loss= np.mean(losses)
-                print("curr_loss = {0:.2f}, avg_loss on last {1} batches = {2:.2f}".format(curr_loss, check_every,
-                                                                                           next_avg_loss))
-                if next_avg_loss < current_avg_loss:
-                    current_avg_loss = next_avg_loss
-                if next_loss < curr_loss:
-                    curr_loss = next_loss
-
-                print(curr_loss)
-                #epoch_loss = np.mean(losses[i - 200:i])
-                #print(epoch_loss)
-                #if np.mean(losses[i-100:i-50]) - np.mean(losses[i-50:i]) < 0.01:
-                 #   break
-
-        w1, b1, w2, b2 = session.run(tf.trainable_variables())
-
-        return w1, b1, w2, b2
-
-
+#
+# def regression_with_one_hidden_leyer_build(n_features, n_tasks, reg_lambda=0):
+#     x = tf.placeholder(tf.float32, shape=(None, n_features), name='x')
+#     y = tf.placeholder(tf.float32, shape=(None, n_tasks), name='y')
+#
+#     with tf.variable_scope('nlreg') as scope:
+#         w1 = tf.Variable(tf.random_normal([n_features, n_features * 2]), name ='w1')
+#         b1 = tf.Variable(tf.random_normal([n_features *2]), name ='b1')
+#         w2 = tf.Variable(tf.random_normal([n_features *  2, n_tasks]), name ='w2')
+#         b2 = tf.Variable(tf.random_normal([n_tasks]), name = 'b2')
+#
+#         hidden_layer = tf.nn.relu(tf.matmul(x, w1) + b1)
+#         y_pred = tf.matmul(hidden_layer, w2 + b2)
+#         regularizer = tf.nn.l2_loss(w1) + tf.nn.l2_loss(w2)
+#         loss = tf.reduce_mean(tf.square(y_pred-y)) + reg_lambda * regularizer
+#     return x, y, y_pred, loss
+#
+#
+# def learn_one_region(features, activation, features_val, n_epochs, batch_size, reg_lambda = 0):
+#     check_every = min(2 *int(np.size(features, 0) // batch_size), 5000)
+#     dataset = Dataset(features, activation)
+#     n_samples = np.size(features, 0)
+#     x, y, y_pred, loss = regression_with_one_hidden_leyer_build(np.size(features, 1), np.size(activation, 1),
+#                                                                 reg_lambda = reg_lambda)
+#     optimizer = tf.train.AdamOptimizer(0.05).minimize(loss)
+#     init = tf.global_variables_initializer()
+#     losses = np.zeros([check_every])
+#     current_avg_loss = float('inf')
+#     curr_loss = float('inf')
+#     with tf.Session() as session:
+#         session.run(init)
+#         idx = 0
+#         while dataset.epochs_completed < n_epochs:
+#
+#             x_batch, y_batch = dataset.next_batch(batch_size= batch_size)
+#             feed_dict = {x: x_batch, y: y_batch}
+#             losses[idx], _ = session.run([loss, optimizer], feed_dict=feed_dict)
+#             idx +=1
+#             if idx ==check_every:
+#                 idx=0
+#                 next_loss = session.run(loss, feed_dict={x: features, y: activation})
+#                 next_avg_loss= np.mean(losses)
+#                 #print("curr_loss = {0:.2f}, avg_loss on last {1} batches = {2:.2f}".format(curr_loss, check_every,next_avg_loss))
+#                 if next_avg_loss < current_avg_loss:
+#                     current_avg_loss = next_avg_loss
+#                 if next_loss < curr_loss:
+#                     curr_loss = next_loss
+#
+#
+#                 #epoch_loss = np.mean(losses[i - 200:i])
+#                 #print(epoch_loss)
+#                 #if np.mean(losses[i-100:i-50]) - np.mean(losses[i-50:i]) < 0.01:
+#                  #   break
+#
+#         #w1, b1, w2, b2 = session.run(tf.trainable_variables())
+#         prediction = session.run(y_pred, feed_dict={x: features})
+#         prediction_val = session.run(y_pred, feed_dict={x: features_val})
+#
+#         return prediction, prediction_val
+#
+#
 
 def run_regression():
-
+    training_size = 70
+    validation_size = 30
+    n_subjects = training_size + validation_size
     filters = np.load(spatial_filters_file)
     spatial_filters_raw, (series, bm) = cifti.read(spatial_filters_path)
     spatial_filters_raw = np.transpose(spatial_filters_raw)
     tasks = np.load(tasks_file)
-    #all_features = np.load(AllFeatures_File)
-    all_features = np.load(AllFeatures_File)
     print("files loaded, start regression")
     extracted_featuresr_path = r'D:\Projects\PITECA\Data\extracted features'
     subjects = []
-    for i in range(1, 101):
+    for i in range(1, n_subjects+1):
         id = general_utils.zeropad(i, 6)
         subjects.append(Subject(subject_id= id,
                                 features_path= os.path.join(extracted_featuresr_path, id + '_features.dtseries.nii'),
                                 features_exist=True))
 
-    linear_regression_on_features_tf_on_all(subjects, filters, tasks, all_features)
+    random.shuffle(subjects)
+    subjects_training = subjects[:training_size]
+    subjects_validation = subjects[training_size:]
+    linear_regression_on_features_tf_on_all(subjects_training, subjects_validation, filters, tasks)
     #predict_from_betas_LOO_fromSubjects_fast(subjects, spatial_filters_raw,  tasks, all_features)
     return
 

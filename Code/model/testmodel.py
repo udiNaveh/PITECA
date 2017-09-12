@@ -20,8 +20,6 @@ features_path = join_path(definitions.EXTRACTED_FEATURES_DIR, 'extracted_feature
 
 class TestModel(unittest.TestCase):
 
-    def setUp(self):
-        pass
 
     def test_linear_model(self):
         subjects = create_subjects_udi(range(2, 100), LOCAL_FEATURES_DIR, OUTPUTPATH)

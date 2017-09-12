@@ -108,3 +108,23 @@ def fsl_glm(x, y):
     varcope = dim_0_dot(np.diag(np.linalg.inv((x.transpose().dot(x)))),  sigma_sq)
     t = beta / np.sqrt(varcope)
     return t
+
+
+def rms_loss(prediction, actual, reduce_mean=False, use_normalization=False):
+    """
+    computes the residual sum of squares loss (using mean rather then sum)
+    each line in prediction is one observation
+    """
+    if not np.shape(prediction) == np.shape(actual):
+        raise ValueError("prediction and actual must be the same shape")
+
+    if reduce_mean:
+        prediction = demean(prediction, axis=1)
+        actual = demean(actual, axis=1)
+
+    if use_normalization:
+        prediction = normalize(prediction, axis=1)
+        actual = normalize(actual, axis= 1)
+
+    rms = np.mean(np.square(prediction - actual))
+    return rms

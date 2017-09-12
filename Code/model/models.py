@@ -8,6 +8,8 @@ import os.path
 import definitions
 from abc import ABC, abstractmethod
 import definitions
+import time
+from scipy import sparse
 
 # constants - use configs instead
 
@@ -43,7 +45,7 @@ class LinearModel(IModel):
         super(LinearModel, self).__init__(tasks)
         self.__feature_extractor = FeatureExtractor()
         self.__betas = None
-        self.__soft_filters = None
+        self.spatial_filters_soft = None
         self.__is_loaded = False
 
     def __load(self):
@@ -67,8 +69,11 @@ class LinearModel(IModel):
         self.__betas = all_betas[tasks_indices,:,:]
 
         ica_both_lowdim, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
-        self.__spatial_filters_soft = softmax(np.transpose(ica_both_lowdim)* temperature)
-        self.__spatial_filters_hard = np.argmax(np.transpose(ica_both_lowdim), axis = 1)[:STANDART_BM.N_CORTEX]
+        self.spatial_filters_soft = softmax(np.transpose(ica_both_lowdim) * temperature)
+        below_threshold = self.spatial_filters_soft < 1e-2
+        self.spatial_filters_soft[below_threshold] = 0
+        self.spatial_filters_soft = self.spatial_filters_soft[:STANDART_BM.N_CORTEX, :]
+        self.__spatial_filters_hard = np.argmax(np.transpose(ica_both_lowdim[:, :STANDART_BM.N_CORTEX]), axis = 1)
         return True
 
     def __preprocess(self, subject_features):
@@ -86,17 +91,31 @@ class LinearModel(IModel):
         arr, bm = fe.get_features(subject)
         subject_feats = self.__preprocess(arr)
         if filters == 'soft':
+            start = time.time()
             dotprod = subject_feats.dot(betas)
-            pred = np.sum(np.swapaxes(dotprod, 0, 1) * self.__spatial_filters_soft[:STANDART_BM.N_CORTEX,:], axis=2)
+            pred = np.sum(np.swapaxes(dotprod, 0, 1) * self.spatial_filters_soft, axis=2)
+            stop = time.time()
+            print("soft filter prediction took {0:.4f} seconds".format(stop-start))
         elif filters == 'hard':
+            start = time.time()
             pred = np.zeros([STANDART_BM.N_CORTEX, len(self.tasks)])
-            for j in range(np.size(self.__spatial_filters_soft, axis=1)):
+            for j in range(np.size(self.spatial_filters_soft, axis=1)):
                 ind = self.__spatial_filters_hard == j
                 M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
                                     demean(subject_feats[ind, 1:])),axis=1)
-                #M = subject_feats[ind, :]
                 pred[ind, :] = M.dot((betas[:,:,j]).swapaxes(0,1))
-
+            stop = time.time()
+            print("hard filter prediction took {0:.4f} seconds".format(stop - start))
+        elif filters == 'soft fast':
+            start = time.time()
+            pred = np.zeros([STANDART_BM.N_CORTEX, len(self.tasks)])
+            for j in range(np.size(self.spatial_filters_soft, axis=1)):
+                ind = self.__spatial_filters_hard == j
+                M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
+                                    demean(subject_feats[ind, 1:])),axis=1)
+                pred[ind, :] = M.dot((betas[:,:,j]).swapaxes(0,1))
+            stop = time.time()
+            print("soft fast filter prediction took {0:.4f} seconds".format(stop - start))
         if not save:
             return pred
 
