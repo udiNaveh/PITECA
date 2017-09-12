@@ -93,7 +93,7 @@ def get_prediction_mean(subjects, task, outputpath):
 #region functions based on correlations
 
 
-def get_predictions_correlations(subjects ,task, other_path):
+def get_predictions_correlations(subjects, task, other_path):
     n_subjects = len(subjects)
     subjects_predictions = get_predicted_task_maps_by_subject(subjects, task)
     subjects_predictions_matrix = __arrays_to_matrix(

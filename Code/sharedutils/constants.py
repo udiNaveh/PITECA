@@ -114,9 +114,8 @@ QUESTION_TITLE = "PITECA - Dialog"
 EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \
                   " \nDo you want to use the existing features?"
 
-"""
-Hard coded values
-"""
-TMP_FEATURES_PATH = "C:/Users/User/Sadna/src/git/PITECA/Code/misc/Mock Files/features"
-TMP_ANALYSIS_PATH = "C:/Users/User/Sadna/src/git/PITECA/Data/Analysis"
-# TODO: use paths in the configurations instead
+UNEXPECTED_EXCEPTION_MSG = "An unexpected exception occurred."
+
+# Quit prograss
+ARE_YOU_SURE_MSG = "Are you sure you want to quit?"
+

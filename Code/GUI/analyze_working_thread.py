@@ -17,6 +17,8 @@ class AnalysisTask(Enum):
 class AnalysisWorkingThread(QThread):
 
     progress_finished_sig = QtCore.pyqtSignal()
+    exception_occurred_sig = QtCore.pyqtSignal()
+
 
     def __init__(self,
                  analysis_task,  # type: AnalysisTask
@@ -33,28 +35,29 @@ class AnalysisWorkingThread(QThread):
         self.task = task
         self.outputdir = outputdir
         self.other_path = other_path
+        self.results = None
 
     def __del__(self):
         self.wait()
 
     def run(self):
-
         if self.analysis_task == AnalysisTask.Analysis_Mean:
-            analyzer.get_prediction_mean(self.subjects, self.task, self.outputdir)
+            self.results = analyzer.get_prediction_mean(self.subjects, self.task, self.outputdir)
 
         elif self.analysis_task == AnalysisTask.Analysis_Correlations:
-            analyzer.get_predictions_correlations(self.subjects, self.task, self.other_path)
+            self.results = analyzer.get_predictions_correlations(self.subjects, self.task, self.other_path)
 
         elif self.analysis_task == AnalysisTask.Analysis_Significance:
             pass
             # TODO: what is the function in analyzer for this?
 
         elif self.analysis_task == AnalysisTask.Compare_Correlations:
-            analyzer.get_predicted_actual_correlations(self.subjects, self.task)
+            self.results = analyzer.get_predicted_actual_correlations(self.subjects, self.task)
 
         elif self.analysis_task == AnalysisTask.Compare_Significance:
-            analyzer.get_significance_overlap_maps_for_subjects(self.subjects, self.task, self.outputdir)
+            self.results = analyzer.get_significance_overlap_maps_for_subjects(self.subjects, self.task, self.outputdir)
 
+        self.progress_finished_sig.emit()
         self.quit()
 
 

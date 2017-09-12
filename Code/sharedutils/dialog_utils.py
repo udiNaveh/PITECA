@@ -1,5 +1,6 @@
 from GUI.popups.question_dlg import QuestionDialog
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import Qt
 import os
 
 '''
@@ -28,9 +29,15 @@ def print_error(msg):
     '''
 
     error_dialog = QtWidgets.QErrorMessage()
+    error_dialog.setWindowModality(Qt.ApplicationModal)
     error_dialog.showMessage(msg)
     error_dialog.exec_()
 
+def inform_user(msg):
+    msg_box = QtWidgets.QMessageBox()
+    msg_box.setText(msg)
+    msg_box.addButton(QtWidgets.QMessageBox.Ok)
+    msg_box.exec_()
 
 def browse_files(line_edit):
     dlg = QtWidgets.QFileDialog()
@@ -46,3 +53,7 @@ def browse_dir(line_edit):
     if dir:
         line_edit.setText(dir)
         # TODO: consider editing scenarios
+
+
+def save_file(filters):
+    return QtWidgets.QFileDialog.getSaveFileName(None, 'Select files', os.getcwd(), filters)

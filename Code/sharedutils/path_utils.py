@@ -1,4 +1,5 @@
-from sharedutils.constants import TMP_FEATURES_PATH, FEATS_EXT, PREDICT_OUTPUT_EXT, DTSERIES_EXT
+from sharedutils.constants import FEATS_EXT, PREDICT_OUTPUT_EXT, DTSERIES_EXT
+from definitions import EXTRACTED_FEATURES_DIR
 import os
 
 
@@ -19,7 +20,7 @@ def get_output_path(output_dir, id):
 
 def get_features_path(id):
     filename = id + FEATS_EXT + DTSERIES_EXT
-    return os.path.join(TMP_FEATURES_PATH, filename)
+    return os.path.join(EXTRACTED_FEATURES_DIR, filename)
 
 
 def extract_filenames(input_files_str):

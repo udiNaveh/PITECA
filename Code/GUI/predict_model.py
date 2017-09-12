@@ -36,6 +36,13 @@ class PredictTabModel:
             if path.exists(subject.features_path):
                 self.subjects_with_feats.append(subject)
 
+
+    def __handle_predict_exception(self, progress_bar_dlg):
+        progress_bar_dlg.progress_thread.quit()
+        progress_bar_dlg.close()
+        print_error(UNEXPECTED_EXCEPTION_MSG)
+
+
     def run_prediction_flow(self, ui):
         # Setup
         self.prediction_model = LinearModel(self.tasks)
@@ -53,9 +60,11 @@ class PredictTabModel:
 
         # prepare progress bar dialog
         progress_bar_dlg = PredictWorkingDlg(self.prediction_model, self.subjects)
+        progress_bar_dlg.progress_thread.exception_occurred_sig.connect(
+            lambda: self.__handle_predict_exception(progress_bar_dlg)
+        )
         progress_bar_dlg.setWindowModality(Qt.ApplicationModal)
 
-        # TODO: terminate() is not recommended
         # TODO: change button text to 'Finished' or disable it when prediction completed
 
         # start work
