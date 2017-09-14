@@ -7,13 +7,13 @@ from sharedutils import constants, dialog_utils
 import sys
 from threading import current_thread
 import threading
+from GUI.globals import *
 
 
 '''
 The main of PITECA project.
 Runs the app and connects user events on the Main Window of PITECA to their functionality.
 '''
-
 
 def setup_thread_excepthook():
     """
@@ -58,11 +58,17 @@ def setup_functionality(ui):
 
 
 def piteca_excepthook(exctype, value, tb):
+    if not should_exit_on_error:
+    # If we are on main thread but don't want to close PITECA
+        dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG[:-1] + ": " + str(value))
+        print(value)  # TODO: remove this! Here only for development needs
+        return
     if int(QThread.currentThreadId()) == main_thread_id:
         dialog_utils.print_error(str(value) + ". PITECA will be now closed")
         sys.exit()
     else:
         # The exception_occurred_sig should be defined in every thread class in PITECA
+        print("Inside piteca_excepthook")
         print(value) # TODO: remove this! Here only for development needs
         QThread.currentThread().exception_occurred_sig.emit()
 
