@@ -17,3 +17,4 @@ ICA_LR_MATCHED_PINV_PATH = os.path.join(MODELS_DIR,'FeatureExtractor', 'pinvg.np
 ICA_LOW_DIM_PATH = os.path.join(MODELS_DIR,'ica_both_lowdim.dtseries.nii')
 UI_DIR = os.path.join(ROOT_DIR, 'UI')
 PITECA_ICON_PATH = os.path.join(UI_DIR, 'piteca_icon.gif')
+CANONICAL_CIFTI_PATH = os.path.join(DATA_DIR, 'canonical.dtseries.nii') # TODO: get the file from Ido and update name here

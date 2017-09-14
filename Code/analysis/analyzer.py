@@ -20,7 +20,7 @@ def _get_task_maps_by_subject(subjects, task, getpath_func):
         if subject_task_path is None:
             # @error_handle - for development. In release we should guarantee that every subject
             # has the prediction?
-            raise RuntimeWarning("no filepath found for subject {} for task {}".format(subject.subject_id, task.name))
+            raise RuntimeError("no filepath found for subject {} for task {}".format(subject.subject_id, task.name))
         else:
             start = time.time()
             arr, (ax, bm) = open_cifti(subject_task_path)
@@ -32,11 +32,11 @@ def _get_task_maps_by_subject(subjects, task, getpath_func):
 
 
 def get_predicted_task_maps_by_subject(subjects, task):
-    return _get_task_maps_by_subject(subjects, task, lambda s, t : s.predicted.get(task, None))
+    return _get_task_maps_by_subject(subjects, task, lambda s, t : s.predicted.get(t, None))
 
 
 def get_actual_task_maps_by_subject(subjects, task):
-    return _get_task_maps_by_subject(subjects, task, lambda s, t : s.actual.get(task, None))
+    return _get_task_maps_by_subject(subjects, task, lambda s, t : s.actual.get(t, None))
 
 
 def __arrays_to_matrix(arrays):
@@ -102,15 +102,14 @@ def get_predictions_correlations(subjects, task, other_path):
     mean_pred = np.mean(subjects_predictions_matrix, axis=0)
     other_arr, (ax, bm) = open_cifti(other_path)
 
-    # assume other_arr is of shape 1x91282
-
+    # assume other_arr is of shape 1x91282s
     unified_mat = np.concatenate((subjects_predictions_matrix,
                                   mean_pred.reshape([1, STANDART_BM.N_CORTEX]),
                                   other_arr[:, :STANDART_BM.N_CORTEX]))
     correlation_matrix = np.corrcoef(unified_mat)
-    return (correlation_matrix[:n_subjects, :n_subjects],  # subject x subject correlations
-            correlation_matrix[:n_subjects, -2],  # correlations with group mean
-            correlation_matrix[:n_subjects, -1])  # correlations with other_arr
+    return (np.asarray(correlation_matrix[:n_subjects, :n_subjects], float),  # subject x subject correlations
+            np.asarray(correlation_matrix[:n_subjects, -2], float),  # correlations with group mean
+            np.asarray(correlation_matrix[:n_subjects, -1]), float)  # correlations with other_arr
 
 
 def get_predicted_actual_correlations(subjects, task):
@@ -133,9 +132,10 @@ def get_predicted_actual_correlations(subjects, task):
     n_subjects = len(subjects)
     predicted_matrix = __arrays_to_matrix([subjects_predicted_maps[s] for s in subjects])
     actual_matrix = __arrays_to_matrix([subjects_actual_maps[s] for s in subjects])
-
+    print(STANDART_BM.CORTEX)
     correlation_matrix = np.corrcoef(actual_matrix[:, STANDART_BM.CORTEX],
                                      predicted_matrix)[n_subjects:, :n_subjects]
+
     return correlation_matrix
 
 

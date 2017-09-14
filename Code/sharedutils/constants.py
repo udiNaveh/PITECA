@@ -98,17 +98,15 @@ class Domain(Enum):
     SOCIAL = [Task(i) for i in range(26, 29)]
     WM = [Task(i) for i in range(29, 48)]
 
-'''
-Extensions
-'''
+# Extensions
 DTSERIES_EXT = ".dtseries.nii"
 FEATS_EXT = "_features"
 PREDICT_OUTPUT_EXT = "_predicted"
 
-'''
-Dialogs
-'''
+# Dialogs
 QUESTION_TITLE = "PITECA - Dialog"
+PROVIDE_INPUT_MSG = "Please provide input."
+SELECT_ACTION_MSG = "Please select an action."
 
 # Existing features
 EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \

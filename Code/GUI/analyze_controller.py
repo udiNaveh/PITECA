@@ -3,12 +3,12 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QCursor
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5 import QtCore
+from GUI.globals import *
 from GUI.popups import analysis_working_dlg_controller
 from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
 from GUI.graphics import graphics
-import definitions
-from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG
-
+from definitions import CANONICAL_CIFTI_PATH, ANALYSIS_DIR
+from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG
 
 class AnalyzeController:
 
@@ -39,23 +39,25 @@ class AnalyzeController:
             predicted_ids = [subject.subject_id for subject in subjects]
             actual_ids = [path_utils.get_id(file) for file in actual_files]
             if not set(predicted_ids) == set(actual_ids):
-                dialog_utils.print_error("Predicted and actual don't match.")
-                return
+                dialog_utils.print_error("The files provided as the actual activation do not match the predicted files.")
+                return None
             else:
                 # Add subjects the "actual" property
                 for file in actual_files:
                     match_subject = next(
                         subject for subject in subjects if subject.subject_id == path_utils.get_id(file))
-                    match_subject.actual = file
+                    match_subject.actual = {task: file}
 
         return subjects
 
     def __handle_results(self, analysis_task, dlg, data, subjects):
         dlg.close()
 
+        should_exit_on_error = False
+
         # if analysis should create a CIFTI
         if analysis_task == AnalysisTask.Analysis_Mean:
-            dialog_utils.inform_user("Done! Analysis result is saved in {}".format(definitions.ANALYSIS_DIR))
+            dialog_utils.inform_user("Done! Analysis result is saved in {}".format(ANALYSIS_DIR))
 
         # if analysis should be displayed in graph
         elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations]:
@@ -71,7 +73,9 @@ class AnalyzeController:
             pass
 
         else:
-            raise Exception(UNEXPECTED_EXCEPTION_MSG)
+            raise Exception('Unsupported action.')
+
+        should_exit_on_error = True
 
 
     def __handle_unexpected_exception(self, dlg, thread):
@@ -101,13 +105,13 @@ class AnalyzeController:
 
         # Check all input provided
         if not predicted_files_str:
-            dialog_utils.print_error("Please provide input.")
+            dialog_utils.print_error(PROVIDE_INPUT_MSG)
             return
 
         # Prepare additional analysis parameters
         analysis_task = None
-        outputdir = definitions.ANALYSIS_DIR
-        other_path = None
+        outputdir = ANALYSIS_DIR
+        other_path = CANONICAL_CIFTI_PATH
         if self.ui.analysisMeanRadioButton.isChecked():
             analysis_task = AnalysisTask.Analysis_Mean
 
@@ -121,7 +125,7 @@ class AnalyzeController:
             analysis_task = AnalysisTask.Analysis_Significance
 
         else:
-            dialog_utils.print_error("Please choose analysis")
+            dialog_utils.print_error(SELECT_ACTION_MSG)
             return
 
         thread = AnalysisWorkingThread(analysis_task, subjects, task, outputdir, other_path)
@@ -138,16 +142,18 @@ class AnalyzeController:
         actual_files_str = self.ui.addActualLineEdit.text()
 
         if not predicted_files_str or not actual_files_str:
-            dialog_utils.print_error("Please provide input.")
+            dialog_utils.print_error(PROVIDE_INPUT_MSG)
             return
 
-        subjects = self.__create_subjects(predicted_files_str, actual_files_str)
         task = constants.Task[self.ui.taskComboBox.currentText()]
+        subjects = self.__create_subjects(task, predicted_files_str, actual_files_str)
+        if not subjects:
+            return
 
         # Prepare additional analysis parameters
         analysis_task = None
-        outputdir = definitions.ANALYSIS_DIR
-        other_path = None
+        outputdir = ANALYSIS_DIR
+        other_path = CANONICAL_CIFTI_PATH
 
         if self.ui.comparisonCorrelationsRadioButton.isChecked():
             analysis_task = AnalysisTask.Compare_Correlations
@@ -156,13 +162,15 @@ class AnalyzeController:
             analysis_task = AnalysisTask.Compare_Significance
 
         else:
-            dialog_utils.print_error("Please choose a comparison functionality.")
+            dialog_utils.print_error(SELECT_ACTION_MSG)
             return
 
         thread = AnalysisWorkingThread(analysis_task, subjects, task, outputdir, other_path)
         dlg = analysis_working_dlg_controller.AnalysisWorkingDlg()
+        dlg.setWindowModality(Qt.ApplicationModal)
         dlg.show()
-        thread.progress_finished_sig.connect(lambda: dlg.close())
+        thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results, subjects))
+        thread.exception_occurred_sig.connect(lambda: self.__handle_unexpected_exception(dlg, thread))
         thread.start()
         # TODO: duplicated code with onAnalysisButtonClicked
 

@@ -64,8 +64,7 @@ def create_params_file():
     params_to_json( r'C:\Users\ASUS\Dropbox\PITECA\Data\params3.json', params)
 
 
-def test_linalgutils_on_real_data():
-    print(1)
+def test_linalgutils_on_real_data():s
     input_file = os.path.join(PATHS.DATA_DIR, rfmri_example_filename)
     arr, axes = cifti.read(input_file)
     features_001 = np.load('features_001.npy')
