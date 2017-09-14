@@ -30,8 +30,8 @@ class BestWeightsQueue:
 
     def update(self, loss, model_weights):
         if len(self.dic) >= self.max_size:
-            if loss < min(self.dic):
-                self.dic.pop(min(self.dic))
+            if loss < max(self.dic):
+                self.dic.pop(max(self.dic))
                 self.dic[loss] = model_weights
                 return True
 

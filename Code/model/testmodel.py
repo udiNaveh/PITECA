@@ -17,13 +17,15 @@ input_timeseries = join_path(LOCAL_DATA_DIR,'rfMRI_REST2_LR_Atlas_MSMAll_hp2000_
 features_path = join_path(definitions.EXTRACTED_FEATURES_DIR, 'extracted_features_'+'rfMRI_REST2_LR_Atlas_MSMAll_hp2000_clean.dtseries.nii')
 
 
+AllFeatures_File = os.path.join(r'D:\Projects\PITECA\Data',"all_features.npy")
+all_features = np.load(AllFeatures_File)
+
 
 class TestModel(unittest.TestCase):
 
-
     def test_linear_model(self):
         subjects = create_subjects_udi(range(2, 100), LOCAL_FEATURES_DIR, OUTPUTPATH)
-        lmodel = LinearModel([Task.MATH_STORY, Task.MATCH_REL])
+        lmodel = LinearModel([Task.MATH_STORY, Task.MATCH_REL], all_features)
         predictions= {}
         predictions_softmax = {}
         for subj in subjects:

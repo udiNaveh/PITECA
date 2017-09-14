@@ -2,6 +2,8 @@ import numpy as np
 import time
 from sklearn.preprocessing import normalize
 import scipy.signal as spsignal
+import scipy.stats.mstats as mstats
+
 
 '''
 Specific implementations of linear algebra utilities for processing our data.
@@ -48,20 +50,33 @@ def ss_svds(y,n):
 def demean(matrix, axis=0):
     if axis == 0:
         return matrix-np.mean(matrix, axis=axis)
-    if axis == 1:
-        return matrix-(np.mean(matrix, axis=axis))[:,np.newaxis]
-
+    if axis >0:
+        return matrix-(np.mean(matrix, axis=axis, keepdims=True))
 
 
 def demean_and_normalize(matrix, axis=0):
-    return normalize(demean(matrix, axis=axis),'l2',axis=axis)
+    demeaned = demean(matrix, axis=axis)
+    std = np.std(demeaned, axis= axis, keepdims=True)
+    try:
+        normalized = demeaned / std
+    except FloatingPointError:
+        print("err")
+    return normalized
 
+
+def add_ones_column(matrix, axis=1):
+    # matrix is a 2-d array
+    if axis==1:
+        return np.concatenate((np.ones([np.size(matrix, 0), 1]), matrix), axis=1)
+    if axis==0:
+        return np.concatenate((np.ones([1, np.size(matrix, 1)]), matrix), axis=0)
 
 def detrend(matrix, axis = 0):
     return spsignal.detrend(matrix, axis)
 
 
-
+def z_score(array, axis=0, ddof=0):
+    return mstats.zscore(array, axis, ddof)
 
 def softmax(x, axis=0):
     """Compute the softmax function for each row of the input x.
@@ -112,19 +127,24 @@ def fsl_glm(x, y):
 
 def rms_loss(prediction, actual, reduce_mean=False, use_normalization=False):
     """
-    computes the residual sum of squares loss (using mean rather then sum)
+    computes the residual sum of squares loss (using mean rather than sum)
     each line in prediction is one observation
     """
     if not np.shape(prediction) == np.shape(actual):
         raise ValueError("prediction and actual must be the same shape")
+
+    #if len(np.shape(prediction))==1:
+    prediction = np.reshape(prediction, [1, len(prediction)])
+    #if len(np.shape(actual))==1:
+    actual = np.reshape(actual, [1, len(actual)])
 
     if reduce_mean:
         prediction = demean(prediction, axis=1)
         actual = demean(actual, axis=1)
 
     if use_normalization:
-        prediction = normalize(prediction, axis=1)
-        actual = normalize(actual, axis= 1)
+        prediction =  z_score(prediction, axis=1)
+        actual = z_score(actual, axis= 1)
 
     rms = np.mean(np.square(prediction - actual))
     return rms

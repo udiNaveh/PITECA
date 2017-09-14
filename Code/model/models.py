@@ -14,6 +14,17 @@ from scipy import sparse
 # constants - use configs instead
 
 temperature = 3.5
+ALL_FEATURES_LOADED = True #TODO delete all following lines up to the class definition
+subjects_features_order = os.path.join(definitions.LOCAL_DATA_DIR, 'subjects_features_order.txt')
+
+mapping = get_subject_to_feature_index_mapping(subjects_features_order)
+
+#TODO DELETE
+def get_subject_features_from_matrix(subject, all_features, mapping, t=False):
+    subj_features = all_features[STANDART_BM.CORTEX, mapping[int(subject.subject_id)], :]
+    if t:
+        subj_features = subj_features.transpose()
+    return subj_features.transpose()
 
 
 class IModel(ABC):
@@ -41,12 +52,13 @@ class LinearModel(IModel):
     # data files related to the tasks. e.g. in the betas matrix the betas related to Task.REWARD
     # are in the coordintas [4,:,:]
 
-    def __init__(self, tasks):
+    def __init__(self, tasks, features = None):
         super(LinearModel, self).__init__(tasks)
-        self.__feature_extractor = FeatureExtractor()
+
         self.__betas = None
         self.spatial_filters_soft = None
         self.__is_loaded = False
+        self.__feature_extractor = FeatureExtractor(features) #TODO DELETE
 
     def __load(self):
         '''
@@ -182,9 +194,10 @@ class Model:
 
 class FeatureExtractor:
 
-    def __init__(self):
+    def __init__(self, features = None):
         self.matrices = dict()
         self.is_loaded = False
+        self.all_features = features # TODO
 
     def load(self):
         arr = np.load(definitions.SC_CLUSTERS_PATH)
@@ -197,8 +210,13 @@ class FeatureExtractor:
     def get_features(self,subject):
         assert isinstance(subject,Subject)
         if subject.features_exist:
-            arr, (series, bm) = open_cifti(subject.features_path)
-            return arr, bm
+            if self.all_features is not None: #TODO
+                arr = get_subject_features_from_matrix(subject, self.all_features, mapping)
+                return arr, None
+
+            else:
+                arr, (series, bm) = open_cifti(subject.features_path)
+                return arr, bm
         else:
             if not self.is_loaded:
                 self.load()
