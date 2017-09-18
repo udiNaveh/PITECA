@@ -17,115 +17,37 @@ import random
 import pickle
 from misc.nn_model import *
 
-'''
-rough translation of Ido's matlab code of the linear model. This is just a POC,
-not to be used in PITECA.
-
-'''
-
-LOCAL_DATA_DIR = r'D:\Projects\PITECA\Data'
-
-#LOO_betas_path = os.path.join(LOCAL_DATA_DIR, 'model', 'linear','loo_betas_7_tasks')
-LOO_betas_path_tf = os.path.join(LOCAL_DATA_DIR, 'model', 'linear','loo_betas_7_tasks_take3')
-LOO_betas_path = os.path.join(LOCAL_DATA_DIR, 'model', 'linear','loo_betas_7_tasks_take2')
-nn_weights_path = os.path.join(LOCAL_DATA_DIR, 'model', 'nn')
-os.makedirs(LOO_betas_path, exist_ok=True)
+LOO_betas_path_tf = os.path.join(definitions.LOCAL_DATA_DIR, 'model', 'linear','loo_betas_7_tasks_take3')
+LOO_betas_path = os.path.join(definitions.LOCAL_DATA_DIR, 'model', 'linear','loo_betas_7_tasks_take2')
+nn_weights_path = os.path.join(definitions.LOCAL_DATA_DIR, 'model', 'nn')
 # file names
 
-spatial_filters_file = os.path.join(LOCAL_DATA_DIR, 'HCP_200', "spatial_filters.npy")
-tasks_file = os.path.join(LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
-spatial_filters_path = os.path.join(LOCAL_DATA_DIR, 'HCP_200', 'ica_both_lowdim.dtseries.nii')
-subjects_features_order = os.path.join(LOCAL_DATA_DIR, 'subjects_features_order.txt')
-AllFeatures_File = os.path.join(r'D:\Projects\PITECA\Data',"all_features.npy")
-#all_features = np.load(AllFeatures_File)
+spatial_filters_file = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', "spatial_filters.npy")
+tasks_file = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
+spatial_filters_path = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', 'ica_both_lowdim.dtseries.nii')
+subjects_features_order = os.path.join(definitions.LOCAL_DATA_DIR, 'subjects_features_order.txt')
+all_features_path = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order.npy")
 
 
+all_features = np.load(all_features_path)
 
 
-def get_subject_to_feature_index_mapping(path):
-    mapping = {}
-    with open(path, 'r') as f:
-        for i in range(100):
-            subj_number = int(f.readline()) + 1
-            assert subj_number not in mapping
-            mapping[subj_number] = i
-    return mapping
+def get_subject_features_from_matrix(subject, all_features):
+    subj_features = all_features[: STANDART_BM.N_CORTEX, int(subject.subject_id) -1, :]
+    return subj_features.transpose()
 
 
-mapping = get_subject_to_feature_index_mapping(subjects_features_order)
-all_features = np.load(AllFeatures_File)
-
-
-def linear_regression_on_features(subjects, filters, tasks, all_features):
-    if all_features is None:
-        all_features = np.load(AllFeatures_File)
-    mapping = get_subject_to_feature_index_mapping(subjects_features_order)
-    n_filters = np.size(filters, axis=1)
-    n_tasks = np.size(tasks, 0)
-    n_features = NUM_FEATURES
-    for subject in subjects:
-        print("do regression for subject {}".format(subject.subject_id))
-        arr = get_subject_features_from_matrix(subject, all_features, mapping)
-        subject_feats = np.concatenate((np.ones([STANDART_BM.N_CORTEX,1]),np.transpose(arr)),axis=1)
-        i = int(subject.subject_id) -1
-        subject_tasks = tasks[:,i,:]
-        subject_feats[:,:] = normalize(subject_feats, 'l2', axis=0)
-        subject_feats[:,0] = 1.0
-        betas = np.zeros([n_tasks, n_features+1, n_filters])
-        for j in range(n_filters):
-            ind = filters[STANDART_BM.CORTEX,j] > 0
-            if np.size(np.nonzero(ind))<30:
-                continue
-            y = np.transpose(subject_tasks[:,ind])
-            M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
-                                demean(subject_feats[ind, 1:])),axis=1)
-            betas[:,:,j] = np.transpose(np.linalg.pinv(M).dot(y))
-        np.save(os.path.join(LOO_betas_path,"betas_subject_{}.npy".format(i)),betas)
-    return
-
-
-def linear_regression_on_features_tf(subjects, filters, tasks, all_features):
-    if all_features is None:
-        all_features = np.load(AllFeatures_File)
-    mapping = get_subject_to_feature_index_mapping(subjects_features_order)
-    n_filters = np.size(filters, axis=1)
-    n_tasks = np.size(tasks, 0)
-    n_features = NUM_FEATURES
-    for subject in subjects:
-        print("do regression for subject {}".format(subject.subject_id))
-        arr = get_subject_features_from_matrix(subject, all_features, mapping)
-        subject_feats = np.concatenate((np.ones([STANDART_BM.N_CORTEX,1]),np.transpose(arr)),axis=1)
-        i = int(subject.subject_id) -1
-        subject_tasks = tasks[:,i,:]
-        subject_feats[:,:] = normalize(subject_feats, 'l2', axis=0)
-        subject_feats[:,0] = 1.0
-        betas = np.zeros([n_tasks, n_features+1, n_filters])
-        for j in range(n_filters):
-            ind = filters[STANDART_BM.CORTEX,j] > 0
-            if np.size(np.nonzero(ind))<30:
-                continue
-            y = np.transpose(subject_tasks[:,ind])
-            M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
-                                demean(subject_feats[ind, 1:])),axis=1)
-            #betas[:,:,j] = np.transpose(np.linalg.pinv(M).dot(y))
-            betas[:, :, j] = get_betas(M, y)
-        np.save(os.path.join(LOO_betas_path,"betas_subject_{}.npy".format(i)),betas)
-    return
-
-
-def get_selected_features_and_tasks(all_features, ind, tasks, mapping, subjects):
-    roi = [demean_and_normalize(all_features[ind, mapping[int(s.subject_id)], :], axis=0) for s in subjects]
+def get_selected_features_and_tasks(all_features, ind, tasks, subjects):
+    roi = [demean_and_normalize(all_features[ind, int(s.subject_id)-1, :], axis=0) for s in subjects]
     roi_feats = np.concatenate(roi, axis=0)
     roi_tasks = [tasks[:, int(s.subject_id) - 1, ind] for s in subjects]
     roi_tasks = np.concatenate(roi_tasks, axis=1)
     return roi_feats, roi_tasks
 
 
-def lin_nonlin_reg_all_features(subjects_training, subjects_validation, filters, all_tasks, all_features=None):
-    if all_features is None:
-        all_features = np.load(AllFeatures_File)
 
-    all_features = all_features[:STANDART_BM.N_CORTEX,:]
+def lin_nonlin_reg_all_features(subjects_training, subjects_validation, filters, all_tasks):
+
     all_tasks = all_tasks[:,:, :STANDART_BM.N_CORTEX]
     mapping = get_subject_to_feature_index_mapping(subjects_features_order)
     n_filters = np.size(filters, axis=1)
@@ -134,7 +56,7 @@ def lin_nonlin_reg_all_features(subjects_training, subjects_validation, filters,
     betas = np.zeros([NUM_FEATURES+1, n_tasks, n_filters])
     filter_sizes = [np.size(np.nonzero( filters[: STANDART_BM.N_CORTEX,j])) for j in range(n_filters)]
 
-    tensors = regression_with_one_hidden_leyer_build(NUM_FEATURES, 1)
+    tensors = regression_with_one_hidden_layer_build(NUM_FEATURES, 1)
     best_weights = {}
     for task_idx in range(n_tasks):
         betas_task = np.zeros([NUM_FEATURES+1, n_filters])
@@ -147,8 +69,8 @@ def lin_nonlin_reg_all_features(subjects_training, subjects_validation, filters,
             print("do regression for filter {} with {} vertices".format(j, np.size(np.nonzero(ind))))
             if np.size(np.nonzero(ind))<30:
                 continue
-            roi_feats, roi_tasks = get_selected_features_and_tasks(all_features, ind, task, mapping, subjects_training,)
-            roi_feats_val, roi_tasks_val = get_selected_features_and_tasks(all_features, ind, task, mapping, subjects_validation)
+            roi_feats, roi_tasks = get_selected_features_and_tasks(all_features, ind, task, subjects_training,)
+            roi_feats_val, roi_tasks_val = get_selected_features_and_tasks(all_features, ind, task, subjects_validation)
             learned_betas = np.linalg.pinv(add_ones_column(roi_feats)).dot(roi_tasks.transpose())
             training = (roi_feats, roi_tasks.transpose())
             validation = (roi_feats_val, roi_tasks_val.transpose())
@@ -162,10 +84,10 @@ def lin_nonlin_reg_all_features(subjects_training, subjects_validation, filters,
 
             l = 0.03
 
-            _, weights = learn_one_region_2(
+            _, weights = train_model(
                 tensors, training, validation ,max_epochs=200 ,batch_size=200, regularization_lambda=l)
-            predicted_val_tf = predict_one_region_2(tensors, roi_feats_val,  weights)
-            predicted_train_tf = predict_one_region_2(tensors, roi_feats, weights)
+            predicted_val_tf = predict_from_model(tensors, roi_feats_val, weights)
+            predicted_train_tf = predict_from_model(tensors, roi_feats, weights)
             loss_tf_train = rms_loss(predicted_train_tf, training[1])
             loss_tf_val = rms_loss(predicted_val_tf, validation[1])
             best_weights[j] = weights
@@ -182,18 +104,7 @@ def lin_nonlin_reg_all_features(subjects_training, subjects_validation, filters,
                                                format(task_idx)), 'wb'))
 
 
-
-    #np.save(os.path.join(LOO_betas_path,"betas_regressed_on_all_tf.npy"),betas)
     return
-
-
-
-
-def get_subject_features_from_matrix(subject, all_features, mapping, t=False):
-    subj_features = all_features[STANDART_BM.CORTEX, mapping[int(subject.subject_id)], :]
-    if t:
-        subj_features = subj_features.transpose()
-    return subj_features.transpose()
 
 
 def get_correlations_for_subjects(subjects, tasks, features_getter, predictor):
@@ -258,10 +169,9 @@ def predict_from_nn_model(arr, filters, saved_weights, n_features, n_tasks, tens
                                                    format(task_index, j)),'rb'))
                 saved_weights[(task_index, j)] = weights
             weights = saved_weights[(task_index, j)]
-            subject_prediction[task_index, ind] = np.squeeze(predict_one_region_2(tensors, features, weights))
-
-
+            subject_prediction[task_index, ind] = np.squeeze(predict_from_model(tensors, features, weights))
     return subject_prediction
+
 
 def run_regression():
     training_size = 70
@@ -304,17 +214,17 @@ def run_regression():
     tempered_filters = {}
     temperature = 3.5
     tempered_filters = softmax((spatial_filters_raw[STANDART_BM.CORTEX, :]).astype(float)  * temperature)
-    get_subject_features = lambda s : get_subject_features_from_matrix(s, all_features, mapping)
+    get_subject_features = lambda s : get_subject_features_from_matrix(s, all_features)
     predict_subject_tasks_linear = lambda arr : predict_from_linear_betas(arr, tempered_filters, betas_by_task)
 
 
-    tensors = regression_with_one_hidden_leyer_build(NUM_FEATURES, 1)
+    tensors = regression_with_one_hidden_layer_build(NUM_FEATURES, 1)
     saved_weights = {}
-    predict_subject_tasks_nn =  lambda arr:\
+    predict_subject_tasks_nn = lambda arr:\
         predict_from_nn_model(arr, filters, saved_weights, 50, 1, tensors)
-    get_correlations_for_subjects(subjects, tasks
+    get_correlations_for_subjects(subjects_validation, tasks
                                   , get_subject_features, predict_subject_tasks_linear)
-    get_correlations_for_subjects(subjects, tasks
+    get_correlations_for_subjects(subjects_validation, tasks
                                   , get_subject_features, predict_subject_tasks_nn)
     return
 
