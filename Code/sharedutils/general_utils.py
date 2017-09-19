@@ -21,3 +21,13 @@ def union_dicts(dict1, dict2):
 def safe_open(path, *args):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     return open(path, *args)
+#
+#
+# def get_subject_to_feature_index_mapping(path):
+#     mapping = {}
+#     with open(path, 'r') as f:
+#         for i in range(100):
+#             subj_number = int(f.readline()) + 1
+#             assert subj_number not in mapping
+#             mapping[subj_number] = i
+#     return mapping
