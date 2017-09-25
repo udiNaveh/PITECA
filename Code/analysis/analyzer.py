@@ -112,7 +112,7 @@ def get_predictions_correlations(subjects, task, other_path):
             np.asarray(correlation_matrix[:n_subjects, -1]), float)  # correlations with other_arr
 
 
-def get_predicted_actual_correlations(subjects, task):
+def get_predicted_actual_correlations(subjects, task, subjects_predicted_and_actuak_maps = None):
     '''
 
     :param subjects: type: List[Subject]
@@ -122,8 +122,11 @@ def get_predicted_actual_correlations(subjects, task):
     the actual activation of the j'th subject for task.
     '''
 
-    subjects_predicted_maps = get_predicted_task_maps_by_subject(subjects, task)
-    subjects_actual_maps = get_actual_task_maps_by_subject(subjects, task)
+    if not subjects_predicted_and_actuak_maps:
+        subjects_predicted_maps = get_predicted_task_maps_by_subject(subjects, task)
+        subjects_actual_maps = get_actual_task_maps_by_subject(subjects, task)
+    else:
+        subjects_predicted_maps, subjects_actual_maps = subjects_predicted_and_actuak_maps
 
     # need to insure that maps are paired
     subjects = [s for s in subjects if s in subjects_actual_maps and s in subjects_predicted_maps]
@@ -132,8 +135,8 @@ def get_predicted_actual_correlations(subjects, task):
     n_subjects = len(subjects)
     predicted_matrix = __arrays_to_matrix([subjects_predicted_maps[s] for s in subjects])
     actual_matrix = __arrays_to_matrix([subjects_actual_maps[s] for s in subjects])
-    print(STANDART_BM.CORTEX)
-    correlation_matrix = np.corrcoef(actual_matrix[:, STANDART_BM.CORTEX],
+
+    correlation_matrix = np.corrcoef(actual_matrix[:, :STANDART_BM.N_CORTEX],
                                      predicted_matrix)[n_subjects:, :n_subjects]
 
     return correlation_matrix

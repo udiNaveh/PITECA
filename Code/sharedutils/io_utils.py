@@ -16,8 +16,6 @@ to data. It can also make other code more readable.
 Other methods for reading or saving files can be added here - for example saving graphs created
 in the analysis module.
 
-
-
 '''
 
 
@@ -50,7 +48,6 @@ def open_cifti(path):
 
 
 def open_rfmri_file(path):
-
     arr, (series, bm) = open_cifti(path)
     if not isinstance(series, cifti.axis.Series):
         raise ValueError("input file is not a time series")

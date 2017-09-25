@@ -17,6 +17,10 @@ import definitions
 
 from misc.nn_model import *
 from misc.model_hyperparams import *
+from analysis.analyzer import get_predicted_actual_correlations
+
+
+np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
 LINEAR_BETAS_PATH = os.path.join(definitions.LOCAL_DATA_DIR, 'model', 'linear', 'loo_betas_7_tasks_take2')
 NN_WEIGHTS_PATH = os.path.join(definitions.LOCAL_DATA_DIR, 'model', 'nn')
@@ -28,6 +32,9 @@ subjects_features_order = os.path.join(definitions.LOCAL_DATA_DIR, 'subjects_fea
 all_features_path = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order.npy")
 
 fsf_nn_pred_path = r'D:\Projects\PITECA\Data\model\nn\predictions\predictions_validation_s71-100_nn_2hl_fsf.npy'
+nn_pred_path = r'D:\Projects\PITECA\Data\model\nn\predictions\predictions_validation_s71-100_nn_2hl.npy'
+linear_pred_path = r'D:\Projects\PITECA\Data\model\linear\loo_betas_7_tasks_take2\linear_weights_70_s_2\predictions_validation_s71-100_linear.npy'
+linear_pred_path_fsf = r'D:\Projects\PITECA\Data\model\linear\loo_betas_7_tasks_take2\linear_weights_70_s_2\predictions_validation_s71-100_linear_fsf.npy'
 
 TASKS = {Task.MATH_STORY: 0,
                    Task.TOM: 1,
@@ -210,33 +217,46 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
     n_subjects = len(subjects)
     pred = np.empty([tasks.shape[0], STANDART_BM.N_CORTEX , n_subjects]) if saved_pred is None else saved_pred
     correlations = np.zeros([n_tasks,n_subjects])
-    correlations_of_mean_roi =  np.zeros([n_tasks,n_subjects])
+    correlations_with_mean = np.zeros([n_tasks, n_subjects])
+    correlations_of_mean_roi = np.zeros([n_tasks,n_subjects])
     regions_sizes = [np.count_nonzero(hard_filters[: STANDART_BM.N_CORTEX , j] > 0) for j in range(n_filters)]
     correlations_by_roi = np.zeros([n_tasks,n_subjects, n_filters])
     losses = np.zeros([n_tasks,n_subjects])
     losses2 = np.zeros([n_tasks, n_subjects])
+    all_arranged_in_dicts = {}
 
-    for i, subject in enumerate(subjects):
-        subject_idx = int(subject.subject_id)-1
-        print("calculate prediction for subject {}".format(subject.subject_id))
-        start = time.time()
-        if saved_pred is None:
+
+
+    if saved_pred is None:
+        for i, subject in enumerate(subjects):
+            subject_idx = int(subject.subject_id)-1
+            print("calculate prediction for subject {}".format(subject.subject_id))
+            start = time.time()
             arr = features_getter(subject)
-
             s_prediction = predictor(arr)
             for task_name, s_task_pred in s_prediction.items():
                 pred[TASKS[task_name],:,i] = s_task_pred
-        end = time.time()
-        print("prediction time: {:.3f}".format(end - start))
+            end = time.time()
+            print("prediction time: {:.3f}".format(end - start))
 
+    mean_actuals = {}
+    for i, subject in enumerate(subjects):
+        subject_idx = int(subject.subject_id) - 1
         for task_index in [idx for t, idx in TASKS.items() if t in tasks_predicted]:
 
-            task_subject_pred = pred[task_index,:, i]
-            task_subject_actual = tasks[task_index,:STANDART_BM.N_CORTEX, subject_idx]
-            #task_subject_actual = demean_and_normalize(task_subject_actual)
+            if task_index not in mean_actuals:
+                mean_actuals[task_index] = np.mean(
+                tasks[task_index, :STANDART_BM.N_CORTEX, [int(subject.subject_id) - 1 for s in subjects]], axis=0)
 
+
+            task_subject_pred = pred[task_index, :, i]
+            task_subject_actual = tasks[task_index,:STANDART_BM.N_CORTEX, subject_idx]
+
+            if task_index not in all_arranged_in_dicts:
+                all_arranged_in_dicts[task_index] = {}
             only_mean_roi_prediction = np.zeros(np.shape(task_subject_pred))
             only_mean_roi_actual = np.zeros(np.shape(task_subject_actual))
+            all_arranged_in_dicts[task_index][subject] = (task_subject_pred, task_subject_actual)
             for j in range(n_filters):
                 ind = hard_filters[: STANDART_BM.N_CORTEX, j] > 0
                 if np.size(np.nonzero(ind)) < 30:
@@ -252,28 +272,46 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
             # only_mean_roi_actual = only_mean_roi_actual[some_filters > 0]
 
             correlations[task_index, i] = np.corrcoef(task_subject_actual, task_subject_pred)[0, 1]
+            correlations_with_mean[task_index, i] = np.corrcoef(mean_actuals[task_index], task_subject_pred)[0, 1]
+
 
             correlations_of_mean_roi[task_index, i] = np.corrcoef(only_mean_roi_actual, only_mean_roi_prediction)[0, 1]
 
             losses[task_index,i] = rms_loss(task_subject_pred, task_subject_actual)
             losses2[task_index, i] = rms_loss(task_subject_pred, task_subject_actual, True, True)
 
-    np.save('predictions_fsf.npy' ,pred)
+
+
+
     for task_index in range(np.size(tasks, axis=0)):
+
         try:
+
             task_name = [taskname for taskname, idx in TASKS.items() if idx==task_index ][0]
-            print("task = {0} : {1}, loss ={2:.4f}, loss2 = {3:.4f} correlation={4:.4f}, corrs_only_mean_roi={5:.4f}".format(
+            print("task = {0} : {1}, loss ={2:.4f}, loss2 = {3:.4f} correlation={4:.4f}, avg_corr_with_mean={5:.4f}, corrs_only_mean_roi={6:.4f}".format(
                 task_index+1, task_name, np.mean(losses[task_index,:]),np.mean(losses2[task_index,:])  ,
-                np.mean(correlations[task_index,:]), np.mean(correlations_of_mean_roi[task_index,:])))
+                np.mean(correlations[task_index,:]), np.mean(correlations_with_mean[task_index, :]),
+                np.mean(correlations_of_mean_roi[task_index,:])))
             mean_corrs_by_roi = (np.mean(correlations_by_roi[task_index, :, :], axis=0))
 
+
             roi_sizes_weighted = regions_sizes / np.sum(regions_sizes)
-            print("by region:")
-            print(mean_corrs_by_roi)
-            print("correlation with means only:")
-            print(np.sum(mean_corrs_by_roi * roi_sizes_weighted))
-            print("by subject:")
-            print(correlations[task_index,:])
+
+            predicted_by_subj = {s : maps[0] for s, maps in all_arranged_in_dicts[task_index].items()}
+            actual_by_subj = {s: maps[1] for s, maps in all_arranged_in_dicts[task_index].items()}
+            # print("by region:")
+            # print(mean_corrs_by_roi)
+            # print("correlation with means only:")
+            # print(np.sum(mean_corrs_by_roi * roi_sizes_weighted))
+            # print("by subject:")
+            # print(correlations[task_index,:])
+            all_corrs = get_predicted_actual_correlations(subjects, task_name, (predicted_by_subj, actual_by_subj))
+            all_corrs_normalized = demean_and_normalize(demean_and_normalize(all_corrs, axis=0), axis=1)
+
+            print("mean corrs = : {0:.3f}".format(np.mean(all_corrs)))
+            print("mean self corrs = : {0:.3f}".format(np.mean(np.diag(all_corrs))))
+            print("mean self corrs normalized = : {0:.3f}".format(np.mean(np.diag(all_corrs_normalized))))
+            print("")
 
 
         except KeyError as kerr:
@@ -370,11 +408,10 @@ def run_regression():
         arr, soft_filters, saved_weights=saved_weights_by_task, tasks = tasks_for_model, prediction_function =
         predict_from_nn_weights)
 
-
-    prediction = np.load(fsf_nn_pred_path)
+    prediction = np.load(linear_pred_path_fsf)
     # get_correlations_for_subjects(subjects_validation, all_tasks_normalized,
     #                               get_subject_features, predict_subject_tasks_linear)
-    get_correlations_for_subjects(subjects_validation, all_tasks_normalized,
+    get_correlations_for_subjects(subjects_validation, all_tasks,
                                   get_subject_features, predict_subject_tasks_nn,tasks_for_model, prediction)
     return
 
