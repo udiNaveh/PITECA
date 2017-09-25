@@ -14,17 +14,6 @@ from scipy import sparse
 # constants - use configs instead
 
 temperature = 3.5
-ALL_FEATURES_LOADED = True #TODO delete all following lines up to the class definition
-subjects_features_order = os.path.join(definitions.LOCAL_DATA_DIR, 'subjects_features_order.txt')
-
-mapping = get_subject_to_feature_index_mapping(subjects_features_order)
-
-#TODO DELETE
-def get_subject_features_from_matrix(subject, all_features, mapping, t=False):
-    subj_features = all_features[STANDART_BM.CORTEX, mapping[int(subject.subject_id)], :]
-    if t:
-        subj_features = subj_features.transpose()
-    return subj_features.transpose()
 
 
 class IModel(ABC):
@@ -140,57 +129,6 @@ class LinearModel(IModel):
 
 
 
-class Model:
-
-    def __init__(self, tasks):
-        self.tasks = tasks
-        self.is_loaded = False
-        self.__graph__ = None
-
-    def load(self):
-        '''
-        builds the computational graph (in tensorflow)
-        The network is defined with a placeholder for input layer that can be assigned
-        feature maps (numpy ndarray in size N_VERTICES_CORTEX * N_FEATURES).
-        The output layer is a tensor of size  N_VERTICES_CORTEX * len(tasks).
-        The model architecture, or at least its weights, is loaded from disc.
-        I still havn't gone into tensor flow saving and loading of models so not really sure
-        how to implement this.
-        
-         
-        '''
-
-        # do many things that
-        self.__graph__ = "whatever" # todo
-        self.is_loaded = True
-
-    def preprocess(self, subject_features):
-        '''
-        prepare the features before running the network on them. notice that we can implement more sophisticated 
-        processing here than just demean and normalize.
-        :param subject_features: probably the functional connectivity features, as they appear in
-        the .nii feature files.
-        :return: the processed features. the output of this function is the input for the network 
-        (i.e. for predict_all_tasks method)
-        '''
-        return demean_and_normalize(subject_features)
-
-    def predict_all_tasks(self, subject_features):
-
-        if not self.is_loaded:
-            self.load()
-        predicted_maps = np.zeros(STANDART_BM.N_CORTEX, len(self.tasks))
-        subject_features = self.preprocess(subject_features)
-
-        # get the prediction. for example something like:
-        #with tf.Session as sess:
-        #    predicted_maps = sess.run(output_layer, feed_dict= {subject_features = subject_features})
-
-        return {task : predicted_maps[:,i] for i, task in enumerate(self.tasks)}
-
-    def predict(self, subject):
-        return
-
 
 class FeatureExtractor:
 
@@ -210,13 +148,8 @@ class FeatureExtractor:
     def get_features(self,subject):
         assert isinstance(subject,Subject)
         if subject.features_exist:
-            if self.all_features is not None: #TODO
-                arr = get_subject_features_from_matrix(subject, self.all_features, mapping)
-                return arr, None
-
-            else:
-                arr, (series, bm) = open_cifti(subject.features_path)
-                return arr, bm
+            arr, (series, bm) = open_cifti(subject.features_path)
+            return arr, bm
         else:
             if not self.is_loaded:
                 self.load()
