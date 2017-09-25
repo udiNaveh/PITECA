@@ -8,10 +8,23 @@ import os.path
 import definitions
 from abc import ABC, abstractmethod
 import definitions
+import time
+from scipy import sparse
 
 # constants - use configs instead
 
 temperature = 3.5
+ALL_FEATURES_LOADED = True #TODO delete all following lines up to the class definition
+subjects_features_order = os.path.join(definitions.LOCAL_DATA_DIR, 'subjects_features_order.txt')
+
+mapping = get_subject_to_feature_index_mapping(subjects_features_order)
+
+#TODO DELETE
+def get_subject_features_from_matrix(subject, all_features, mapping, t=False):
+    subj_features = all_features[STANDART_BM.CORTEX, mapping[int(subject.subject_id)], :]
+    if t:
+        subj_features = subj_features.transpose()
+    return subj_features.transpose()
 
 
 class IModel(ABC):
@@ -39,12 +52,13 @@ class LinearModel(IModel):
     # data files related to the tasks. e.g. in the betas matrix the betas related to Task.REWARD
     # are in the coordintas [4,:,:]
 
-    def __init__(self, tasks):
+    def __init__(self, tasks, features = None):
         super(LinearModel, self).__init__(tasks)
-        self.__feature_extractor = FeatureExtractor()
+
         self.__betas = None
-        self.__soft_filters = None
+        self.spatial_filters_soft = None
         self.__is_loaded = False
+        self.__feature_extractor = FeatureExtractor(features) #TODO DELETE
 
     def __load(self):
         '''
@@ -67,7 +81,11 @@ class LinearModel(IModel):
         self.__betas = all_betas[tasks_indices,:,:]
 
         ica_both_lowdim, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
-        self.__spatial_filters_soft = tempered_filters = softmax(np.transpose(ica_both_lowdim)* temperature)
+        self.spatial_filters_soft = softmax(np.transpose(ica_both_lowdim) * temperature)
+        below_threshold = self.spatial_filters_soft < 1e-2
+        self.spatial_filters_soft[below_threshold] = 0
+        self.spatial_filters_soft = self.spatial_filters_soft[:STANDART_BM.N_CORTEX, :]
+        self.__spatial_filters_hard = np.argmax(np.transpose(ica_both_lowdim[:, :STANDART_BM.N_CORTEX]), axis = 1)
         return True
 
     def __preprocess(self, subject_features):
@@ -76,7 +94,7 @@ class LinearModel(IModel):
         subject_features[:, 0] = 1.0
         return subject_features
 
-    def predict(self, subject):
+    def predict(self, subject, filters = 'soft', save = True):
         fe = self.__feature_extractor
         if not self.__is_loaded:
             self.__is_loaded = self.__load()
@@ -84,13 +102,42 @@ class LinearModel(IModel):
         prediction_paths = {}
         arr, bm = fe.get_features(subject)
         subject_feats = self.__preprocess(arr)
-        dotprod = subject_feats.dot(betas)
-        pred = np.sum(np.swapaxes(dotprod, 0, 1) * self.__spatial_filters_soft[:STANDART_BM.N_CORTEX,:], axis=2)
+        if filters == 'soft':
+            start = time.time()
+            dotprod = subject_feats.dot(betas)
+            pred = np.sum(np.swapaxes(dotprod, 0, 1) * self.spatial_filters_soft, axis=2)
+            stop = time.time()
+            print("soft filter prediction took {0:.4f} seconds".format(stop-start))
+        elif filters == 'hard':
+            start = time.time()
+            pred = np.zeros([STANDART_BM.N_CORTEX, len(self.tasks)])
+            for j in range(np.size(self.spatial_filters_soft, axis=1)):
+                ind = self.__spatial_filters_hard == j
+                M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
+                                    demean(subject_feats[ind, 1:])),axis=1)
+                pred[ind, :] = M.dot((betas[:,:,j]).swapaxes(0,1))
+            stop = time.time()
+            print("hard filter prediction took {0:.4f} seconds".format(stop - start))
+        elif filters == 'soft fast':
+            start = time.time()
+            pred = np.zeros([STANDART_BM.N_CORTEX, len(self.tasks)])
+            for j in range(np.size(self.spatial_filters_soft, axis=1)):
+                ind = self.__spatial_filters_hard == j
+                M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
+                                    demean(subject_feats[ind, 1:])),axis=1)
+                pred[ind, :] = M.dot((betas[:,:,j]).swapaxes(0,1))
+            stop = time.time()
+            print("soft fast filter prediction took {0:.4f} seconds".format(stop - start))
+        if not save:
+            return pred
+
         for i,task in enumerate(self.tasks):
             predicted_task_activation = pred[i,:]
-            prediction_paths[task] = save_to_dtseries(subject.get_predicted_task_filepath(task), bm, predicted_task_activation)
-
+            if save:
+                prediction_paths[task] = save_to_dtseries(subject.get_predicted_task_filepath(task), bm, predicted_task_activation)
         return prediction_paths
+
+
 
 
 class Model:
@@ -147,9 +194,10 @@ class Model:
 
 class FeatureExtractor:
 
-    def __init__(self):
+    def __init__(self, features = None):
         self.matrices = dict()
         self.is_loaded = False
+        self.all_features = features # TODO
 
     def load(self):
         arr = np.load(definitions.SC_CLUSTERS_PATH)
@@ -162,8 +210,13 @@ class FeatureExtractor:
     def get_features(self,subject):
         assert isinstance(subject,Subject)
         if subject.features_exist:
-            arr, (series, bm) = open_cifti(subject.features_path)
-            return arr, bm
+            if self.all_features is not None: #TODO
+                arr = get_subject_features_from_matrix(subject, self.all_features, mapping)
+                return arr, None
+
+            else:
+                arr, (series, bm) = open_cifti(subject.features_path)
+                return arr, bm
         else:
             if not self.is_loaded:
                 self.load()

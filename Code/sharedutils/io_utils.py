@@ -16,8 +16,6 @@ to data. It can also make other code more readable.
 Other methods for reading or saving files can be added here - for example saving graphs created
 in the analysis module.
 
-
-
 '''
 
 
@@ -50,7 +48,6 @@ def open_cifti(path):
 
 
 def open_rfmri_file(path):
-
     arr, (series, bm) = open_cifti(path)
     if not isinstance(series, cifti.axis.Series):
         raise ValueError("input file is not a time series")
@@ -125,3 +122,13 @@ def load_ndarray_from_mat(filepath, array_name = None):
         raise ValueError("file must include only one array")
     else:
         return arrays.popitem()[1]
+
+#TODO DEKETE
+def get_subject_to_feature_index_mapping(path):
+    mapping = {}
+    with open(path, 'r') as f:
+        for i in range(100):
+            subj_number = int(f.readline()) + 1
+            assert subj_number not in mapping
+            mapping[subj_number] = i
+    return mapping
