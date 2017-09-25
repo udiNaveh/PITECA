@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QCursor
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5 import QtCore
-from GUI.globals import *
+import GUI.globals as gb
 from GUI.popups import analysis_working_dlg_controller
 from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
 from GUI.graphics import graphics
@@ -11,6 +11,8 @@ from definitions import CANONICAL_CIFTI_PATH, ANALYSIS_DIR
 from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG
 
 class AnalyzeController:
+
+    global should_exit_on_error
 
     def __init__(self, ui):
         self.ui = ui
@@ -52,8 +54,7 @@ class AnalyzeController:
 
     def __handle_results(self, analysis_task, dlg, data, subjects):
         dlg.close()
-
-        should_exit_on_error = False
+        gb.should_exit_on_error = False
 
         # if analysis should create a CIFTI
         if analysis_task == AnalysisTask.Analysis_Mean:
@@ -61,7 +62,12 @@ class AnalyzeController:
 
         # if analysis should be displayed in graph
         elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations]:
-            graphic_dlg = graphics.GraphicDlg(analysis_task, data, subjects)
+
+            title = "Correlations between {} \n Domain: {} Task: {}".format(
+                "subjects' predictions" if analysis_task == AnalysisTask.Analysis_Correlations else "actual and predicted activation",
+                self.task.domain().name, self.task.name
+            )
+            graphic_dlg = graphics.GraphicDlg(analysis_task, data, subjects, title)
             graphic_dlg.setWindowModality(Qt.ApplicationModal)
             graphic_dlg.show()
 
@@ -75,7 +81,7 @@ class AnalyzeController:
         else:
             raise Exception('Unsupported action.')
 
-        should_exit_on_error = True
+            gb.should_exit_on_error = True
 
 
     def __handle_unexpected_exception(self, dlg, thread):
@@ -100,8 +106,8 @@ class AnalyzeController:
 
     def onRunAnalysisButtonClicked(self):
         predicted_files_str = self.ui.selectPredictedLineEdit.text()
-        task = constants.Task[self.ui.taskComboBox.currentText()]
-        subjects = self.__create_subjects(task, predicted_files_str)
+        self.task = constants.Task[self.ui.taskComboBox.currentText()]
+        subjects = self.__create_subjects(self.task, predicted_files_str)
 
         # Check all input provided
         if not predicted_files_str:
@@ -128,7 +134,7 @@ class AnalyzeController:
             dialog_utils.print_error(SELECT_ACTION_MSG)
             return
 
-        thread = AnalysisWorkingThread(analysis_task, subjects, task, outputdir, other_path)
+        thread = AnalysisWorkingThread(analysis_task, subjects, self.task, outputdir, other_path)
         dlg = analysis_working_dlg_controller.AnalysisWorkingDlg()
         dlg.closeEvent = lambda event: self.wait_dlg_close_event(event, dlg, thread)
         dlg.setWindowModality(Qt.ApplicationModal)
@@ -145,8 +151,8 @@ class AnalyzeController:
             dialog_utils.print_error(PROVIDE_INPUT_MSG)
             return
 
-        task = constants.Task[self.ui.taskComboBox.currentText()]
-        subjects = self.__create_subjects(task, predicted_files_str, actual_files_str)
+        self.task = constants.Task[self.ui.taskComboBox.currentText()]
+        subjects = self.__create_subjects(self.task, predicted_files_str, actual_files_str)
         if not subjects:
             return
 
@@ -165,7 +171,7 @@ class AnalyzeController:
             dialog_utils.print_error(SELECT_ACTION_MSG)
             return
 
-        thread = AnalysisWorkingThread(analysis_task, subjects, task, outputdir, other_path)
+        thread = AnalysisWorkingThread(analysis_task, subjects, self.task, outputdir, other_path)
         dlg = analysis_working_dlg_controller.AnalysisWorkingDlg()
         dlg.setWindowModality(Qt.ApplicationModal)
         dlg.show()
