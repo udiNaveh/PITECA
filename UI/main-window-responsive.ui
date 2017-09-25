@@ -15,14 +15,14 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>piteca_icon.gif</normaloff>piteca_icon.gif</iconset>
+    <normaloff>../../../../../.designer/backup/piteca_icon.gif</normaloff>../../../../../.designer/backup/piteca_icon.gif</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <widget class="QTabWidget" name="mainView">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="predictView">
        <attribute name="title">
@@ -60,6 +60,12 @@
         </item>
         <item row="2" column="3">
          <widget class="QPushButton" name="browseInputFilesButton">
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Browse...</string>
           </property>
@@ -70,6 +76,12 @@
         </item>
         <item row="5" column="3">
          <widget class="QPushButton" name="browseOutputDirButton">
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Browse...</string>
           </property>
@@ -97,6 +109,12 @@
         </item>
         <item row="6" column="0" colspan="2">
          <widget class="QTreeWidget" name="tasksTree">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="columnCount">
            <number>1</number>
           </property>
@@ -190,6 +208,12 @@
         </item>
         <item row="17" column="0">
          <widget class="QPushButton" name="runCompareButton">
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Compare</string>
           </property>
@@ -210,6 +234,12 @@
         </item>
         <item row="11" column="0">
          <widget class="QPushButton" name="runAnalyzeButton">
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Analyze</string>
           </property>
@@ -230,6 +260,12 @@
         </item>
         <item row="7" column="4">
          <widget class="QPushButton" name="browsePredictedButton">
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Browse...</string>
           </property>
@@ -240,6 +276,12 @@
         </item>
         <item row="14" column="4">
          <widget class="QPushButton" name="browseActualButton">
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Browse...</string>
           </property>

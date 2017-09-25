@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 import scipy.io as sio
+from textwrap import wrap
 
 from sharedutils import dialog_utils, constants
 from GUI.analyze_working_thread import AnalysisTask
@@ -19,18 +20,19 @@ This module provides plotting methods of 4 heatmap graphs:
 4. Correlation between the predicted activations of all subjects to their actual activation (subj_subj_data)
 """
 
-SUBJECTS_X_LABEL = "subjects_x"
-SUBJECTS_Y_LABEL = "subjects_y"
+SUBJECTS_X_LABEL = "subjects"
+SUBJECTS_Y_LABEL = "subjects"
 MEAN_Y_LABEL = "with mean"
 CANONICAL_Y_LABEL = "with canonical"
 
 class GraphicDlg(QDialog):
-    def __init__(self, analysis_task, data, subjects, parent=None):
+    def __init__(self, analysis_task, data, subjects, title, parent=None):
         super(GraphicDlg, self).__init__(parent)
 
         self.ids = [subject.subject_id for subject in subjects]
         self.analysis_task = analysis_task
         self.data = data
+        self.title = title
         if self.analysis_task == AnalysisTask.Analysis_Correlations:
             self.subj_subj_data = data[0] # 2 dims
             self.subj_mean_data = data[1] # 1 dim
@@ -42,6 +44,7 @@ class GraphicDlg(QDialog):
             return
 
         # a figure instance to plot on
+        sizeObject = QtWidgets.QDesktopWidget().screenGeometry(-1)
         self.figure = plt.figure()
 
         # this is the Canvas Widget that displays the `figure`
@@ -77,12 +80,18 @@ class GraphicDlg(QDialog):
                 # graph (1)
                 if event.inaxes.get_xlabel() == SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == SUBJECTS_Y_LABEL:
                     correlation = self.subj_subj_data[subject_x_index, subject_y_index]
+                    between1 = "subject {}".format(self.ids[subject_x_index])
+                    between2 = "subject {}".format(self.ids[subject_y_index])
                 # graph (2)
                 elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == MEAN_Y_LABEL:
                     correlation = self.subj_mean_data[subject_x_index]
+                    between1 = self.ids[subject_x_index]
+                    between2 = "mean activation"
                 # graph (3)
                 elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == CANONICAL_Y_LABEL:
                     correlation = self.subj_canonical_data[subject_x_index]
+                    between1 = "subject {}".format(self.ids[subject_x_index])
+                    between2 = "canonical activation"
                 # not a heat map location
                 else:
                     return
@@ -91,6 +100,8 @@ class GraphicDlg(QDialog):
                 # graph 4
                 if event.inaxes.get_xlabel() == SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == SUBJECTS_Y_LABEL:
                     correlation = self.subj_subj_data[subject_x_index, subject_y_index]
+                    between1 = "subject {}".format(self.ids[subject_x_index])
+                    between2 = "subject {}".format(self.ids[subject_y_index])
                 # not a heat map location
                 else:
                     return
@@ -98,7 +109,8 @@ class GraphicDlg(QDialog):
             else:
                 dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG)
 
-            self.correlation_label.setText("Value: {:.2f}".format(correlation))
+            self.correlation_label.setText("Value: {:.2f} (Correlation between {} and {})"
+                                           .format(correlation, between1, between2))
 
     def save_data(self):
         name, extension = dialog_utils.save_file('*.mat ;; *.numpy')
@@ -113,13 +125,21 @@ class GraphicDlg(QDialog):
         else:
             raise Exception('File extension is not supported.')
 
-    def plot_heatmap(self):
+    def plot_heatmap2(self):
 
         # a label to show correlation
         self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
         self.layout.addWidget(self.correlation_label)
 
         self.figure.clear()
+        self.figure.suptitle(self.title)
+
+        cmap = 'RdBu'
+        edgecolors = 'black'
+
+        # calculate x tick labels font
+        num_of_chars = len(''.join(self.ids)) + len(self.ids)
+        font_size = (14 / (math.ceil(num_of_chars / 29))) if num_of_chars > 29 else 7
 
         # create an axis
         subjects_by_subjects_ax = self.figure.gca()
@@ -128,44 +148,105 @@ class GraphicDlg(QDialog):
         subjects_by_subjects_ax.set_xticks(np.arange(len(self.subj_subj_data)) + 0.5)
         subjects_by_subjects_ax.set_xticklabels(self.ids)
         subjects_by_subjects_ax.set_yticks(np.arange(len(self.subj_subj_data)) + 0.5)
-        subjects_by_subjects_ax.set_yticklabels(self.ids)
+        subjects_by_subjects_ax.set_yticklabels(self.ids, rotation=50)
 
         # plot data
         from mpl_toolkits.axes_grid1 import make_axes_locatable
         divider = make_axes_locatable(subjects_by_subjects_ax)
-        color_ax = divider.append_axes("right", "3%", pad="1%")
+        color_ax = divider.append_axes("right", "5%")
 
         if self.analysis_task == AnalysisTask.Analysis_Correlations:
-            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.subj_subj_data)
+            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.subj_subj_data, cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
             # add correlations to mean and canonical
-            subjects_by_mean_ax = divider.append_axes("bottom", "7%", pad="30%")
-            subjects_by_canonical_ax = divider.append_axes("bottom", "7%", pad="25%")
+            subjects_by_mean_ax = divider.append_axes("bottom", "7%")
+            subjects_by_canonical_ax = divider.append_axes("bottom", "7%")
 
             self.figure.add_axes(subjects_by_mean_ax)
             self.figure.add_axes(subjects_by_canonical_ax)
-            subjects_by_mean_ax.pcolor([self.subj_mean_data])
-            subjects_by_canonical_ax.pcolor([self.subj_canonical_data])
+            subjects_by_mean_ax.pcolor([self.subj_mean_data], cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
+            subjects_by_canonical_ax.pcolor([self.subj_canonical_data], cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
 
             subjects_by_mean_ax.set_ylabel(MEAN_Y_LABEL, rotation=0)
-            subjects_by_mean_ax.yaxis.set_label_coords(-0.08, +1)
             subjects_by_mean_ax.set_xticks(np.arange(len(self.subj_mean_data)) + 0.5)
-            subjects_by_mean_ax.set_xticklabels(self.ids)
+            subjects_by_mean_ax.set_xticklabels(self.ids, rotation=50)
             subjects_by_mean_ax.set_yticks(np.arange(0))
 
             subjects_by_canonical_ax.set_ylabel(CANONICAL_Y_LABEL, rotation=0)
-            subjects_by_canonical_ax.yaxis.set_label_coords(-0.05, +1)
             subjects_by_canonical_ax.set_xticks(np.arange(len(self.subj_canonical_data)) + 0.5)
-            subjects_by_canonical_ax.set_xticklabels(self.ids)
+            subjects_by_canonical_ax.set_xticklabels(self.ids, rotation=50)
             subjects_by_canonical_ax.set_yticks(np.arange(0))
 
         else:
-            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.data)
+            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.data, cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
 
         self.figure.colorbar(heatmap_s_s, cax=color_ax)
         self.canvas.draw()
 
         self.canvas.mpl_connect('button_press_event', self.onClick)
+        plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
 
+    def plot_heatmap(self):
+
+        # a label to show correlation
+        self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
+        self.layout.addWidget(self.correlation_label)
+
+        self.figure.clear()
+        self.figure.suptitle(self.title)
+
+        cmap = 'RdBu'
+        edgecolors = 'black'
+
+        # calculate x tick labels font
+        num_of_chars = len(''.join(self.ids)) + len(self.ids)
+        font_size = (14 / (math.ceil(num_of_chars / 29))) if num_of_chars > 29 else 7
+
+        # create an axis
+        subjects_by_subjects_ax = self.figure.gca()
+        subjects_by_subjects_ax.set_aspect('equal', adjustable='box')
+        subjects_by_subjects_ax.set_xlabel(SUBJECTS_X_LABEL)
+        subjects_by_subjects_ax.set_ylabel(SUBJECTS_Y_LABEL)
+        subjects_by_subjects_ax.set_xticks(np.arange(len(self.subj_subj_data)) + 0.5)
+        subjects_by_subjects_ax.set_xticklabels(self.ids, fontsize=font_size, rotation=50)
+        subjects_by_subjects_ax.set_yticks(np.arange(len(self.subj_subj_data)) + 0.5)
+        subjects_by_subjects_ax.set_yticklabels(self.ids, fontsize=font_size, rotation=50)
+
+        # plot data
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+        divider = make_axes_locatable(subjects_by_subjects_ax)
+        color_ax = divider.append_axes("right", "5%", pad="5%")
+
+        if self.analysis_task == AnalysisTask.Analysis_Correlations:
+            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.subj_subj_data, cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
+            # add correlations to mean and canonical
+            subjects_by_mean_ax = divider.append_axes("bottom", "7%", pad="60%")
+            subjects_by_canonical_ax = divider.append_axes("bottom", "7%", pad="50%")
+
+            self.figure.add_axes(subjects_by_mean_ax)
+            self.figure.add_axes(subjects_by_canonical_ax)
+            subjects_by_mean_ax.pcolor([self.subj_mean_data], cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
+            subjects_by_canonical_ax.pcolor([self.subj_canonical_data], cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
+
+            subjects_by_mean_ax.set_ylabel(MEAN_Y_LABEL, rotation=0)
+            subjects_by_mean_ax.yaxis.set_label_coords(-0.5, 0)
+            subjects_by_mean_ax.set_xticks(np.arange(len(self.subj_mean_data)) + 0.5)
+            subjects_by_mean_ax.set_xticklabels(self.ids, fontsize=font_size, rotation=50)
+            subjects_by_mean_ax.set_yticks(np.arange(0))
+
+            subjects_by_canonical_ax.set_ylabel(CANONICAL_Y_LABEL, rotation=0)
+            subjects_by_canonical_ax.yaxis.set_label_coords(-0.5, 0)
+            subjects_by_canonical_ax.set_xticks(np.arange(len(self.subj_canonical_data)) + 0.5)
+            subjects_by_canonical_ax.set_xticklabels(self.ids, fontsize=font_size, rotation=50)
+            subjects_by_canonical_ax.set_yticks(np.arange(0))
+
+        else:
+            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.data, cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
+
+        self.figure.colorbar(heatmap_s_s, cax=color_ax)
+        self.canvas.draw()
+
+        self.canvas.mpl_connect('button_press_event', self.onClick)
+        plt.tight_layout()
 
     def plot_barchart(self):
 
