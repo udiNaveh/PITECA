@@ -7,7 +7,8 @@ from sharedutils import constants, dialog_utils
 import sys
 from threading import current_thread
 import threading
-from GUI.globals import *
+import GUI.globals as gb
+from PyQt5.QtWidgets import QStyleFactory
 
 
 '''
@@ -58,7 +59,7 @@ def setup_functionality(ui):
 
 
 def piteca_excepthook(exctype, value, tb):
-    if not should_exit_on_error:
+    if not gb.should_exit_on_error:
     # If we are on main thread but don't want to close PITECA
         dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG[:-1] + ": " + str(value))
         print(value)  # TODO: remove this! Here only for development needs
