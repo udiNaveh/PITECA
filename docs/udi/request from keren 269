@@ -5,4 +5,13 @@ Reqeusts for keren:
 3. default directory for browsing - should be the last directory used (as long as PITECA is open)
 4. files with same name - should have a solution - if prediction path already exists - we should handle it (ask the user whether to use old file, override or keep both with different names,
 simpler solution would be to always keep both but to enumerate filenames - as happens in windows downloads directory). This should be done in the check prior to the predictions themselves.
- 
+5. available tasks in predict tab - should be according to the available tasks in the model
+
+
+------------
+- choose model in settings - look at roee's solution
+- open in wb_view
+- add option to use pre-loaded all features matrix
+- cache for analysis
+- replace svd in feature extraction
+- correlation with predicted matrix : add normalized version

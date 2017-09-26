@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 
 from GUI.popups.predict_working_dlg_controller import PredictWorkingDlg
-from model.models import LinearModel
+from model.models import LinearModel, TFRoiBasedModel, NN2lhMode, TFLinear
 from sharedutils.constants import *
 from sharedutils.dialog_utils import *
 from sharedutils.subject import create_subjects
@@ -45,7 +45,7 @@ class PredictTabModel:
 
     def run_prediction_flow(self, ui):
         # Setup
-        self.prediction_model = LinearModel(self.tasks)
+        self.prediction_model = TFLinear(self.tasks)
         self.__prepare_subjects()
 
         # Open a dialog to ask the user for permission to use existing features

@@ -18,6 +18,9 @@ in the analysis module.
 
 '''
 
+saple_task_file = r'D:\Projects\PITECA\Data\actual\000001_MOTOR_T.dtseries.nii'
+saple_pred_file = r'C:\Users\ASUS\PycharmProjects\PITECA\Data\Predictions\LANGUAGE\MATH_STORY\000001_LANGUAGE_MATH_STORY_predicted.dtseries.nii'
+
 
 def open_cifti(path):
     '''
@@ -123,7 +126,7 @@ def load_ndarray_from_mat(filepath, array_name = None):
     else:
         return arrays.popitem()[1]
 
-#TODO DEKETE
+#TODO DELETE
 def get_subject_to_feature_index_mapping(path):
     mapping = {}
     with open(path, 'r') as f:
@@ -132,3 +135,8 @@ def get_subject_to_feature_index_mapping(path):
             assert subj_number not in mapping
             mapping[subj_number] = i
     return mapping
+
+
+def load_standart_cortex_bm():
+    arr, (series, bm) = open_cifti(saple_pred_file)
+    return bm
