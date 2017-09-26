@@ -1,4 +1,5 @@
 import os
+from GUI.settings_controller import get_prediction_outputs_folder
 
 from PyQt5 import QtWidgets, QtCore
 
@@ -14,9 +15,6 @@ class PredictController:
 
     def onBrowseInputFilesClicked(self):
         dialog_utils.browse_files(self.ui.inputFilesLineEdit)
-
-    def onBrowseOutputDirClicked(self):
-        dialog_utils.browse_dir(self.ui.outputDirLineEdit)
 
     def findCheckedTasks(self):
 
@@ -49,9 +47,9 @@ class PredictController:
 
     def onRunPredictClicked(self):
         inputFiles = self.ui.inputFilesLineEdit.text()
-        outputDir = self.ui.outputDirLineEdit.text()
+        outputDir = get_prediction_outputs_folder()
         tasks = self.findCheckedTasks()
-        if (not inputFiles or not outputDir or not tasks):
+        if (not inputFiles or not tasks):
             dialog_utils.print_error("Please provide input.")
             return
         predictModel = PredictTabModel(inputFiles, outputDir, tasks)

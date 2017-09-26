@@ -3,6 +3,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QFile, QIODevice, QThread
 from GUI.views import Ui_MainView
 from GUI.analyze_controller import AnalyzeController
+from GUI.settings_controller import SettingsController
 from sharedutils import constants, dialog_utils
 import sys
 from threading import current_thread
@@ -46,7 +47,6 @@ def setup_functionality(ui):
     # For Predict tab
     predictController = PredictController(ui)
     ui.browseInputFilesButton.clicked.connect(lambda: predictController.onBrowseInputFilesClicked())
-    ui.browseOutputDirButton.clicked.connect(lambda: predictController.onBrowseOutputDirClicked())
     ui.runPredictButton.clicked.connect(lambda: predictController.onRunPredictClicked())
 
     # For Analysis tab
@@ -57,6 +57,11 @@ def setup_functionality(ui):
     ui.runAnalyzeButton.clicked.connect(lambda: analyzeController.onRunAnalysisButtonClicked())
     ui.runCompareButton.clicked.connect(lambda: analyzeController.onRunComparisonButtonClicked())
 
+    # For Settings tab
+    settingsController = SettingsController(ui)
+    ui.featuresFolderButton.clicked.connect(lambda: settingsController.set_features_folder())
+    ui.predictionOutputFolderButton.clicked.connect(lambda: settingsController.set_output_predictions_folder())
+    ui.analysisOutputFolderButton.clicked.connect(lambda: settingsController.set_output_analysis_folder())
 
 def piteca_excepthook(exctype, value, tb):
     if not gb.should_exit_on_error:

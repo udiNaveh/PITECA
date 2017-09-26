@@ -53,6 +53,7 @@ def browse_dir(line_edit):
     if dir:
         line_edit.setText(dir)
         # TODO: consider editing scenarios
+    return dir
 
 
 def save_file(filters):

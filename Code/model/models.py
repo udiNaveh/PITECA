@@ -79,6 +79,7 @@ class LinearModel(IModel):
         return True
 
     def __preprocess(self, subject_features):
+        subject_features = subject_features[:, :STANDART_BM.N_CORTEX]
         subject_features = np.concatenate((np.ones([STANDART_BM.N_CORTEX, 1]), np.transpose(subject_features)), axis=1)
         subject_features = demean_and_normalize(subject_features)
         subject_features[:, 0] = 1.0
