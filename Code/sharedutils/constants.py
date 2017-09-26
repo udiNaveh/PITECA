@@ -98,6 +98,15 @@ class Domain(Enum):
     SOCIAL = [Task(i) for i in range(26, 29)]
     WM = [Task(i) for i in range(29, 48)]
 
+AVAILABLE_TASKS = [Task.MATH_STORY ,
+                       Task.TOM,
+                       Task.MATCH_REL,
+                       Task.TWO_BK,
+                       Task.REWARD,
+                       Task.FACES_SHAPES,
+                       Task.T
+                       ]
+
 # Extensions
 DTSERIES_EXT = ".dtseries.nii"
 FEATS_EXT = "_features"

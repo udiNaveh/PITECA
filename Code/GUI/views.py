@@ -7,7 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from sharedutils.constants import Domain
+from sharedutils.constants import Domain, AVAILABLE_TASKS
 from definitions import PITECA_ICON_PATH
 
 class Ui_MainView(object):
@@ -179,10 +179,11 @@ class Ui_MainView(object):
             taskItem = QtWidgets.QTreeWidgetItem(self.tasksTree)
             taskItem.setText(0, domain.name)
             for task in domain.value:
-                contrastItem = QtWidgets.QTreeWidgetItem(taskItem)
-                contrastItem.setCheckState(0, QtCore.Qt.Checked)
-                contrastItem.setCheckState(0, QtCore.Qt.Unchecked)
-                contrastItem.setText(0, task.name)
+                if task in AVAILABLE_TASKS:
+                    contrastItem = QtWidgets.QTreeWidgetItem(taskItem)
+                    contrastItem.setCheckState(0, QtCore.Qt.Checked)
+                    contrastItem.setCheckState(0, QtCore.Qt.Unchecked)
+                    contrastItem.setText(0, task.name)
             self.domainComboBox.addItem(domain.name)
         self.taskComboBox.addItems(task.name for task in Domain.EMOTION.value)
         """ End of Added manually """

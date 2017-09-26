@@ -9,11 +9,12 @@ import definitions
 from abc import ABC, abstractmethod
 import definitions
 import time
-from scipy import sparse
-
+from misc.model_hyperparams import *
+from misc.nn_model import *
+import pickle
 # constants - use configs instead
 
-temperature = 3.5
+
 
 
 class IModel(ABC):
@@ -47,7 +48,7 @@ class LinearModel(IModel):
         self.__betas = None
         self.spatial_filters_soft = None
         self.__is_loaded = False
-        self.__feature_extractor = FeatureExtractor(features) #TODO DELETE
+        self.__feature_extractor = FeatureExtractor()
 
     def __load(self):
         '''
@@ -70,7 +71,7 @@ class LinearModel(IModel):
         self.__betas = all_betas[tasks_indices,:,:]
 
         ica_both_lowdim, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
-        self.spatial_filters_soft = softmax(np.transpose(ica_both_lowdim) * temperature)
+        self.spatial_filters_soft = softmax(np.transpose(ica_both_lowdim) * TEMPERATURE)
         below_threshold = self.spatial_filters_soft < 1e-2
         self.spatial_filters_soft[below_threshold] = 0
         self.spatial_filters_soft = self.spatial_filters_soft[:STANDART_BM.N_CORTEX, :]
@@ -128,15 +129,153 @@ class LinearModel(IModel):
         return prediction_paths
 
 
+class TFRoiBasedModel(IModel):
 
+    available_tasks = {Task.MATH_STORY : 0,
+                       Task.TOM: 1,
+                       Task.MATCH_REL : 2,
+                       Task.TWO_BK: 3,
+                       Task.REWARD : 4,
+                       Task.FACES_SHAPES : 5,
+                       Task.T : 6
+                       }
+
+    def __init__(self, tasks):
+        super(TFRoiBasedModel, self).__init__(tasks)
+        self._weights = {}
+        self.feature_extractor = FeatureExtractor()
+        self.is_loaded =  False
+
+
+        missing_tasks = []
+        for task in self.tasks:
+            if task not in TFRoiBasedModel.available_tasks:
+                missing_tasks.append(task)
+                raise RuntimeWarning("no TFRoiBasedModel model for task {}".format(task.name))
+            # TODO @error_handle. Notice that this is probably only for development,
+
+        self.tasks = [t for t in self.tasks if t not in missing_tasks]
+
+    def _load(self):
+        spatial_filters_raw, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
+        spatial_filters_raw = np.transpose(spatial_filters_raw[:, STANDART_BM.CORTEX])
+        soft_filters = softmax(spatial_filters_raw.astype(float) * TEMPERATURE)
+        soft_filters[soft_filters < FILTERS_EPSILON] = 0.0
+        soft_filters[:, 2] = 0
+        soft_filters /= np.reshape(np.sum(soft_filters, axis=1), [STANDART_BM.N_CORTEX, 1])
+        hard_filters = np.round(softmax(spatial_filters_raw.astype(float) * 1000))
+        hard_filters[spatial_filters_raw < SPATIAL_FILTERS_THRESHOLD] = 0
+        self.spatial_filters_soft = soft_filters
+        self.spatial_filters_hard = hard_filters
+        self.x, self.y_pred = self.get_placeholders()
+        self.variables = self.get_trainable_variables()
+        #load weights
+        self.load_weights()
+        return True
+
+    def load_weights(self):
+        raise NotImplementedError()
+        # for task in self.tasks:
+        #     weights_path = definitions.NN_WEIGHTS_PATH_FORMAT.format(task.full_name)
+        #     weights = pickle.load(open(weights_path, 'rb'))
+        #     self.__weights[task] = weights
+
+    def get_placeholders(self):
+        raise NotImplementedError()
+
+    def get_trainable_variables(self):
+        raise NotImplementedError()
+
+    def preprocess_features(self, subject_features):
+        subject_features = np.transpose(subject_features)
+        subject_features = demean_and_normalize(subject_features)
+        return subject_features
+
+    def predict(self, subject, save = True):
+        if not self.is_loaded:
+            self.is_loaded = self._load()
+        arr, bm = self.feature_extractor.get_features(subject)
+        subject_feats = self.preprocess_features(arr)
+        subject_predictions = {}
+        prediction_paths = {}
+        with tf.Session() as sess:
+            for task in self.tasks:
+                subject_task_prediction = np.zeros([1, STANDART_BM.N_CORTEX])
+                start = time.time()
+                for j in range(np.size(self.spatial_filters_soft, axis=1)):
+                    if j in self._weights[task]:
+                        ind = self.spatial_filters_soft[: STANDART_BM.N_CORTEX, j] > 0
+                        weighting = self.spatial_filters_soft[:,j][ind]
+                        features = subject_feats[ind]
+                        weights = self._weights[task][j]
+                        assert len(self.variables) == len(weights) # TODO delete
+                        region_feed_dict = union_dicts({self.x: features},
+                                                       {tensor: weights[i] for i, tensor in enumerate(self.variables)})
+                        roi_prediction = np.squeeze(sess.run(self.y_pred, feed_dict=region_feed_dict))
+                        subject_task_prediction[:,ind] += weighting * roi_prediction
+                subject_predictions[task] = subject_task_prediction
+                end = time.time()
+                print("task {0} subject {1} took {2:.3f}seconds".format(task.full_name, subject.subject_id, end-start))
+                if save:
+                    prediction_paths[task] = save_to_dtseries(subject.get_predicted_task_filepath(task), bm,
+                                                              subject_task_prediction)
+        return subject_predictions, prediction_paths
+
+
+class NN2lhMode(TFRoiBasedModel):
+    def __init__(self, tasks):
+        super(NN2lhMode, self).__init__(tasks)
+
+    def load_weights(self):
+        for task in self.tasks:
+            weights_path = os.path.join(definitions.NN_WEIGHTS_DIR, '2hl_70s',
+                           'nn_2hl_no_roi_normalization_70s_weights_{0}_all_filters.pkl'.format(task.full_name))
+            weights = pickle.load(open(weights_path, 'rb'))
+            self._weights[task] = weights
+
+    def get_placeholders(self):
+        x, y, y_pred = \
+        regression_with_two_hidden_layers_build(input_dim=NUM_FEATURES, output_dim=1, scope_name='nn1_h2_reg')
+        return x, y_pred
+
+    def get_trainable_variables(self):
+        return [v for v in tf.trainable_variables() if v in
+                      tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='nn1_h2_reg')]
+
+
+class TFLinear(TFRoiBasedModel):
+    def __init__(self, tasks):
+        super(TFLinear, self).__init__(tasks)
+
+    def load_weights(self):
+        for task in self.tasks:
+            weights_path = os.path.join(definitions.LINEAR_WEIGHTS_DIR, 'learned_by_roi_70s',
+                                        'linear_weights_{}.pkl'.format(
+                                            task.full_name))
+            weights = pickle.load(open(weights_path, 'rb'))
+
+            self._weights[task] = {i : [weights[:,i:i+1]] for i in range(np.size(weights, axis=1)) if i!=2}
+
+    def get_placeholders(self):
+        x, y, y_pred = \
+            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg')
+        return x, y_pred
+
+    def get_trainable_variables(self):
+        return [v for v in tf.trainable_variables() if v in
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg')][:1]
+
+    def preprocess_features(self, subject_features):
+        subject_features = np.transpose(subject_features)
+        subject_features = demean_and_normalize(subject_features)
+        return add_ones_column(subject_features)
 
 
 class FeatureExtractor:
 
-    def __init__(self, features = None):
+    def __init__(self):
         self.matrices = dict()
         self.is_loaded = False
-        self.all_features = features # TODO
 
     def load(self):
         arr = np.load(definitions.SC_CLUSTERS_PATH)
@@ -187,10 +326,6 @@ class FeatureExtractor:
         features_map = np.dot(normalize(T2, axis=1), normalize(rfmri_data_normalized, axis=0))
         save_to_dtseries(subject.features_path, bm, features_map)
         return features_map, bm
-
-
-
-
 
 
 

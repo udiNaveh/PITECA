@@ -208,7 +208,7 @@ def get_significance_overlap_maps_for_subjects(subjects, task, outputdir):
     subjects_predicted_maps = get_predicted_task_maps_by_subject(subjects, task)
     subjects_actual_maps = get_actual_task_maps_by_subject(subjects, task)
     # need to insure that maps are paired
-    subjects = [s for s in subjects if s in subjects_actual_maps and s in subjects_predicted_maps ]
+    subjects = [s for s in subjects if s in subjects_actual_maps and s in subjects_predicted_maps]
     # @error_handel need to decide what to do if the above intersection is different from subjects
     # i.e. some subjects don't have actual and predicted maps
     n_subjects = len(subjects)
@@ -216,14 +216,16 @@ def get_significance_overlap_maps_for_subjects(subjects, task, outputdir):
     all_maps = {s : SubjectTaskMaps(get_significance_map(subjects_predicted_maps[s]),
                                     get_significance_map(subjects_actual_maps[s])) for s in subjects}
 
+    iou_positive = []
+    iou_negative = []
     for s in subjects:
-
-        pred = all_maps[s].predicted
         map, iou_pos, iou_neg, iou_both = get_significance_maps_overlap(all_maps[s].predicted,
                                                                         all_maps[s].actual[:,STANDART_BM.CORTEX])
+        iou_positive.append(iou_pos)
+        iou_negative.append(iou_neg)
         save_to_dtseries(s.get_predicted_actual_overlap_task_filepath(task, outputdir), bm, map)
 
-    return
+    return subjects, iou_positive, iou_negative
 
 
 
