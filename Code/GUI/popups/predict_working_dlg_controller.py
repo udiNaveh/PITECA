@@ -19,16 +19,16 @@ class PredictWorkingDlg(QtWidgets.QDialog):
     def onFinish(self):
         self.progress_bar_ui.label.setText("Done!")
 
-    def closeEvent(self, event):
-        if self.progress_thread.isFinished():
-            event.accept()
-        else:
-            should_stop = dialog_utils.ask_user(False, constants.QUESTION_TITLE, constants.ARE_YOU_SURE_MSG)
-            if should_stop:
-                self.progress_thread.quit()
-                event.accept()
-            else:
-                event.ignore()
+    # def closeEvent(self, event):
+    #     if self.progress_thread.isFinished():
+    #         event.accept()
+    #     else:
+    #         should_stop = dialog_utils.ask_user(False, constants.QUESTION_TITLE, constants.ARE_YOU_SURE_MSG)
+    #         if should_stop:
+    #             self.progress_thread.quit()
+    #             event.accept()
+    #         else:
+    #             event.ignore()
 
     def start_progress(self):
         self.progress_thread.start()

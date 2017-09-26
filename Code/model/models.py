@@ -78,6 +78,7 @@ class LinearModel(IModel):
         return True
 
     def __preprocess(self, subject_features):
+        subject_features = subject_features[:, :STANDART_BM.N_CORTEX]
         subject_features = np.concatenate((np.ones([STANDART_BM.N_CORTEX, 1]), np.transpose(subject_features)), axis=1)
         subject_features = demean_and_normalize(subject_features)
         subject_features[:, 0] = 1.0
@@ -185,7 +186,7 @@ class FeatureExtractor:
         # get the featires - correlation coefficient for each vertex with each netwrok
         features_map = np.dot(normalize(T2, axis=1), normalize(rfmri_data_normalized, axis=0))
         save_to_dtseries(subject.features_path, bm, features_map)
-        return features_map
+        return features_map, bm
 
 
 

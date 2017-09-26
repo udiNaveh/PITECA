@@ -1,5 +1,5 @@
 from sharedutils.constants import FEATS_EXT, PREDICT_OUTPUT_EXT, DTSERIES_EXT
-from definitions import EXTRACTED_FEATURES_DIR
+from GUI.settings_controller import get_features_folder
 import os
 
 
@@ -20,7 +20,7 @@ def get_output_path(output_dir, id):
 
 def get_features_path(id):
     filename = id + FEATS_EXT + DTSERIES_EXT
-    return os.path.join(EXTRACTED_FEATURES_DIR, filename)
+    return os.path.join(get_features_folder(), filename)
 
 
 def extract_filenames(input_files_str):
