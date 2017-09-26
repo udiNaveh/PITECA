@@ -36,6 +36,12 @@ nn_pred_path = r'D:\Projects\PITECA\Data\model\nn\predictions\predictions_valida
 linear_pred_path = r'D:\Projects\PITECA\Data\model\linear\loo_betas_7_tasks_take2\linear_weights_70_s_2\predictions_validation_s71-100_linear.npy'
 linear_pred_path_fsf = r'D:\Projects\PITECA\Data\model\linear\loo_betas_7_tasks_take2\linear_weights_70_s_2\predictions_validation_s71-100_linear_fsf.npy'
 
+# TODO DELETE
+tasks_dir =  r'D:\Projects\PITECA\Data\actual'
+features_path = r'D:\Projects\PITECA\Data\extracted features'
+predictions_cifti_path = r'D:\Projects\PITECA\Data_for_testing\predictions_linear'
+
+
 TASKS = {Task.MATH_STORY: 0,
                    Task.TOM: 1,
                    Task.MATCH_REL: 2,
@@ -59,21 +65,21 @@ def load_data():
     all_features_normalized = demean_and_normalize(all_features_raw, axis=0)
     all_tasks = np.load(tasks_file)
     all_tasks = all_tasks[:,:, :STANDART_BM.N_CORTEX]
-    return all_features_normalized, all_tasks, soft_filters, hard_filters, spatial_filters_raw
+    return all_features_normalized, all_tasks, soft_filters, hard_filters, spatial_filters_raw # TODO
 
 all_features_normalized, all_tasks, soft_filters, hard_filters, spatial_filters_raw= load_data()
 all_tasks_normalized = demean_and_normalize(all_tasks, axis=2)
 n_filters = np.size(hard_filters, axis=1)
-spatial_filters_raw = demean_and_normalize(spatial_filters_raw, axis=0)
+saptial_filters_raw = demean_and_normalize(spatial_filters_raw, axis=0)
 n_additional_features = n_filters if USE_RAW_FILTERS_AS_FEATURES else 0
 
+standart_cortex_bm = load_standart_cortex_bm()
 
 nn_scope_name = 'nn1_h2_reg'
 tensors_two_hidden_layer_nn =\
-    regression_with_two_hidden_layers_build(NUM_FEATURES+n_additional_features, 1, nn_scope_name)
+    regression_with_two_hidden_layers_build(NUM_FEATURES, 1, nn_scope_name)
 x, y, y_pred = tensors_two_hidden_layer_nn
 loss_function = build_loss(y, y_pred, nn_scope_name, REG_LAMBDA, HUBER_DELTA)
-
 
 
 def get_subject_features_from_matrix(subject):
@@ -152,11 +158,11 @@ def train_by_roi_and_task(subjects_partition, tasks, spatial_filters, tensors, s
             betas_task[:, j] = np.squeeze(learned_betas)
 
 
-        pickle.dump(learned_weights, safe_open(os.path.join(NN_WEIGHTS_PATH, "nn_2hl_no_roi_normalization_fsf_70s_weights_task{0}_all_filters.pkl".
-                                                            format(task)), 'wb'))
+        pickle.dump(learned_weights, safe_open(os.path.join(NN_WEIGHTS_PATH, "nn_2hl_no_roi_normalization_fsf_70s_weights_{0}_all_filters.pkl".
+                                                            format(task.full_name)), 'wb'))
 
-        pickle.dump(betas_task, safe_open(os.path.join(LINEAR_BETAS_PATH,  "linear_weights_70_s_2", "linear_weights_fsf_task{0}.pkl".
-                                                   format(task.name)), 'wb'))
+        pickle.dump(betas_task, safe_open(os.path.join(LINEAR_BETAS_PATH,  "linear_weights_70_s_2", "linear_weights_fsf_{0}_all_filters.pkl".
+                                                   format(task.full_name)), 'wb'))
         print("saved betas {}".format(task.name))
     return
 
@@ -209,6 +215,28 @@ def predict_all_subject(subjects, tasks, features_getter, predictor):
         print("prediction time: {:.3f}".format(end-start))
 
 
+
+#
+# def udi_create_tasks_files(subjects, tasks):
+#     tasks = np.swapaxes(tasks,1,2)
+#     n_tasks = np.size(tasks, axis=0)
+#     n_subjects = len(subjects)
+#     for task, task_idx in TASKS.items():
+#         task_for_all_subjetcs = tasks[task_idx, :, :]
+#         for subj in subjects:
+#             subject_idx = int(subj.subject_id) - 1
+#             filepath = join_path(tasks_dir, "{0}_{1}.dtseries.nii".format(subj.subject_id, task.full_name))
+#             arr = task_for_all_subjetcs[:,subject_idx]
+#             arr = arr.reshape([1, STANDART_BM.N_TOTAL_VERTICES])
+#             save_to_dtseries(filepath, standart_cortex_bm, arr)
+
+
+
+
+
+
+
+
 def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, tasks_predicted, saved_pred =  None):
 
     tasks = np.swapaxes(tasks,1,2)
@@ -243,13 +271,15 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
     for i, subject in enumerate(subjects):
         subject_idx = int(subject.subject_id) - 1
         for task_index in [idx for t, idx in TASKS.items() if t in tasks_predicted]:
-
+            task_name = [taskname for taskname, idx in TASKS.items() if idx == task_index][0]
             if task_index not in mean_actuals:
                 mean_actuals[task_index] = np.mean(
                 tasks[task_index, :STANDART_BM.N_CORTEX, [int(subject.subject_id) - 1 for s in subjects]], axis=0)
-
-
             task_subject_pred = pred[task_index, :, i]
+
+
+
+
             task_subject_actual = tasks[task_index,:STANDART_BM.N_CORTEX, subject_idx]
 
             if task_index not in all_arranged_in_dicts:
@@ -319,6 +349,7 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
 
 
     #np.save(os.path.join(LOO_betas_path,'all_correlations.npy'), all_correlations)
+    return pred
 
 
 def get_corr_by_region(filters, pred, act):
@@ -344,12 +375,11 @@ def predict_by_roi(subject_feats, filters, saved_weights, tasks, prediction_func
             if j in saved_weights[task]:
                 weights = saved_weights[task][j]
                 ind = filters[: STANDART_BM.N_CORTEX, j] > 0
-                weighting =  filters[:,j][ind]
+                weighting = filters[:,j][ind]
                 features = subject_feats[ind]
                 subject_task_prediction[ind] += weighting * np.squeeze(prediction_function(features, weights))
         subject_predictions[task] = subject_task_prediction
     return subject_predictions
-
 
 
 
@@ -367,6 +397,8 @@ def run_regression():
                                 features_exist=True))
 
     #random.shuffle(subjects)
+
+
     tasks_for_model = TASKS.keys()
     subjects_training = subjects[:training_size]
     subjects_validation = subjects[training_size:]
@@ -392,8 +424,8 @@ def run_regression():
         #     open(os.path.join(NN_WEIGHTS_PATH, "nn_2hl_no_roi_normalization_70s_weights_task{0}_all_filters.pkl".
         #                       format(task)), 'rb'))
         saved_weights_by_task[task] = pickle.load(
-            open(os.path.join(NN_WEIGHTS_PATH, "nn_2hl_no_roi_normalization_fsf_70s_weights_task{0}_all_filters.pkl".
-                              format(task)), 'rb'))
+            open(os.path.join(NN_WEIGHTS_PATH, "nn_2hl_no_roi_normalization_70s_weights_{0}_all_filters.pkl".
+                              format(task.full_name)), 'rb'))
 
     get_subject_features = lambda s : get_subject_features_from_matrix(s)
     predict_subject_tasks_linear = lambda arr : predict_by_roi(
@@ -408,11 +440,14 @@ def run_regression():
         arr, soft_filters, saved_weights=saved_weights_by_task, tasks = tasks_for_model, prediction_function =
         predict_from_nn_weights)
 
-    prediction = np.load(linear_pred_path_fsf)
+#(subjects, tasks, features_getter, predictor, tasks_predicted, saved_pred =  None)
+    # prediction = np.load(linear_pred_path)
     # get_correlations_for_subjects(subjects_validation, all_tasks_normalized,
-    #                               get_subject_features, predict_subject_tasks_linear)
-    get_correlations_for_subjects(subjects_validation, all_tasks,
-                                  get_subject_features, predict_subject_tasks_nn,tasks_for_model, prediction)
+    #                               get_subject_features, predict_subject_tasks_linear, TASKS, prediction)
+    # get_correlations_for_subjects(subjects_validation, all_tasks,
+    #                               get_subject_features, predict_subject_tasks_nn,, TASKS, prediction)
+
+
     return
 
 
