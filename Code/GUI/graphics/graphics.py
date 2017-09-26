@@ -50,6 +50,12 @@ class GraphicDlg(QDialog):
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.toolbar)
         self.layout.addWidget(self.canvas)
+
+        if analysis_task == AnalysisTask.Analysis_Correlations or analysis_task == AnalysisTask.Compare_Correlations:
+            # a label to show correlation
+            self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
+            self.layout.addWidget(self.correlation_label)
+
         self.layout.addWidget(self.save_button)
         self.setLayout(self.layout)
 
@@ -58,6 +64,11 @@ class GraphicDlg(QDialog):
         self.analysis_task = analysis_task
         self.data = data
         self.title = title
+
+        # calculate x tick labels font
+        num_of_chars = len(''.join(self.ids)) + len(self.ids)
+        self.font_size = (14 / (math.ceil(num_of_chars / 29))) if num_of_chars > 29 else 7
+
         if self.analysis_task == AnalysisTask.Analysis_Correlations:
             self.subj_subj_data = data[0] # 2 dims
             self.subj_mean_data = data[1] # 1 dim
@@ -132,19 +143,11 @@ class GraphicDlg(QDialog):
 
     def plot_heatmap(self):
 
-        # a label to show correlation
-        self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
-        self.layout.addWidget(self.correlation_label)
-
         self.figure.clear()
         self.figure.suptitle(self.title)
 
         cmap = 'RdBu'
         edgecolors = 'black'
-
-        # calculate x tick labels font
-        num_of_chars = len(''.join(self.ids)) + len(self.ids)
-        font_size = (14 / (math.ceil(num_of_chars / 29))) if num_of_chars > 29 else 7
 
         # create an axis
         subjects_by_subjects_ax = self.figure.gca()
@@ -152,9 +155,11 @@ class GraphicDlg(QDialog):
         subjects_by_subjects_ax.set_xlabel(SUBJECTS_X_LABEL)
         subjects_by_subjects_ax.set_ylabel(SUBJECTS_Y_LABEL)
         subjects_by_subjects_ax.set_xticks(np.arange(len(self.subj_subj_data)) + 0.5)
-        subjects_by_subjects_ax.set_xticklabels(self.ids, fontsize=font_size, rotation=50)
+        subjects_by_subjects_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
         subjects_by_subjects_ax.set_yticks(np.arange(len(self.subj_subj_data)) + 0.5)
-        subjects_by_subjects_ax.set_yticklabels(self.ids, fontsize=font_size, rotation=50)
+        subjects_by_subjects_ax.set_yticklabels(self.ids, fontsize=self.font_size, rotation=35)
+
+        plt.subplots_adjust(top=0.83)
 
         # plot data
         from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -175,13 +180,13 @@ class GraphicDlg(QDialog):
             subjects_by_mean_ax.set_ylabel(MEAN_Y_LABEL, rotation=0)
             subjects_by_mean_ax.yaxis.set_label_coords(-0.5, 0)
             subjects_by_mean_ax.set_xticks(np.arange(len(self.subj_mean_data)) + 0.5)
-            subjects_by_mean_ax.set_xticklabels(self.ids, fontsize=font_size, rotation=50)
+            subjects_by_mean_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
             subjects_by_mean_ax.set_yticks(np.arange(0))
 
             subjects_by_canonical_ax.set_ylabel(CANONICAL_Y_LABEL, rotation=0)
             subjects_by_canonical_ax.yaxis.set_label_coords(-0.5, 0)
             subjects_by_canonical_ax.set_xticks(np.arange(len(self.subj_canonical_data)) + 0.5)
-            subjects_by_canonical_ax.set_xticklabels(self.ids, fontsize=font_size, rotation=50)
+            subjects_by_canonical_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
             subjects_by_canonical_ax.set_yticks(np.arange(0))
 
         else:
@@ -191,45 +196,41 @@ class GraphicDlg(QDialog):
         self.canvas.draw()
 
         self.canvas.mpl_connect('button_press_event', self.onClick)
-        plt.tight_layout()
+        # plt.tight_layout()
 
     def plot_barchart(self):
-
         self.figure.clear()
         ax = self.figure.gca()
+        self.figure.suptitle(self.title)
 
-        men_means = (20, 35, 30, 35, 27)
-        N = 5
+        positive_indices = self.data[0]
+        N = len(positive_indices)
 
         ind = np.arange(N)  # the x locations for the groups
         width = 0.35  # the width of the bars
-
-        rects1 = ax.bar(ind, men_means, width, color='steelblue', yerr=men_means)
-
-        women_means = (25, 32, 34, 20, 25)
-        women_std = (3, 5, 2, 3, 3)
-        rects2 = ax.bar(ind + width, women_means, width, color='mediumspringgreen', yerr=women_std)
+        rects1 = ax.bar(ind, positive_indices, width, color='steelblue')
+        negative_indices = self.data[1]
+        rects2 = ax.bar(ind + width, negative_indices, width, color='mediumspringgreen')
 
         # add some text for labels, title and axes ticks
-        ax.set_ylabel('Scores')
-        ax.set_title('Scores by group and gender')
+        ax.set_ylabel('Indices')
+        ax.set_xlabel('Subjects')
         ax.set_xticks(ind + width / 2)
-        ax.set_xticklabels(('G1', 'G2', 'G3', 'G4', 'G5'))
+        ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
 
-        ax.legend((rects1[0], rects2[0]), ('Predicted', 'Actual'))
-
-        def autolabel(rects):
+        ax.legend((rects1[0], rects2[0]), ('Positive', 'Negative'))
+        def autolabel(rects, j):
             """
             Attach a text label above each bar displaying its height
             """
-            for rect in rects:
-                height = rect.get_height()
-                ax.text(rect.get_x() + rect.get_width() / 2., 1.05 * height,
-                        '%d' % int(height),
-                        ha='center', va='bottom')
-
-        autolabel(rects1)
-        autolabel(rects2)
+            for i in range(len(rects)):
+                height = rects[i].get_height()
+                index = self.data[j][i]
+                ax.text(rects[i].get_x() + rects[i].get_width() / 2., 0.8 * height,
+                        '{:01.2f}'.format(index),
+                        ha='center', va='bottom', fontsize=self.font_size)
+        autolabel(rects1, 0)
+        autolabel(rects2, 1)
 
         # refresh canvas
         self.canvas.draw()

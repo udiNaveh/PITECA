@@ -168,6 +168,7 @@ class AnalyzeController:
 
         thread = AnalysisWorkingThread(analysis_task, subjects, self.task, outputdir, other_path)
         dlg = analysis_working_dlg_controller.AnalysisWorkingDlg()
+        dlg.closeEvent = lambda event: self.wait_dlg_close_event(event, dlg, thread)
         dlg.setWindowModality(Qt.ApplicationModal)
         dlg.show()
         thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results, subjects))
