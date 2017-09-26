@@ -22,12 +22,26 @@ from misc.model_hyperparams import HL1_SIZE, HL2_SIZE, LEARNING_RATE
 PRINT_DURING_LEARNING = False
 
 
-def linear_regression_build(input_dim, output_dim):
+def linear_regression_build(input_dim, output_dim, scope_name):
+    x = tf.placeholder(tf.float32, shape=(None, input_dim), name='x')
+    y = tf.placeholder(tf.float32, shape=(None, output_dim), name='y')
+
+
+    with tf.variable_scope(scope_name) as scope:
+        w1 = tf.get_variable("w1", shape=[input_dim, output_dim],
+                             initializer=tf.contrib.layers.xavier_initializer())
+
+        y_pred = tf.matmul(x, w1)
+
+    return x, y, y_pred
+
+
+def linear_regression_build_old(input_dim, output_dim, scope_name):
     x = tf.placeholder(tf.float32, shape=(None, input_dim), name='x')
     y = tf.placeholder(tf.float32, shape=(None, output_dim), name='y')
     reg_lambda = tf.placeholder(tf.float32, name='reg_lambda')
 
-    with tf.variable_scope('lin_reg') as scope:
+    with tf.variable_scope(scope_name) as scope:
         w1 = tf.get_variable("w1", shape=[input_dim, output_dim],
                              initializer=tf.contrib.layers.xavier_initializer())
         b1 = tf.get_variable("b1", shape=[output_dim],
