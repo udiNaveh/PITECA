@@ -8,10 +8,9 @@ from enum import Enum
 class AnalysisTask(Enum):
     Analysis_Mean = 1
     Analysis_Correlations = 2
-    Analysis_Significance = 3
 
-    Compare_Correlations = 4
-    Compare_Significance = 5
+    Compare_Correlations = 3
+    Compare_Significance = 4
 
 
 class AnalysisWorkingThread(QThread):
@@ -46,10 +45,6 @@ class AnalysisWorkingThread(QThread):
 
         elif self.analysis_task == AnalysisTask.Analysis_Correlations:
             self.results = analyzer.get_predictions_correlations(self.subjects, self.task, self.other_path)
-
-        elif self.analysis_task == AnalysisTask.Analysis_Significance:
-            pass
-            # TODO: what is the function in analyzer for this?
 
         elif self.analysis_task == AnalysisTask.Compare_Correlations:
             self.results = analyzer.get_predicted_actual_correlations(self.subjects, self.task)

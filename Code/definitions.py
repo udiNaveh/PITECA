@@ -19,3 +19,4 @@ UI_DIR = os.path.join(ROOT_DIR, 'UI')
 PITECA_ICON_PATH = os.path.join(UI_DIR, 'piteca_icon.gif')
 CANONICAL_CIFTI_PATH = os.path.join(DATA_DIR, 'canonical.dtseries.nii') # TODO: get the file from Ido and update name here
 LOCAL_DATA_DIR = r'D:\Projects\PITECA\Data' #TODO
+SETTINGS_PATH = os.path.join(CODE_DIR, 'settings.ini')

@@ -56,27 +56,27 @@ class AnalyzeController:
         dlg.close()
         gb.should_exit_on_error = False
 
-        # if analysis should create a CIFTI
         if analysis_task == AnalysisTask.Analysis_Mean:
             dialog_utils.inform_user("Done! Analysis result is saved in {}".format(ANALYSIS_DIR))
 
-        # if analysis should be displayed in graph
-        elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations]:
+        elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations, AnalysisTask.Compare_Significance]:
 
-            title = "Correlations between {} \n Domain: {} Task: {}".format(
-                "subjects' predictions" if analysis_task == AnalysisTask.Analysis_Correlations else "actual and predicted activation",
-                self.task.domain().name, self.task.name
+            if analysis_task == AnalysisTask.Compare_Significance:
+                dialog_utils.inform_user("Done! Comparison result is saved in {}".format(ANALYSIS_DIR))
+                title_base = "Intersection over Union of subjects overlap maps"
+
+            if analysis_task == AnalysisTask.Analysis_Correlations:
+                title_base = "Correlations between subjects' predictions"
+
+            if analysis_task == AnalysisTask.Compare_Correlations:
+                title_base = "Correlations between actual and predicted activation"
+
+            title = "{}\n Domain: {} Task: {}".format(
+                title_base, self.task.domain().name, self.task.name
             )
             graphic_dlg = graphics.GraphicDlg(analysis_task, data, subjects, title)
             graphic_dlg.setWindowModality(Qt.ApplicationModal)
             graphic_dlg.show()
-
-        elif analysis_task == AnalysisTask.Analysis_Significance:
-            # TODO: how do we want to show this?
-            pass
-        elif analysis_task == AnalysisTask.Compare_Significance:
-            # TODO: how do we want to show this?
-            pass
 
         else:
             raise Exception('Unsupported action.')
@@ -124,11 +124,6 @@ class AnalyzeController:
         elif self.ui.analysisCorrelationsRadioButton.isChecked():
             analysis_task = AnalysisTask.Analysis_Correlations
             # TODO: add other_path = ...
-
-        elif self.ui.analysisSignificantRadioButton.isChecked():
-            # TODO: as I understand, there is no function for this in analyzer.
-            # Remove this option from GUI or add a function to analyzer
-            analysis_task = AnalysisTask.Analysis_Significance
 
         else:
             dialog_utils.print_error(SELECT_ACTION_MSG)
