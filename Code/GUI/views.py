@@ -187,7 +187,7 @@ class Ui_MainView(object):
         self.taskComboBox.addItems(task.name for task in Domain.EMOTION.value)
         """ End of Added manually """
 
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "PITECA"))
         self.browseInputFilesButton.setText(_translate("MainWindow", "Browse..."))
         self.runPredictButton.setText(_translate("MainWindow", "Run"))
         self.selectInputFilesLabel.setText(_translate("MainWindow", "Select input files:"))
