@@ -70,7 +70,7 @@ class Ui_MainView(object):
         self.gridLayout_2.addWidget(self.analysisCorrelationsRadioButton, 9, 0, 1, 2)
         self.analysisSignificantRadioButton = QtWidgets.QRadioButton(self.analyzeView)
         self.analysisSignificantRadioButton.setObjectName("analysisSignificantRadioButton")
-        self.gridLayout_2.addWidget(self.analysisSignificantRadioButton, 10, 0, 1, 2)
+        # self.gridLayout_2.addWidget(self.analysisSignificantRadioButton, 10, 0, 1, 2)
         self.analysisMeanRadioButton = QtWidgets.QRadioButton(self.analyzeView)
         self.analysisMeanRadioButton.setObjectName("analysisMeanRadioButton")
         self.gridLayout_2.addWidget(self.analysisMeanRadioButton, 8, 0, 1, 2)
