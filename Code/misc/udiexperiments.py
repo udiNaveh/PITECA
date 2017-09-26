@@ -1,6 +1,7 @@
 from sharedutils.io_utils import *
 from sharedutils.subject import *
 from sharedutils.linalg_utils import *
+from sharedutils.cmd_utils import run_wb_view, show_maps_in_wb_view
 import time
 import os
 
@@ -97,4 +98,6 @@ def check():
     compare_ciftis(f1,f2, soft_filters)
 
 if __name__ == "__main__":
-    check()
+    #run_wb_view([])
+    cifti_path = r'C:\Users\ASUS\PycharmProjects\PITECA\Data\Tasks\000001_MOTOR_T.dtseries.nii'
+    show_maps_in_wb_view(cifti_path)

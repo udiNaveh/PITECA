@@ -26,3 +26,10 @@ LINEAR_WEIGHTS_DIR = os.path.join(DATA_DIR, 'Models','LinearModels')
 
 #EXTRACTED_FEATURES_DIR = r'D:\Projects\PITECA\Data_for_testing\Features'
 SETTINGS_PATH = os.path.join(CODE_DIR, 'settings.ini')
+
+DEFAULT_LEFT_SURFACE_PATH = os.path.join(DATA_DIR, 'Surfaces', r'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii')
+DEFAULT_RIGHT_SURFACE_PATH = os.path.join(DATA_DIR, 'Surfaces', r'Q1-Q6_R440.R.midthickness.32k_fs_LR.surf.gii')
+
+DEFAULT_EXTRACTED_FEATURES_DIR = os.path.join(DATA_DIR, 'ExtractedFeatures')
+DEFAULT_ANLYSIS_DIR = os.path.join(DATA_DIR, 'Analysis')
+DEFAULT_PREDICTIONS_DIR = os.path.join(DATA_DIR, 'Predictions')
