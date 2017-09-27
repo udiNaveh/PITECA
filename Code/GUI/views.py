@@ -9,6 +9,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from sharedutils.constants import Domain, AVAILABLE_TASKS
 from definitions import PITECA_ICON_PATH
+from model import models
 
 class Ui_MainView(object):
     def setupUi(self, MainWindow):
@@ -181,6 +182,7 @@ class Ui_MainView(object):
         Added manually
         """
         self.tasksTree.headerItem().setText(0, _translate("MainView", "Tasks"))
+
         for domain in Domain:
             taskItem = QtWidgets.QTreeWidgetItem(self.tasksTree)
             taskItem.setText(0, domain.name)
@@ -192,6 +194,7 @@ class Ui_MainView(object):
                     contrastItem.setText(0, task.name)
             self.domainComboBox.addItem(domain.name)
         self.taskComboBox.addItems(task.name for task in Domain.EMOTION.value)
+        self.ModelComboBox.addItems(models.available_models.keys())
         """ End of Added manually """
 
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
