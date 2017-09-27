@@ -151,8 +151,7 @@ class TFRoiBasedModel(IModel):
         for task in self.tasks:
             if task not in TFRoiBasedModel.available_tasks:
                 missing_tasks.append(task)
-                raise RuntimeWarning("no TFRoiBasedModel model for task {}".format(task.name))
-            # TODO @error_handle. Notice that this is probably only for development,
+                print("no TFRoiBasedModel model for task {}".format(task.name))
 
         self.tasks = [t for t in self.tasks if t not in missing_tasks]
 
@@ -169,20 +168,19 @@ class TFRoiBasedModel(IModel):
         self.spatial_filters_hard = hard_filters
         self.x, self.y_pred = self.get_placeholders()
         self.variables = self.get_trainable_variables()
-        #load weights
         self.load_weights()
+        self.spatial_filters_raw = spatial_filters_raw
         return True
 
+    @abstractmethod
     def load_weights(self):
         raise NotImplementedError()
-        # for task in self.tasks:
-        #     weights_path = definitions.NN_WEIGHTS_PATH_FORMAT.format(task.full_name)
-        #     weights = pickle.load(open(weights_path, 'rb'))
-        #     self.__weights[task] = weights
 
+    @abstractmethod
     def get_placeholders(self):
         raise NotImplementedError()
 
+    @abstractmethod
     def get_trainable_variables(self):
         raise NotImplementedError()
 
@@ -215,16 +213,21 @@ class TFRoiBasedModel(IModel):
                         subject_task_prediction[:,ind] += weighting * roi_prediction
                 subject_predictions[task] = subject_task_prediction
                 end = time.time()
-                print("task {0} subject {1} took {2:.3f}seconds".format(task.full_name, subject.subject_id, end-start))
+                print("preiction of task {0} subject {1} took {2:.3f}seconds".format(task.full_name, subject.subject_id, end-start))
                 if save:
                     prediction_paths[task] = save_to_dtseries(subject.get_predicted_task_filepath(task), bm,
                                                               subject_task_prediction)
         return subject_predictions, prediction_paths
 
 
-class NN2lhMode(TFRoiBasedModel):
+class NN2lhModel(TFRoiBasedModel):
+
+    hl1_size = 50
+    hl2_size = 50
+    input_size = NUM_FEATURES
+
     def __init__(self, tasks):
-        super(NN2lhMode, self).__init__(tasks)
+        super(NN2lhModel, self).__init__(tasks)
 
     def load_weights(self):
         for task in self.tasks:
@@ -235,12 +238,47 @@ class NN2lhMode(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-        regression_with_two_hidden_layers_build(input_dim=NUM_FEATURES, output_dim=1, scope_name='nn1_h2_reg')
+        regression_with_two_hidden_layers_build(input_dim= NN2lhModel.input_size, output_dim=1, scope_name='nn1_h2_reg',
+                                                layer1_size=NN2lhModel.hl1_size, layer2_size=NN2lhModel.l2_size)
         return x, y_pred
 
     def get_trainable_variables(self):
         return [v for v in tf.trainable_variables() if v in
                       tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='nn1_h2_reg')]
+
+
+class NN2lhModelWithFiltersAsDeatures(TFRoiBasedModel):
+
+    hl1_size = 50
+    hl2_size = 50
+    input_size = NUM_FEATURES + NUM_SPATIAL_FILTERS
+
+    def __init__(self, tasks):
+        super(NN2lhModelWithFiltersAsDeatures, self).__init__(tasks)
+
+    def load_weights(self):
+        for task in self.tasks:
+            weights_path = os.path.join(definitions.NN_WEIGHTS_DIR, '2hl_features_as_filters_70s',
+                           'nn_2hl_no_roi_normalization_fsf_70s_weights_{0}_all_filters.pkl'.format(task.full_name))
+            weights = pickle.load(open(weights_path, 'rb'))
+            self._weights[task] = weights
+
+    def get_placeholders(self):
+        x, y, y_pred = \
+        regression_with_two_hidden_layers_build(input_dim= NN2lhModelWithFiltersAsDeatures.input_size, output_dim=1, scope_name='nn1_h2_reg_fsf',
+                                                layer1_size=NN2lhModelWithFiltersAsDeatures.hl1_size, layer2_size=NN2lhModelWithFiltersAsDeatures.hl2_size)
+        return x, y_pred
+
+    def get_trainable_variables(self):
+        return [v for v in tf.trainable_variables() if v in
+                      tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='nn1_h2_reg_fsf')]
+
+    def preprocess_features(self, subject_features):
+        subject_features = np.transpose(subject_features)
+        subject_features = demean_and_normalize(subject_features)
+        subject_features = np.concatenate((subject_features, self.spatial_filters_raw), axis = 1)
+        return subject_features
+
 
 
 class TFLinear(TFRoiBasedModel):

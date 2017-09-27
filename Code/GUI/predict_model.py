@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 
 from GUI.popups.predict_working_dlg_controller import PredictWorkingDlg
-from model.models import LinearModel, TFRoiBasedModel, NN2lhMode, TFLinear
+from model.models import LinearModel, TFRoiBasedModel, NN2lhModel, TFLinear, NN2lhModelWithFiltersAsDeatures
 from sharedutils.constants import *
 from sharedutils.dialog_utils import *
 from sharedutils.subject import create_subjects

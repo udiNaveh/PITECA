@@ -15,6 +15,7 @@ that use it still work.
 
 MIN_TIME_UNITS = 300
 NUM_FEATURES = 108
+NUM_SPATIAL_FILTERS = 50
 
 # Brain parcellations
 STANDART_BM = type('Dummy', (object,), {})
