@@ -9,6 +9,7 @@ from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
 from GUI.graphics import graphics
 from definitions import CANONICAL_CIFTI_PATH, ANALYSIS_DIR
 from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG
+from GUI.settings_controller import get_analysis_results_folder
 
 class AnalyzeController:
 
@@ -57,7 +58,7 @@ class AnalyzeController:
         gb.should_exit_on_error = False
 
         if analysis_task == AnalysisTask.Analysis_Mean:
-            dialog_utils.inform_user("Done! Analysis result is saved in {}".format(ANALYSIS_DIR))
+            dialog_utils.inform_user("Done! Analysis result is saved in {}".format(get_analysis_results_folder()))
 
         elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations, AnalysisTask.Compare_Significance]:
 
@@ -116,7 +117,7 @@ class AnalyzeController:
 
         # Prepare additional analysis parameters
         analysis_task = None
-        outputdir = ANALYSIS_DIR
+        outputdir = get_analysis_results_folder()
         other_path = CANONICAL_CIFTI_PATH
         if self.ui.analysisMeanRadioButton.isChecked():
             analysis_task = AnalysisTask.Analysis_Mean
@@ -153,7 +154,7 @@ class AnalyzeController:
 
         # Prepare additional analysis parameters
         analysis_task = None
-        outputdir = ANALYSIS_DIR
+        outputdir = get_analysis_results_folder()
         other_path = CANONICAL_CIFTI_PATH
 
         if self.ui.comparisonCorrelationsRadioButton.isChecked():
