@@ -47,6 +47,9 @@ class PredictTabModel:
         # Setup
         self.prediction_model = TFLinear(self.tasks)
         self.__prepare_subjects()
+        if len(self.subjects) > MAX_SUBJECTS:
+            inform_user("Too many files to process. Maximum number is 25 files.")
+            return
 
         # Open a dialog to ask the user for permission to use existing features
         use_existing = False
