@@ -215,6 +215,7 @@ def train_tf_by_task(subjects_partition, tasks, tensors, scope_name):
         print("saved betas {}".format(task.name))
     return
 
+
 def train_linear_original(subjects_partition, spatial_filters):
 
     subjects_training, subjects_validation, subjects_test = subjects_partition
@@ -296,11 +297,6 @@ def predict_all_subject(subjects, tasks, features_getter, predictor):
 #             arr = task_for_all_subjetcs[:,subject_idx]
 #             arr = arr.reshape([1, STANDART_BM.N_TOTAL_VERTICES])
 #             save_to_dtseries(filepath, standart_cortex_bm, arr)
-
-
-
-
-
 
 
 
@@ -473,7 +469,7 @@ def run_regression():
     #random.shuffle(subjects)
 
 
-    tasks_for_model = [Task.MATH_STORY]
+    tasks_for_model = TASKS
     subjects_training = subjects[:training_size]
     subjects_validation = subjects[training_size:]
     subjects_test = []
@@ -496,8 +492,8 @@ def run_regression():
 
     linear_betas_by_task = {}
     for task in tasks_for_model:
-        linear_betas_by_task [task] = np.load(os.path.join(LINEAR_BETAS_PATH, "linear_weights_70_s_averaged_betas_no_roi",
-                     "linear_weights_{0}_fsf.npy".format(task.full_name)))
+        linear_betas_by_task [task] = np.load(os.path.join(LINEAR_BETAS_PATH, "linear_weights_70_s_averaged_betas",
+                     "linear_weights_{0}.pkl".format(task.full_name)))
 
 
 
@@ -515,7 +511,7 @@ def run_regression():
     weights = pickle.load(open(os.path.join(NN_WEIGHTS_PATH, "nnnnnn.pkl"), 'rb'))
     saved_weights_by_task_all_together[Task.MATH_STORY] = {i : weights for i in range (50) if i!=2}
 
-
+    linear_betas_by_task = {k : {i : v[:,i] for i in range(50) if i!=2} for k,v in linear_betas_by_task.items()}
     get_subject_features = lambda s : get_subject_features_from_matrix(s)
     predict_subject_tasks_linear = lambda arr : predict_by_roi(
         arr, soft_filters, saved_weights=linear_betas_by_task, tasks = tasks_for_model, prediction_function =
@@ -534,10 +530,10 @@ def run_regression():
 
 #(subjects, tasks, features_getter, predictor, tasks_predicted, saved_pred =  None)
     # prediction = np.load(linear_pred_path)
-    # get_correlations_for_subjects(subjects_validation, all_tasks_normalized,
-    #                               get_subject_features, predict_subject_tasks_linear_simple, TASKS)
     get_correlations_for_subjects(subjects_validation, all_tasks,
-                                  get_subject_features, predict_subject_tasks_nn, [Task.MATH_STORY])
+                                  get_subject_features, predict_subject_tasks_linear, TASKS)
+    # get_correlations_for_subjects(subjects_validation, all_tasks,
+    #                               get_subject_features, predict_subject_tasks_nn, [Task.MATH_STORY])
 
 
     return
