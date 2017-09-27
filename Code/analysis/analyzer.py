@@ -5,6 +5,7 @@ from collections import namedtuple
 from sharedutils.subject import *
 from sharedutils.io_utils import *
 from sharedutils.general_utils import *
+from sharedutils.path_utils import *
 
 #region utility functions
 
@@ -54,7 +55,6 @@ def __arrays_to_matrix(arrays):
         # @error_handle
         raise Exception("cannot produce matrix for shape {}".format(arrays[0].shape))
 
-
 def get_prediction_statistic(subjects, task, statfunc, outputpath = None):
     prediction_arrays = []
     for subject in subjects:
@@ -72,9 +72,11 @@ def get_prediction_statistic(subjects, task, statfunc, outputpath = None):
     # need to verify that all arrays are of shape 1x59282
     res = statfunc(prediction_arrays)
     if outputpath is not None:
-        save_to_dtseries(outputpath, bm, res)
+        print(outputpath)
+        filename = generate_file_name(outputpath, task, 'mean_of_predictions')
+        print(generate_final_filename(filename))
+        save_to_dtseries(generate_final_filename(filename), bm, res)
     return res
-
 
 def get_mean(arrays):
     return np.mean(np.concatenate(arrays, axis =0), axis=0)
