@@ -17,6 +17,8 @@ import pickle
 
 
 
+
+
 class IModel(ABC):
 
     def __init__(self, tasks):
@@ -247,14 +249,14 @@ class NN2lhModel(TFRoiBasedModel):
                       tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='nn1_h2_reg')]
 
 
-class NN2lhModelWithFiltersAsDeatures(TFRoiBasedModel):
+class NN2lhModelWithFiltersAsFeatures(TFRoiBasedModel):
 
     hl1_size = 50
     hl2_size = 50
     input_size = NUM_FEATURES + NUM_SPATIAL_FILTERS
 
     def __init__(self, tasks):
-        super(NN2lhModelWithFiltersAsDeatures, self).__init__(tasks)
+        super(NN2lhModelWithFiltersAsFeatures, self).__init__(tasks)
 
     def load_weights(self):
         for task in self.tasks:
@@ -265,8 +267,8 @@ class NN2lhModelWithFiltersAsDeatures(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-        regression_with_two_hidden_layers_build(input_dim= NN2lhModelWithFiltersAsDeatures.input_size, output_dim=1, scope_name='nn1_h2_reg_fsf',
-                                                layer1_size=NN2lhModelWithFiltersAsDeatures.hl1_size, layer2_size=NN2lhModelWithFiltersAsDeatures.hl2_size)
+        regression_with_two_hidden_layers_build(input_dim= NN2lhModelWithFiltersAsFeatures.input_size, output_dim=1, scope_name='nn1_h2_reg_fsf',
+                                                layer1_size=NN2lhModelWithFiltersAsFeatures.hl1_size, layer2_size=NN2lhModelWithFiltersAsFeatures.hl2_size)
         return x, y_pred
 
     def get_trainable_variables(self):
@@ -308,6 +310,65 @@ class TFLinear(TFRoiBasedModel):
         subject_features = demean_and_normalize(subject_features)
         return add_ones_column(subject_features)
 
+
+class TFLinearAveraged(TFRoiBasedModel):
+    def __init__(self, tasks):
+        super(TFLinearAveraged, self).__init__(tasks)
+
+    def load_weights(self):
+        for task in self.tasks:
+            weights_path = os.path.join(definitions.LINEAR_WEIGHTS_DIR, 'averaged_weights_70s',
+                                        'linear_weights_{}.pkl'.format(
+                                            task.full_name))
+            weights = pickle.load(open(weights_path, 'rb'))
+
+            self._weights[task] = {i : [weights[:,i:i+1]] for i in range(np.size(weights, axis=1)) if i!=2}
+
+    def get_placeholders(self):
+        x, y, y_pred = \
+            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg')
+        return x, y_pred
+
+    def get_trainable_variables(self):
+        return [v for v in tf.trainable_variables() if v in
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg')][:1]
+
+    def preprocess_features(self, subject_features):
+        subject_features = np.transpose(subject_features)
+        subject_features = demean_and_normalize(subject_features)
+        return add_ones_column(subject_features)
+
+
+class TFLinearFSF(TFRoiBasedModel):
+    input_size = NUM_FEATURES + NUM_SPATIAL_FILTERS
+
+    def __init__(self, tasks):
+        super(TFLinearFSF, self).__init__(tasks)
+
+    def load_weights(self):
+        for task in self.tasks:
+            weights_path = os.path.join(definitions.LINEAR_WEIGHTS_DIR, 'learned_by_roi_filters_as_features70s',
+                                        'linear_weights_fsf_{}.pkl'.format(
+                                            task.full_name))
+            weights = pickle.load(open(weights_path, 'rb'))
+
+            self._weights[task] = {i : [weights[:,i:i+1]] for i in range(np.size(weights, axis=1)) if i!=2}
+
+    def get_placeholders(self):
+        x, y, y_pred = \
+            linear_regression_build(input_dim=NUM_FEATURES+1+ NUM_SPATIAL_FILTERS, output_dim=1, scope_name='lin_reg')
+        return x, y_pred
+
+    def get_trainable_variables(self):
+        return [v for v in tf.trainable_variables() if v in
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg')][:1]
+
+
+    def preprocess_features(self, subject_features):
+        subject_features = np.transpose(subject_features)
+        subject_features = demean_and_normalize(subject_features)
+        subject_features = np.concatenate((subject_features, self.spatial_filters_raw), axis = 1)
+        return add_ones_column(subject_features)
 
 class FeatureExtractor:
 
@@ -365,6 +426,21 @@ class FeatureExtractor:
         save_to_dtseries(subject.features_path, bm, features_map)
         return features_map, bm
 
+
+available_models = {
+    'Linear by ROI averaged betas': TFLinearAveraged,
+    'Linear by ROI': TFLinear,
+    'Linear by ROI with group connectivity features': TFLinearFSF,
+    'MLP by ROI' : NN2lhModel,
+    'MLP by ROI with group connectivity features' : NN2lhModelWithFiltersAsFeatures
+}
+
+def model_factory(model_name, tasks):
+    if model_name not in available_models:
+        raise ValueError("There is no prediction model named {}".format(model_name))
+    my_model_class = available_models[model_name]
+    my_model = my_model_class(tasks)
+    return my_model
 
 
 

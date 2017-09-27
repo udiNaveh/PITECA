@@ -1,11 +1,13 @@
 from PyQt5.QtCore import Qt
 
 from GUI.popups.predict_working_dlg_controller import PredictWorkingDlg
-from model.models import LinearModel, TFRoiBasedModel, NN2lhModel, TFLinear, NN2lhModelWithFiltersAsDeatures
+from model.models import model_factory, IModel
 from sharedutils.constants import *
 from sharedutils.dialog_utils import *
 from sharedutils.subject import create_subjects
 
+
+MODEL_NAME = "MLP by ROI with group connectivity features" # todo change
 
 class PredictTabModel:
     def __init__(self, input_files_str, output_dir, tasks):
@@ -45,7 +47,7 @@ class PredictTabModel:
 
     def run_prediction_flow(self, ui):
         # Setup
-        self.prediction_model = TFLinear(self.tasks)
+        self.prediction_model = model_factory(MODEL_NAME, self.tasks)
         self.__prepare_subjects()
         if len(self.subjects) > MAX_SUBJECTS:
             inform_user("Too many files to process. Maximum number is 25 files.")

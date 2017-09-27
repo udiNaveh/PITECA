@@ -2,10 +2,16 @@ from sharedutils.io_utils import *
 from sharedutils.subject import *
 from sharedutils.linalg_utils import *
 from sharedutils.cmd_utils import run_wb_view, show_maps_in_wb_view
+from model.models import IModel
 import time
 import os
+import sys
+import inspect
+import pkgutil
 
+import ast
 import definitions
+import importlib.util
 
 from misc.model_hyperparams import *
 
@@ -85,19 +91,46 @@ def compare_ciftis(cifti1, cifti2, filters=None):
    # 'features_rfMRI_REST1_LR_Atlas_MSMAll_hp2000_clean.dtseries.nii'
 #r'C:\Users\ASUS\Dropbox\PITECA\Code\MATLAB\Features_firstSubj_firstSession.mat'
 
-def check():
-    ica_both_lowdim, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
-    spatial_filters_raw, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
-    spatial_filters_raw = np.transpose(spatial_filters_raw[:, STANDART_BM.CORTEX])
-    soft_filters = softmax((spatial_filters_raw).astype(float) * TEMPERATURE)
-    soft_filters[soft_filters < FILTERS_EPSILON] = 0.0
-    soft_filters[:, 2] = 0
-    soft_filters /= np.reshape(np.sum(soft_filters, axis=1), [STANDART_BM.N_CORTEX, 1])
-    f1 = r'D:\Projects\PITECA\Data_for_testing\predictions_nn\LANGUAGE\MATH_STORY\000071_LANGUAGE_MATH_STORY_predicted.dtseries.nii'
-    f2 = r'D:\Projects\PITECA\Data_for_testing\predictions_nn\temp_071_LANGUAGE_MATH_STORY(2).dtseries.nii'
-    compare_ciftis(f1,f2, soft_filters)
+def get_classes_from_file(file_path):
+    if not str.endswith(file_path, '.py'):
+        return []
+
+
+
+
+def show_info(functionNode):
+    print("Function name:", functionNode.name)
+    print("Args:")
+    for arg in functionNode.args.args:
+        #import pdb; pdb.set_trace()
+        print("\tParameter name:", arg.arg)
+
+def do_show_info():
+    filename = os.path.join(definitions.CODE_DIR, 'model', 'models.py')
+    with open(filename) as file:
+        node = ast.parse(file.read())
+
+    functions = [n for n in node.body if isinstance(n, ast.FunctionDef)]
+    classes = [n for n in node.body if isinstance(n, ast.ClassDef)]
+
+    for function in functions:
+        show_info(function)
+
+    for class_ in classes:
+        print("Class name:", class_.name)
+        print("Class bases:", class_.bases)
+        methods = [n for n in class_.body if isinstance(n, ast.FunctionDef)]
+        for method in methods:
+            show_info(method)
+
+def xxx():
+    location_path = os.path.join(definitions.CODE_DIR, 'model')
+
+    spec = importlib.util.spec_from_file_location('models.py', location=location_path)
+    foo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(foo)
+    foo.MyClass()
+
 
 if __name__ == "__main__":
-    #run_wb_view([])
-    cifti_path = r'C:\Users\ASUS\PycharmProjects\PITECA\Data\Tasks\000001_MOTOR_T.dtseries.nii'
-    show_maps_in_wb_view(cifti_path)
+    xxx()
