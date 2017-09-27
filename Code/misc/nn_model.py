@@ -19,7 +19,7 @@ from misc.model_hyperparams import HL1_SIZE, HL2_SIZE, LEARNING_RATE
 
 
 
-PRINT_DURING_LEARNING = False
+PRINT_DURING_LEARNING = True
 
 
 def linear_regression_build(input_dim, output_dim, scope_name):
@@ -78,19 +78,20 @@ def regression_with_one_hidden_layer_build(input_dim, output_dim):
     return x, y, y_pred
 
 
-def regression_with_two_hidden_layers_build(input_dim, output_dim, scope_name):
+def regression_with_two_hidden_layers_build(input_dim, output_dim, scope_name, layer1_size = HL1_SIZE,
+                                            layer2_size = HL2_SIZE):
 
     x = tf.placeholder(tf.float32, shape=(None, input_dim), name='x')
     y = tf.placeholder(tf.float32, shape=(None, output_dim), name='y')
 
     with tf.variable_scope(scope_name) as scope: # nn1_h2_reg
-        w1 = tf.get_variable("w1", shape=[input_dim, HL1_SIZE],
+        w1 = tf.get_variable("w1", shape=[input_dim, layer1_size],
                              initializer=tf.contrib.layers.xavier_initializer())
-        b1 = tf.get_variable("b1", shape=[HL1_SIZE],
+        b1 = tf.get_variable("b1", shape=[layer1_size],
                              initializer=tf.contrib.layers.xavier_initializer())
-        w2 = tf.get_variable('w2', shape = [HL1_SIZE, HL2_SIZE], initializer=tf.contrib.layers.xavier_initializer())
-        b2 = tf.get_variable('b2', shape = [HL2_SIZE], initializer=tf.contrib.layers.xavier_initializer())
-        w3 = tf.get_variable('w3', shape = [HL2_SIZE, output_dim], initializer=tf.contrib.layers.xavier_initializer())
+        w2 = tf.get_variable('w2', shape = [layer1_size, layer2_size], initializer=tf.contrib.layers.xavier_initializer())
+        b2 = tf.get_variable('b2', shape = [layer2_size], initializer=tf.contrib.layers.xavier_initializer())
+        w3 = tf.get_variable('w3', shape = [layer2_size, output_dim], initializer=tf.contrib.layers.xavier_initializer())
         b_output = tf.get_variable('b_output', shape=[output_dim],
                         initializer=tf.contrib.layers.xavier_initializer())
 
@@ -152,7 +153,6 @@ def train_model(tensors, loss, training, validation, max_epochs, batch_size, sco
                     break
 
     return trained_variables.get_best_weights()
-
 
 def predict_from_model(tensors, features, saved_weights, scope_name):
 
