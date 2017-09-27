@@ -8,6 +8,7 @@ from GUI.popups import analysis_working_dlg_controller
 from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
 from GUI.graphics import graphics
 from definitions import CANONICAL_CIFTI_PATH, ANALYSIS_DIR
+import definitions
 from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG, MAX_SUBJECTS
 from GUI.settings_controller import get_analysis_results_folder
 
@@ -100,10 +101,12 @@ class AnalyzeController:
         self.ui.taskComboBox.addItems([task.name for task in domain.value])
 
     def onPredictedInputBrowseButtonClicked(self):
-        dialog_utils.browse_files(self.ui.selectPredictedLineEdit)
+        dir = definitions.DATA_DIR
+        dialog_utils.browse_files(self.ui.selectPredictedLineEdit, dir)
 
     def onActualInputBrowseButtonClicked(self):
-        dialog_utils.browse_files(self.ui.addActualLineEdit)
+        dir = definitions.ROOT_DIR
+        dialog_utils.browse_files(self.ui.addActualLineEdit, dir)
 
     def onRunAnalysisButtonClicked(self):
         predicted_files_str = self.ui.selectPredictedLineEdit.text()

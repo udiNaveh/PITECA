@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets, QtCore
 from GUI.predict_model import PredictTabModel
 from sharedutils.constants import Domain, Task # TODO: change this to import constants
 from sharedutils import general_utils, dialog_utils
+import definitions
 
 
 class PredictController:
@@ -14,7 +15,8 @@ class PredictController:
         self.ui = ui
 
     def onBrowseInputFilesClicked(self):
-        dialog_utils.browse_files(self.ui.inputFilesLineEdit)
+        dir = definitions.ROOT_DIR
+        dialog_utils.browse_files(self.ui.inputFilesLineEdit, dir)
 
     def findCheckedTasks(self):
 
