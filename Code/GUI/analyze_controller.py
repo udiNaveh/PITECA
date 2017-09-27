@@ -8,7 +8,8 @@ from GUI.popups import analysis_working_dlg_controller
 from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
 from GUI.graphics import graphics
 from definitions import CANONICAL_CIFTI_PATH, ANALYSIS_DIR
-from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG
+import definitions
+from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG, MAX_SUBJECTS
 from GUI.settings_controller import get_analysis_results_folder
 
 class AnalyzeController:
@@ -100,15 +101,28 @@ class AnalyzeController:
         self.ui.taskComboBox.addItems([task.name for task in domain.value])
 
     def onPredictedInputBrowseButtonClicked(self):
-        dialog_utils.browse_files(self.ui.selectPredictedLineEdit)
+        dir = definitions.DATA_DIR
+        dialog_utils.browse_files(self.ui.selectPredictedLineEdit, dir)
 
     def onActualInputBrowseButtonClicked(self):
-        dialog_utils.browse_files(self.ui.addActualLineEdit)
+        dir = definitions.ROOT_DIR
+        dialog_utils.browse_files(self.ui.addActualLineEdit, dir)
 
     def onRunAnalysisButtonClicked(self):
         predicted_files_str = self.ui.selectPredictedLineEdit.text()
+        if not predicted_files_str:
+            dialog_utils.print_error(PROVIDE_INPUT_MSG)
+            return
+
         self.task = constants.Task[self.ui.taskComboBox.currentText()]
         subjects = self.__create_subjects(self.task, predicted_files_str)
+
+        if not subjects:
+            return
+
+        if len(subjects) > MAX_SUBJECTS:
+            dialog_utils.inform_user("Too many files to process. Maximum number is 25 files.")
+            return
 
         # Check all input provided
         if not predicted_files_str:
@@ -150,6 +164,10 @@ class AnalyzeController:
         self.task = constants.Task[self.ui.taskComboBox.currentText()]
         subjects = self.__create_subjects(self.task, predicted_files_str, actual_files_str)
         if not subjects:
+            return
+
+        if len(subjects) > MAX_SUBJECTS:
+            dialog_utils.inform_user("Too many files to process. Maximum number is 25 files.")
             return
 
         # Prepare additional analysis parameters

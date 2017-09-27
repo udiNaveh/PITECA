@@ -1,6 +1,7 @@
 from GUI.popups.question_dlg import QuestionDialog
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt
+import definitions
 import os
 
 '''
@@ -28,33 +29,41 @@ def print_error(msg):
     :param msg: The error to be printed for the user.
     '''
 
-    error_dialog = QtWidgets.QErrorMessage()
+    error_dialog = QtWidgets.QMessageBox()
     error_dialog.setWindowModality(Qt.ApplicationModal)
-    error_dialog.showMessage(msg)
+    error_dialog.setWindowIcon(QtGui.QIcon(definitions.PITECA_ICON_PATH))
+    error_dialog.setWindowTitle("Error")
+    error_dialog.setText(msg)
+    error_dialog.setFixedWidth(10000000)
+    error_dialog.addButton(QtWidgets.QMessageBox.Ok)
     error_dialog.exec_()
 
 def inform_user(msg):
     msg_box = QtWidgets.QMessageBox()
+    msg_box.setWindowModality(Qt.ApplicationModal)
+    msg_box.setWindowIcon(QtGui.QIcon(definitions.PITECA_ICON_PATH))
+    msg_box.setWindowTitle("Message")
+    msg_box.setMinimumSize(10000000, 0)
     msg_box.setText(msg)
     msg_box.addButton(QtWidgets.QMessageBox.Ok)
     msg_box.exec_()
 
-def browse_files(line_edit):
+def browse_files(line_edit, dir):
     dlg = QtWidgets.QFileDialog()
     filters = "CIFTI (*.dtseries.nii)"
-    files = dlg.getOpenFileNames(None, 'Select files', os.getcwd(), filters)[0]
+    files = dlg.getOpenFileNames(None, 'Select Files', dir, filters)[0]
     if files:
         line_edit.setText(str(files))
         # TODO: consider editing scenarios
 
 
-def browse_dir(line_edit):
-    dir = QtWidgets.QFileDialog.getExistingDirectory()
+def browse_dir(line_edit, dir):
+    dir = QtWidgets.QFileDialog.getExistingDirectory(None, 'Select Folder', dir)
     if dir:
         line_edit.setText(dir)
         # TODO: consider editing scenarios
     return dir
 
 
-def save_file(filters):
-    return QtWidgets.QFileDialog.getSaveFileName(None, 'Select files', os.getcwd(), filters)
+def save_file(filters, dir):
+    return QtWidgets.QFileDialog.getSaveFileName(None, 'Select Files', dir, filters)

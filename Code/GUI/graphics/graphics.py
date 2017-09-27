@@ -51,11 +51,6 @@ class GraphicDlg(QDialog):
         self.layout.addWidget(self.toolbar)
         self.layout.addWidget(self.canvas)
 
-        if analysis_task == AnalysisTask.Analysis_Correlations or analysis_task == AnalysisTask.Compare_Correlations:
-            # a label to show correlation
-            self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
-            self.layout.addWidget(self.correlation_label)
-
         self.layout.addWidget(self.save_button)
         self.setLayout(self.layout)
 
@@ -77,6 +72,14 @@ class GraphicDlg(QDialog):
         elif analysis_task == AnalysisTask.Compare_Correlations:
             self.subj_subj_data = data # 2 dims
             self.plot_heatmap()
+
+        if analysis_task == AnalysisTask.Analysis_Correlations or analysis_task == AnalysisTask.Compare_Correlations:
+            # a label to show correlation
+            self.mean_correlation_label = QtWidgets.QLabel('Mean correlation: {:01.2f}'.format(np.mean(self.subj_subj_data)))
+            self.layout.addWidget(self.mean_correlation_label)
+            self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
+            self.layout.addWidget(self.correlation_label)
+
         elif analysis_task == AnalysisTask.Compare_Significance:
             # self.data is 2 dimensional array
             self.plot_barchart()
@@ -129,15 +132,15 @@ class GraphicDlg(QDialog):
                                            .format(correlation, between1, between2))
 
     def save_data(self):
-        name, extension = dialog_utils.save_file('*.mat ;; *.numpy')
+        name, extension = dialog_utils.save_file('*.mat ;; *.npy')
         if name == '':
             return
         extension = extension.split('.')[1]
 
         if extension == 'mat':
             sio.savemat(name, {'data': self.data})
-        elif extension == 'numpy':
-            self.data.tofile(name)
+        elif extension == 'npy':
+            np.save(name, np.asarray(self.data))
         else:
             raise Exception('File extension is not supported.')
 
