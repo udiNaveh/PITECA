@@ -13,11 +13,6 @@ def get_id(absolute_path):
         return None
 
 
-def get_output_path(output_dir, id):
-    filename = id + PREDICT_OUTPUT_EXT + DTSERIES_EXT
-    return os.path.join(output_dir, filename)
-
-
 def get_features_path(id):
     filename = id + FEATS_EXT + DTSERIES_EXT
     return os.path.join(get_features_folder(), filename)
@@ -31,3 +26,23 @@ def extract_filenames(input_files_str):
         end = filename.rindex("'")
         pathes.append(filename[start+1:end])
     return pathes
+
+
+def generate_file_name(outputpath, task, file_prefix):
+    domain_outputpath = os.path.join(outputpath, task.domain().name)
+    if not os.path.isdir(domain_outputpath):
+        os.mkdir(domain_outputpath)
+    task_outputpath = os.path.join(domain_outputpath, task.name)
+    if not os.path.isdir(task_outputpath):
+        os.mkdir(task_outputpath)
+    return os.path.join(task_outputpath, file_prefix)
+
+
+# handle existing files with the same name
+def generate_final_filename(filename):
+    if not os.path.isfile(filename + DTSERIES_EXT):
+        return filename
+    i = 1
+    while os.path.isfile(filename + "({})".format(i)):
+        i += 1
+    return filename + "({})".format(i)
