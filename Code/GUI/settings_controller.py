@@ -6,6 +6,7 @@ from sharedutils import dialog_utils
 features_folder = None
 prediction_outputs_folder = None
 analysis_results_folder = None
+model = None
 
 def get_features_folder():
     return features_folder
@@ -16,13 +17,11 @@ def get_prediction_outputs_folder():
 def get_analysis_results_folder():
     return analysis_results_folder
 
+def get_model():
+    return model
+
 
 class SettingsController:
-
-    default_values = { 'FeaturesFolder' : definitions.DEFAULT_EXTRACTED_FEATURES_DIR,
-      'PredictionOutputsFolder' : definitions.DEFAULT_PREDICTIONS_DIR,
-      'AnalysisOutputFolder' :  definitions.DEFAULT_ANLYSIS_DIR
-    }
 
     def __init__(self, ui):
         self.ui = ui
@@ -30,13 +29,19 @@ class SettingsController:
         global features_folder
         global prediction_outputs_folder
         global analysis_results_folder
+        global model
 
         # init current settings
         self.config = configparser.ConfigParser()
         self.config.read(definitions.SETTINGS_PATH)
 
+        default_values = {'FeaturesFolder': definitions.DEFAULT_EXTRACTED_FEATURES_DIR,
+                          'PredictionOutputsFolder': definitions.DEFAULT_PREDICTIONS_DIR,
+                          'AnalysisOutputFolder': definitions.DEFAULT_ANLYSIS_DIR,
+                          'Model': self.ui.ModelComboBox.currentText()
+                          }
 
-        for key, value in SettingsController.default_values.items():
+        for key, value in default_values.items():
             if key not in self.config['SETTINGS'] or \
                     not self.config['SETTINGS'][key]:
                 self.config.set('SETTINGS', key, value)
@@ -44,6 +49,7 @@ class SettingsController:
         features_folder = self.config['SETTINGS']['FeaturesFolder']
         prediction_outputs_folder = self.config['SETTINGS']['PredictionOutputsFolder']
         analysis_results_folder = self.config['SETTINGS']['AnalysisOutputFolder']
+        model = self.config['SETTINGS']['Model']
 
         self.ui.featuresFolderLineEdit.setText(features_folder)
         self.ui.predictionOutputFolderLineEdit.setText(prediction_outputs_folder)
@@ -76,5 +82,13 @@ class SettingsController:
         self.config.set('SETTINGS', 'AnalysisOutputFolder', analysis_results_folder)
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)
+
+    def set_model(self):
+        global model
+        key = self.ui.ModelComboBox.currentText()
+        self.config.set('SETTINGS', 'Model', key)
+        with open(definitions.SETTINGS_PATH, 'w') as configfile:
+            self.config.write(configfile)
+
 
     # TODO: add a button to reset to default settings

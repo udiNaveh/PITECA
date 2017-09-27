@@ -5,9 +5,7 @@ from model.models import model_factory, IModel
 from sharedutils.constants import *
 from sharedutils.dialog_utils import *
 from sharedutils.subject import create_subjects
-
-
-MODEL_NAME = "MLP by ROI with group connectivity features" # todo change
+from GUI import settings_controller
 
 class PredictTabModel:
     def __init__(self, input_files_str, output_dir, tasks):
@@ -47,6 +45,7 @@ class PredictTabModel:
 
     def run_prediction_flow(self, ui):
         # Setup
+        MODEL_NAME = settings_controller.get_model()
         self.prediction_model = model_factory(MODEL_NAME, self.tasks)
         self.__prepare_subjects()
         if len(self.subjects) > MAX_SUBJECTS:

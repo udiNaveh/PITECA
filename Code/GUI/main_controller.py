@@ -62,6 +62,7 @@ def setup_functionality(ui):
     ui.featuresFolderButton.clicked.connect(lambda: settingsController.set_features_folder())
     ui.predictionOutputFolderButton.clicked.connect(lambda: settingsController.set_output_predictions_folder())
     ui.analysisOutputFolderButton.clicked.connect(lambda: settingsController.set_output_analysis_folder())
+    ui.ModelComboBox.currentIndexChanged.connect(lambda: settingsController.set_model())
 
 def piteca_excepthook(exctype, value, tb):
     if not gb.should_exit_on_error:
