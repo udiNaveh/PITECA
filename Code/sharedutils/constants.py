@@ -112,8 +112,11 @@ DTSERIES_EXT = ".dtseries.nii"
 FEATS_EXT = "_features"
 PREDICT_OUTPUT_EXT = "_predicted"
 
+# Numbers
+MAX_SUBJECTS = 25
+
 # Dialogs
-QUESTION_TITLE = "PITECA - Dialog"
+QUESTION_TITLE = "Question"
 PROVIDE_INPUT_MSG = "Please provide input."
 SELECT_ACTION_MSG = "Please select an action."
 

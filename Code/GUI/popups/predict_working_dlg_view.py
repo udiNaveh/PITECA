@@ -7,10 +7,14 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import definitions
 
 class Ui_PredictWorkingDlg(object):
     def setupUi(self, PredictWorkingDlg):
         PredictWorkingDlg.setObjectName("PredictWorkingDlg")
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(definitions.PITECA_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        PredictWorkingDlg.setWindowIcon(icon)
         PredictWorkingDlg.resize(234, 64)
         self.verticalLayout = QtWidgets.QVBoxLayout(PredictWorkingDlg)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -28,7 +32,7 @@ class Ui_PredictWorkingDlg(object):
 
     def retranslateUi(self, PredictWorkingDlg):
         _translate = QtCore.QCoreApplication.translate
-        PredictWorkingDlg.setWindowTitle(_translate("PredictWorkingDlg", "Dialog"))
+        PredictWorkingDlg.setWindowTitle(_translate("PredictWorkingDlg", "Prediction"))
 
 
 if __name__ == "__main__":
