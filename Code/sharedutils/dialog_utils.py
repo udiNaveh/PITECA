@@ -48,22 +48,22 @@ def inform_user(msg):
     msg_box.addButton(QtWidgets.QMessageBox.Ok)
     msg_box.exec_()
 
-def browse_files(line_edit):
+def browse_files(line_edit, dir):
     dlg = QtWidgets.QFileDialog()
     filters = "CIFTI (*.dtseries.nii)"
-    files = dlg.getOpenFileNames(None, 'Select files', os.getcwd(), filters)[0]
+    files = dlg.getOpenFileNames(None, 'Select Files', dir, filters)[0]
     if files:
         line_edit.setText(str(files))
         # TODO: consider editing scenarios
 
 
-def browse_dir(line_edit):
-    dir = QtWidgets.QFileDialog.getExistingDirectory()
+def browse_dir(line_edit, dir):
+    dir = QtWidgets.QFileDialog.getExistingDirectory(None, 'Select Folder', dir)
     if dir:
         line_edit.setText(dir)
         # TODO: consider editing scenarios
     return dir
 
 
-def save_file(filters):
-    return QtWidgets.QFileDialog.getSaveFileName(None, 'Select files', os.getcwd(), filters)
+def save_file(filters, dir):
+    return QtWidgets.QFileDialog.getSaveFileName(None, 'Select Files', dir, filters)

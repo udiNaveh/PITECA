@@ -55,21 +55,24 @@ class SettingsController:
 
     def set_features_folder(self):
         global features_folder
-        features_folder = dialog_utils.browse_dir(self.ui.featuresFolderLineEdit)
+        dir = features_folder if features_folder is not None else definitions.ROOT_DIR
+        features_folder = dialog_utils.browse_dir(self.ui.featuresFolderLineEdit, dir)
         self.config.set('SETTINGS', 'FeaturesFolder', features_folder)
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)
 
     def set_output_predictions_folder(self):
         global prediction_outputs_folder
-        prediction_outputs_folder = dialog_utils.browse_dir(self.ui.predictionOutputFolderLineEdit)
+        dir = prediction_outputs_folder if prediction_outputs_folder is not None else definitions.ROOT_DIR
+        prediction_outputs_folder = dialog_utils.browse_dir(self.ui.predictionOutputFolderLineEdit, dir)
         self.config.set('SETTINGS', 'PredictionOutputsFolder', prediction_outputs_folder)
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)
 
     def set_output_analysis_folder(self):
         global analysis_results_folder
-        analysis_results_folder = dialog_utils.browse_dir(self.ui.analysisOutputFolderLineEdit)
+        dir = analysis_results_folder if analysis_results_folder is not None else definitions.ROOT_DIR
+        analysis_results_folder = dialog_utils.browse_dir(self.ui.analysisOutputFolderLineEdit, dir)
         self.config.set('SETTINGS', 'AnalysisOutputFolder', analysis_results_folder)
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)
