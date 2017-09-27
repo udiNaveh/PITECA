@@ -24,17 +24,8 @@ class Subject:
         return join_path(self.output_dir, "{0}_{1}_{2}_predicted".format(self.subject_id, d.name, task.name))
 
     def get_predicted_task_filepath(self, task):
-        domain_path = join_path(self.output_dir, task.domain().name)
-        if not os.path.exists(domain_path):
-            os.mkdir(domain_path)
-        task_path = join_path(domain_path, task.name)
-        if not os.path.exists(task_path):
-            os.mkdir(task_path)
-        return join_path(task_path, "{0}_{1}_predicted".format(self.subject_id, task.full_name))
-
-    def get_predicted_actual_overlap_task_filepath(self, task, outputdir):
-        return join_path(outputdir, "{0}_{1}_predicted_actual_overlap".format(self.subject_id,task.full_name))
-
+        filename = path_utils.generate_file_name(self.output_dir, task, "{0}_{1}_predicted".format(self.subject_id, task.full_name))
+        return path_utils.generate_final_filename(filename)
 
 # TODO: make order in those functions and remove their documentation
 

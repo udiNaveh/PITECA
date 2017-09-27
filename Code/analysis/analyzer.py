@@ -72,9 +72,7 @@ def get_prediction_statistic(subjects, task, statfunc, outputpath = None):
     # need to verify that all arrays are of shape 1x59282
     res = statfunc(prediction_arrays)
     if outputpath is not None:
-        print(outputpath)
         filename = generate_file_name(outputpath, task, 'mean_of_predictions')
-        print(generate_final_filename(filename))
         save_to_dtseries(generate_final_filename(filename), bm, res)
     return res
 
@@ -225,9 +223,10 @@ def get_significance_overlap_maps_for_subjects(subjects, task, outputdir):
                                                                         all_maps[s].actual[:,STANDART_BM.CORTEX])
         iou_positive.append(iou_pos)
         iou_negative.append(iou_neg)
-        save_to_dtseries(s.get_predicted_actual_overlap_task_filepath(task, outputdir), bm, map)
+        filename = generate_file_name(outputdir, task, "{0}_predicted_actual_overlap".format(s.subject_id))
+        save_to_dtseries(generate_final_filename(filename), bm, map)
 
-    return subjects, iou_positive, iou_negative
+    return [iou_positive, iou_negative]
 
 
 
