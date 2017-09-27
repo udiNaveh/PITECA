@@ -67,17 +67,18 @@ def load_data():
     all_tasks = all_tasks[:,:, :STANDART_BM.N_CORTEX]
     return all_features_normalized, all_tasks, soft_filters, hard_filters, spatial_filters_raw # TODO
 
-all_features_normalized, all_tasks, soft_filters, hard_filters, spatial_filters_raw= load_data()
+all_features_normalized, all_tasks, soft_filters, hard_filters, spatial_filters_raw = load_data()
 all_tasks_normalized = demean_and_normalize(all_tasks, axis=2)
+
+
 n_filters = np.size(hard_filters, axis=1)
 saptial_filters_raw = demean_and_normalize(spatial_filters_raw, axis=0)
 n_additional_features = n_filters if USE_RAW_FILTERS_AS_FEATURES else 0
 
-standart_cortex_bm = load_standart_cortex_bm()
 
 nn_scope_name = 'nn1_h2_reg'
 tensors_two_hidden_layer_nn =\
-    regression_with_two_hidden_layers_build(NUM_FEATURES, 1, nn_scope_name)
+    regression_with_two_hidden_layers_build(NUM_FEATURES + n_additional_features, 1, nn_scope_name)
 x, y, y_pred = tensors_two_hidden_layer_nn
 loss_function = build_loss(y, y_pred, nn_scope_name, REG_LAMBDA, HUBER_DELTA)
 
@@ -167,6 +168,53 @@ def train_by_roi_and_task(subjects_partition, tasks, spatial_filters, tensors, s
     return
 
 
+def train_tf_by_task(subjects_partition, tasks, tensors, scope_name):
+
+    subjects_training, subjects_validation, subjects_test = subjects_partition
+    n_filters_  = n_filters
+    for task in tasks:
+        print(task.full_name)
+        task_idx = TASKS[task]
+        betas_task = np.zeros([NUM_FEATURES+n_additional_features+1, n_filters_])
+        task_values = all_tasks_normalized[task_idx:task_idx + 1, :, :]
+        learned_weights = {}
+        ind = soft_filters[: STANDART_BM.N_CORTEX, 0] <10
+
+        roi_feats, roi_tasks = get_selected_features_and_tasks(all_features_normalized, ind, task_values, subjects_training)
+        roi_feats_val, roi_tasks_val = get_selected_features_and_tasks(all_features_normalized, ind, task_values, subjects_validation)
+        training = (roi_feats, roi_tasks.transpose())
+        validation = (roi_feats_val, roi_tasks_val.transpose())
+
+        print("train : M = {0:.3f}, SD = {1:.3f}".format( np.mean(training[1]), np.std(training[1])))
+        # print("val: M = {0:.3f}, SD = {1:.3f}".format(np.mean(validation[1]), np.std(validation[1])))
+
+        _, weights = train_model(tensors, loss_function, training, validation, max_epochs=MAX_EPOCHS_ALL,
+                                 batch_size=BATCH_SIZE_ALL,
+                                 scope_name=scope_name)
+
+
+        predicted_val_tf = predict_from_model(tensors, roi_feats_val, weights, scope_name)
+        predicted_train_tf = predict_from_model(tensors, roi_feats, weights, scope_name)
+        r_tf_train = np.corrcoef(np.squeeze(predicted_train_tf), np.squeeze(training[1]))[0, 1]
+        r_tf_val = np.corrcoef(np.squeeze(predicted_val_tf), np.squeeze(validation[1]))[0, 1]
+
+        # print("training loss pinv = {0:.3f}".format(loss))
+        # print("training loss nn = {0:.3f}".format(loss_tf_train))
+        # print("validation loss pinv = {0:.3f}".format(loss_val))
+        # print("validation loss nn = {0:.3f}".format(loss_tf_val))
+        print("training corr nn = {0:.3f}".format(r_tf_train))
+        print("validation corr nn = {0:.3f}".format(r_tf_val))
+
+
+
+
+        pickle.dump(weights, safe_open(os.path.join(NN_WEIGHTS_PATH, "nnnnnn.pkl".
+                                                            format(task.full_name)), 'wb'))
+
+
+        print("saved betas {}".format(task.name))
+    return
+
 def train_linear_original(subjects_partition, spatial_filters):
 
     subjects_training, subjects_validation, subjects_test = subjects_partition
@@ -191,6 +239,25 @@ def train_linear_original(subjects_partition, spatial_filters):
                                                   "linear_weights_task{0}.pkl".format(task.name)), 'wb'))
     return
 
+def train_linear_averaged_betas_no_rois(subjects_partition):
+
+    subjects_training, subjects_validation, subjects_test = subjects_partition
+    betas = np.zeros([NUM_FEATURES+1+n_additional_features, len(TASKS)])
+    task_values = all_tasks_normalized[:, :, :]
+    learned_weights = {}
+    for s in subjects_training:
+        print(s.subject_id)
+        ind = all_features_normalized[:,0,0] != all_features_normalized[:,0,0] + 1
+        roi_feats, roi_tasks = get_selected_features_and_tasks(all_features_normalized, ind, task_values, [s])
+        learned_betas = np.linalg.pinv(add_ones_column(roi_feats)).dot(roi_tasks.transpose())
+        betas[:, :]+= learned_betas
+
+    betas /= len(subjects_training)
+    for task, task_idx in TASKS.items():
+        task_betas = betas[:,task_idx]
+        pickle.dump(task_betas, safe_open(os.path.join(LINEAR_BETAS_PATH,  "linear_weights_70_s_averaged_betas_no_roi",
+                                                  "linear_weights_{0}_fsf.npy".format(task.full_name)), 'wb'))
+    return
 
 
 def get_stats(predicted, actual):
@@ -382,6 +449,13 @@ def predict_by_roi(subject_feats, filters, saved_weights, tasks, prediction_func
     return subject_predictions
 
 
+def predict_linear(subject_feats, saved_weights, tasks):
+    subject_predictions = {}
+    for task in tasks:
+            weights = saved_weights[task]
+            subject_predictions[task] = np.matmul(subject_feats, weights)
+    return subject_predictions
+
 
 def run_regression():
     training_size = 70
@@ -399,24 +473,34 @@ def run_regression():
     #random.shuffle(subjects)
 
 
-    tasks_for_model = TASKS.keys()
+    tasks_for_model = [Task.MATH_STORY]
     subjects_training = subjects[:training_size]
     subjects_validation = subjects[training_size:]
     subjects_test = []
     partition = (subjects_training,subjects_validation, subjects_test)
 
+
     # train_by_roi_and_task(partition, tasks_for_model, hard_filters, tensors_two_hidden_layer_nn,
     #                       scope_name=nn_scope_name)
 
+    #train_tf_by_task(partition, tasks_for_model, tensors_two_hidden_layer_nn, scope_name=nn_scope_name)
+
+    # for task in tasks_for_model:
+    #     saved_betas_matrix = pickle.load(
+    #         open(os.path.join(LINEAR_BETAS_PATH, "linear_weights_70_s_2", "linear_weights_fsf_task{0}.pkl".
+    #                                                format(task.name)), 'rb'))
+    #     # saved_betas_matrix = pickle.load(
+    #     #     safe_open(os.path.join(LINEAR_BETAS_PATH, "linear_weights_70_s_averaged_betas",
+    #     #                             "linear_weights_task{0}.pkl".format(task.name)), 'rb'))
+    #     linear_betas_by_task[task] = {j : saved_betas_matrix[:,j] for j in range(np.size(saved_betas_matrix, axis=1))}
+
     linear_betas_by_task = {}
     for task in tasks_for_model:
-        saved_betas_matrix = pickle.load(
-            open(os.path.join(LINEAR_BETAS_PATH, "linear_weights_70_s_2", "linear_weights_fsf_task{0}.pkl".
-                                                   format(task.name)), 'rb'))
-        # saved_betas_matrix = pickle.load(
-        #     safe_open(os.path.join(LINEAR_BETAS_PATH, "linear_weights_70_s_averaged_betas",
-        #                             "linear_weights_task{0}.pkl".format(task.name)), 'rb'))
-        linear_betas_by_task[task] = {j : saved_betas_matrix[:,j] for j in range(np.size(saved_betas_matrix, axis=1))}
+        linear_betas_by_task [task] = np.load(os.path.join(LINEAR_BETAS_PATH, "linear_weights_70_s_averaged_betas_no_roi",
+                     "linear_weights_{0}_fsf.npy".format(task.full_name)))
+
+
+
 
     saved_weights_by_task = {}
     for task in tasks_for_model:
@@ -427,25 +511,33 @@ def run_regression():
             open(os.path.join(NN_WEIGHTS_PATH, "nn_2hl_no_roi_normalization_70s_weights_{0}_all_filters.pkl".
                               format(task.full_name)), 'rb'))
 
+    saved_weights_by_task_all_together = {}
+    weights = pickle.load(open(os.path.join(NN_WEIGHTS_PATH, "nnnnnn.pkl"), 'rb'))
+    saved_weights_by_task_all_together[Task.MATH_STORY] = {i : weights for i in range (50) if i!=2}
+
+
     get_subject_features = lambda s : get_subject_features_from_matrix(s)
     predict_subject_tasks_linear = lambda arr : predict_by_roi(
         arr, soft_filters, saved_weights=linear_betas_by_task, tasks = tasks_for_model, prediction_function =
         predict_from_linear_betas)
+
+    predict_subject_tasks_linear_simple = lambda arr : predict_linear(add_ones_column(arr), linear_betas_by_task, tasks_for_model)
+
     predict_from_nn_weights = lambda features, weights : \
         predict_from_model(tensors=tensors_two_hidden_layer_nn,
                        features=features,
                        saved_weights=weights,
                        scope_name = nn_scope_name)
     predict_subject_tasks_nn =  lambda arr : predict_by_roi(
-        arr, soft_filters, saved_weights=saved_weights_by_task, tasks = tasks_for_model, prediction_function =
+        arr, soft_filters, saved_weights=saved_weights_by_task_all_together, tasks = [Task.MATH_STORY], prediction_function =
         predict_from_nn_weights)
 
 #(subjects, tasks, features_getter, predictor, tasks_predicted, saved_pred =  None)
     # prediction = np.load(linear_pred_path)
     # get_correlations_for_subjects(subjects_validation, all_tasks_normalized,
-    #                               get_subject_features, predict_subject_tasks_linear, TASKS, prediction)
-    # get_correlations_for_subjects(subjects_validation, all_tasks,
-    #                               get_subject_features, predict_subject_tasks_nn,, TASKS, prediction)
+    #                               get_subject_features, predict_subject_tasks_linear_simple, TASKS)
+    get_correlations_for_subjects(subjects_validation, all_tasks,
+                                  get_subject_features, predict_subject_tasks_nn, [Task.MATH_STORY])
 
 
     return
