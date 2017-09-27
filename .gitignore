@@ -70,3 +70,4 @@ fabric.properties
 
 *.pyc
 .idea
+*settings.ini
