@@ -74,9 +74,11 @@ class GraphicDlg(QDialog):
             self.plot_heatmap()
 
         if analysis_task == AnalysisTask.Analysis_Correlations or analysis_task == AnalysisTask.Compare_Correlations:
+            if analysis_task == AnalysisTask.Compare_Correlations:
+                mean_of_diagonal = np.mean(np.diagonal(self.subj_subj_data))
+                self.mean_correlation_label = QtWidgets.QLabel('Mean correlation: {:01.2f}'.format(mean_of_diagonal))
+                self.layout.addWidget(self.mean_correlation_label)
             # a label to show correlation
-            self.mean_correlation_label = QtWidgets.QLabel('Mean correlation: {:01.2f}'.format(np.mean(self.subj_subj_data)))
-            self.layout.addWidget(self.mean_correlation_label)
             self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
             self.layout.addWidget(self.correlation_label)
 
@@ -162,7 +164,7 @@ class GraphicDlg(QDialog):
         subjects_by_subjects_ax.set_yticks(np.arange(len(self.subj_subj_data)) + 0.5)
         subjects_by_subjects_ax.set_yticklabels(self.ids, fontsize=self.font_size, rotation=35)
 
-        plt.subplots_adjust(top=0.83)
+        plt.subplots_adjust(top=0.84)
 
         # plot data
         from mpl_toolkits.axes_grid1 import make_axes_locatable
