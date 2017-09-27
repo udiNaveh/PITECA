@@ -15,7 +15,7 @@ class Ui_AnalysisWorkingDlg(object):
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(definitions.PITECA_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         Dialog.setWindowIcon(icon)
-        Dialog.resize(193, 94)
+        Dialog.resize(205, 90)
         self.label = QtWidgets.QLabel(Dialog)
         self.label.setGeometry(QtCore.QRect(40, 40, 91, 16))
         self.label.setObjectName("label")
