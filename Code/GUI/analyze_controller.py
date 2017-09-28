@@ -200,4 +200,3 @@ class AnalyzeController:
         thread.exception_occurred_sig.connect(lambda: self.__handle_unexpected_exception(dlg, thread))
         thread.start()
         # TODO: duplicated code with onAnalysisButtonClicked
-
