@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from sharedutils.constants import Domain, AVAILABLE_TASKS
 from definitions import PITECA_ICON_PATH
 from model import models
+from GUI.settings_controller import get_model
 
 class Ui_MainView(object):
     def setupUi(self, MainWindow):
@@ -194,7 +195,7 @@ class Ui_MainView(object):
                     contrastItem.setText(0, task.name)
             self.domainComboBox.addItem(domain.name)
         self.taskComboBox.addItems(task.name for task in Domain.EMOTION.value)
-        self.ModelComboBox.addItems(models.available_models.keys())
+        self.ModelComboBox.addItems(models.available_models_keys)
         """ End of Added manually """
 
         MainWindow.setWindowTitle(_translate("MainWindow", "PITECA"))

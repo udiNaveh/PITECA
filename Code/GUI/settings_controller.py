@@ -38,7 +38,7 @@ class SettingsController:
         default_values = {'FeaturesFolder': definitions.DEFAULT_EXTRACTED_FEATURES_DIR,
                           'PredictionOutputsFolder': definitions.DEFAULT_PREDICTIONS_DIR,
                           'AnalysisOutputFolder': definitions.DEFAULT_ANLYSIS_DIR,
-                          'Model': self.ui.ModelComboBox.currentText()
+                          'Model': definitions.DEFAULT_MODEL
                           }
 
         for key, value in default_values.items():
@@ -54,6 +54,7 @@ class SettingsController:
         self.ui.featuresFolderLineEdit.setText(features_folder)
         self.ui.predictionOutputFolderLineEdit.setText(prediction_outputs_folder)
         self.ui.analysisOutputFolderLineEdit.setText(analysis_results_folder)
+        self.ui.ModelComboBox.setCurrentText(model)
 
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)

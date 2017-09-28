@@ -28,11 +28,12 @@ class AnalyzeController:
         :return: a list of Subjects
         '''
         subjects = []
-
         predicted_files = path_utils.extract_filenames(predicted_files_str)
         for file in predicted_files:
             curr_subject = subject.Subject()
             curr_subject.subject_id = path_utils.get_id(file)
+            if curr_subject.subject_id == None:
+                return []
             curr_subject.predicted = {task: file}
             subjects.append(curr_subject)
 
@@ -52,6 +53,11 @@ class AnalyzeController:
                         subject for subject in subjects if subject.subject_id == path_utils.get_id(file))
                     match_subject.actual = {task: file}
 
+        # assert only unique subjects
+        ids = [subject.subject_id for subject in subjects]
+        if len(ids) != len(set(ids)):
+            dialog_utils.print_error("Duplicate subjects. Please make sure to have only unique subjects in Analysis")
+            return None
         return subjects
 
     def __handle_results(self, analysis_task, dlg, data, subjects):

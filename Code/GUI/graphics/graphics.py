@@ -8,6 +8,7 @@ import numpy as np
 import math
 import scipy.io as sio
 from textwrap import wrap
+import definitions
 
 from sharedutils import dialog_utils, constants
 from GUI.analyze_working_thread import AnalysisTask
@@ -134,7 +135,8 @@ class GraphicDlg(QDialog):
                                            .format(correlation, between1, between2))
 
     def save_data(self):
-        name, extension = dialog_utils.save_file('*.mat ;; *.npy')
+        dir = definitions.ANALYSIS_DIR
+        name, extension = dialog_utils.save_file('*.mat ;; *.npy', dir)
         if name == '':
             return
         extension = extension.split('.')[1]
