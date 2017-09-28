@@ -435,6 +435,9 @@ available_models = {
     'MLP by ROI with group connectivity features' : NN2lhModelWithFiltersAsFeatures
 }
 
+available_models_keys = list(available_models.keys())
+available_models_keys.sort()
+
 def model_factory(model_name, tasks):
     if model_name not in available_models:
         raise ValueError("There is no prediction model named {}".format(model_name))

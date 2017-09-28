@@ -33,3 +33,4 @@ DEFAULT_RIGHT_SURFACE_PATH = os.path.join(DATA_DIR, 'Surfaces', r'Q1-Q6_R440.R.m
 DEFAULT_EXTRACTED_FEATURES_DIR = os.path.join(DATA_DIR, 'ExtractedFeatures')
 DEFAULT_ANLYSIS_DIR = os.path.join(DATA_DIR, 'Analysis')
 DEFAULT_PREDICTIONS_DIR = os.path.join(DATA_DIR, 'Predictions')
+DEFAULT_MODEL = 'MLP by ROI'
