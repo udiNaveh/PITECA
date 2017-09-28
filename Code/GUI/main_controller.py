@@ -10,6 +10,7 @@ from threading import current_thread
 import threading
 import GUI.globals as gb
 from PyQt5.QtWidgets import QStyleFactory
+import traceback
 
 
 '''
@@ -77,6 +78,8 @@ def piteca_excepthook(exctype, value, tb):
         # The exception_occurred_sig should be defined in every thread class in PITECA
         print("Inside piteca_excepthook")
         print(value) # TODO: remove this! Here only for development needs
+        print(exctype)
+        traceback.print_tb(tb)
         QThread.currentThread().exception_occurred_sig.emit()
 
 
