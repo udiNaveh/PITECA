@@ -7,6 +7,7 @@ from sharedutils.dialog_utils import *
 from sharedutils.subject import create_subjects
 from GUI import settings_controller
 
+
 class PredictTabModel:
     def __init__(self, input_files_str, output_dir, tasks):
         self.input_files_srt = input_files_str
@@ -41,7 +42,6 @@ class PredictTabModel:
         progress_bar_dlg.progress_thread.quit()
         progress_bar_dlg.close()
         print_error(UNEXPECTED_EXCEPTION_MSG)
-
 
     def run_prediction_flow(self, ui):
         # Setup

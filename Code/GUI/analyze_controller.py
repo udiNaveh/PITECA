@@ -65,12 +65,14 @@ class AnalyzeController:
         gb.should_exit_on_error = False
 
         if analysis_task == AnalysisTask.Analysis_Mean:
-            dialog_utils.inform_user("Done! Analysis result is saved in {}".format(get_analysis_results_folder()))
+            dialog_utils.report_results("Done! Analysis result is saved in {}".format(get_analysis_results_folder()),
+                                        get_analysis_results_folder())
 
         elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations, AnalysisTask.Compare_Significance]:
 
             if analysis_task == AnalysisTask.Compare_Significance:
-                dialog_utils.inform_user("Done! Comparison result is saved in {}".format(ANALYSIS_DIR))
+                dialog_utils.report_results("Done! Comparison result is saved in {}".format(ANALYSIS_DIR),
+                                            get_analysis_results_folder())
                 title_base = "Intersection over Union of subjects overlap maps"
 
             if analysis_task == AnalysisTask.Analysis_Correlations:
