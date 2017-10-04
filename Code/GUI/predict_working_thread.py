@@ -25,7 +25,9 @@ class PredictWorkingThread(QThread):
 
     def run(self):
         for subject in self.subjects:
-            self.model.predict(subject)
+            # self.model.predict(subject)
+            for i in range(100):
+                print(1)
             self.progress_update_sig.emit()
             # Tell the thread to sleep for 1 second and let other things run
             time.sleep(1)

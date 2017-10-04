@@ -3,7 +3,12 @@ from PyQt5.QtCore import Qt
 from GUI.popups.predict_working_dlg_view import Ui_PredictWorkingDlg
 from GUI.predict_working_thread import PredictWorkingThread
 from sharedutils import dialog_utils, constants
+from GUI import settings_controller
 
+def on_predict_finish(progress_dlg):
+    progress_dlg.close()
+    dialog_utils.report_results("Done! Predicted files are saved in {}".format(settings_controller.get_prediction_outputs_folder()),
+                                settings_controller.get_prediction_outputs_folder())
 
 class PredictWorkingDlg(QtWidgets.QDialog):
 
@@ -14,10 +19,12 @@ class PredictWorkingDlg(QtWidgets.QDialog):
         self.progress_bar_ui = Ui_PredictWorkingDlg()
         self.progress_bar_ui.setupUi(self)
         self.progress_thread = PredictWorkingThread(self.prediction_model, self.subjects, self.progress_bar_ui.progressBar)
-        self.progress_thread.finished_sig.connect(lambda: self.onFinish())
+        self.progress_thread.finished_sig.connect(lambda: on_predict_finish(self))
 
     def onFinish(self):
-        self.progress_bar_ui.label.setText("Done!")
+        self.close()
+        print("hi")
+
 
     # def closeEvent(self, event):
     #     if self.progress_thread.isFinished():
