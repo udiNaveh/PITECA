@@ -3,7 +3,7 @@ import time
 from sklearn.preprocessing import normalize
 import scipy.signal as spsignal
 import scipy.stats.mstats as mstats
-
+from scipy.sparse.linalg import eigs
 
 '''
 Specific implementations of linear algebra utilities for processing our data.
@@ -24,7 +24,7 @@ def variance_normalise(y, thres = 2.3, n = 30, mindev = 0.001):
     :return: y after variance normalization
     '''
     start = time.time()
-    uu, ss, vv = ss_svds(y,n)
+    uu, ss, vv = ss_svds_fast(y,n)
     stop = time.time()
     print ("svd took {0:.3f} seconds.".format(stop-start))
     vv = np.transpose(vv)
@@ -34,9 +34,9 @@ def variance_normalise(y, thres = 2.3, n = 30, mindev = 0.001):
     return y / std_devs
 
 
-def ss_svds(y,n):
+def ss_svds(x, n):
 
-    u, s, v = np.linalg.svd(y, full_matrices =False)
+    u, s, v = np.linalg.svd(x, full_matrices =False)
     if (np.size(s)) > n:
         s = s[:n]
         u = u[:, :n]
@@ -46,6 +46,23 @@ def ss_svds(y,n):
 
     return (u,s,v)
 
+def ss_svds_fast(x, n):
+
+    x, x_t = (x, x.transpose()) if np.size(x,0) < np.size(x,1) else (x.transpose, x)
+    x_squared = np.dot(x, x_t)
+    if n < np.size(x,0):
+        eigenvalues, eigenvectors = eigs(x_squared, n)
+        eigenvalues = eigenvalues.astype('float')
+        eigenvectors = eigenvectors.astype('float')
+    else:
+        eigenvalues, eigenvectors = np.linalg.eig(x_squared)
+    eigenvalues_inds = np.argsort(eigenvalues)
+    eigenvalues = eigenvalues[eigenvalues_inds[::-1]]
+    eigenvectors = eigenvectors[:, eigenvalues_inds[::-1]]
+    s = np.sqrt(np.abs(eigenvalues))
+    v = (np.matmul(x_t, np.dot(eigenvectors, np.diag(1/s)))).transpose()
+
+    return (eigenvectors,np.diag(s),v)
 
 def demean(matrix, axis=0):
     if axis == 0:
@@ -104,7 +121,8 @@ def softmax(x, axis=0):
         v = np.exp(x - np.max(x))
         x = v/np.sum(v)
 
-    assert x.shape == orig_shape
+    if  x.shape != orig_shape:
+        raise ValueError("shapes don't match")
     return x
 
 def dim_0_dot(v1, v2):
