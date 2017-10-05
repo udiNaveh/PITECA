@@ -209,14 +209,13 @@ class TFRoiBasedModel(IModel):
                         weighting = self.spatial_filters[:, j][ind]
                         features = subject_feats[ind]
                         weights = self._weights[task][j]
-                        assert len(self.variables) == len(weights) # TODO delete
                         region_feed_dict = union_dicts({self.x: features},
                                                        {tensor: weights[i] for i, tensor in enumerate(self.variables)})
                         roi_prediction = np.squeeze(sess.run(self.y_pred, feed_dict=region_feed_dict))
                         subject_task_prediction[:,ind] += weighting * roi_prediction
                 subject_predictions[task] = subject_task_prediction
                 end = time.time()
-                #print("preiction of task {0} subject {1} took {2:.3f}seconds".format(task.full_name, subject.subject_id, end-start))
+                print("preiction of task {0} subject {1} took {2:.3f}seconds".format(task.full_name, subject.subject_id, end-start))
                 if save:
                     prediction_paths[task] = save_to_dtseries(subject.get_predicted_task_filepath(task), bm,
                                                               subject_task_prediction)
