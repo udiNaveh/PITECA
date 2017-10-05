@@ -104,6 +104,39 @@ def regression_with_two_hidden_layers_build(input_dim, output_dim, scope_name, l
 
     return x, y, y_pred
 
+def regression_with_two_hidden_layers_build_with_dropout(input_dim, output_dim, scope_name, layer1_size = HL1_SIZE,
+                                            layer2_size = HL2_SIZE, dropout_keep_p=1):
+
+    x = tf.placeholder(tf.float32, shape=(None, input_dim), name='x')
+    y = tf.placeholder(tf.float32, shape=(None, output_dim), name='y')
+    false_const = tf.constant(False, dtype=tf.bool)
+
+    is_training = tf.placeholder(dtype=tf.bool)
+
+    with tf.variable_scope(scope_name) as scope: # nn1_h2_reg
+        w1 = tf.get_variable("w1", shape=[input_dim, layer1_size],
+                             initializer=tf.contrib.layers.xavier_initializer())
+        b1 = tf.get_variable("b1", shape=[layer1_size],
+                             initializer=tf.contrib.layers.xavier_initializer())
+        w2 = tf.get_variable('w2', shape = [layer1_size, layer2_size], initializer=tf.contrib.layers.xavier_initializer())
+        b2 = tf.get_variable('b2', shape = [layer2_size], initializer=tf.contrib.layers.xavier_initializer())
+        w3 = tf.get_variable('w3', shape = [layer2_size, output_dim], initializer=tf.contrib.layers.xavier_initializer())
+        b_output = tf.get_variable('b_output', shape=[output_dim],
+                        initializer=tf.contrib.layers.xavier_initializer())
+
+        hidden_layer = tf.nn.relu(tf.matmul(x, w1) + b1)
+
+        hl1 = tf.layers.dropout(hidden_layer, rate= 1-dropout_keep_p, training=is_training)
+        hidden_layer_2 = tf.nn.relu(tf.matmul(hl1, w2) + b2)
+        hl2 = tf.layers.dropout(hidden_layer_2, rate= 1-dropout_keep_p, training=is_training)
+        y_pred = tf.matmul(hl2, w3)  + b_output
+        l2_losses = [tf.nn.l2_loss(v) for v in (w1, w2, w3, b1, b2)]
+        regularizer = tf.add_n(l2_losses)
+
+        tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, regularizer)
+
+    return x, y, y_pred, is_training
+
 
 def build_loss(y_tensor, y_pred_tensor, scope_name, reg_lambda = 0.0, huber_delta = 1.0):
     loss = tf.losses.huber_loss(labels=y_tensor, predictions=y_pred_tensor, delta=huber_delta)
@@ -162,6 +195,6 @@ def predict_from_model(tensors, features, saved_weights, scope_name):
     assert len(variables)== len(saved_weights)
     weights_feed_dict = {tensor: saved_weights[i] for i, tensor in enumerate(variables)}
     with tf.Session() as session:
-        region_feed_dict =  union_dicts({x: features}, weights_feed_dict)
+        region_feed_dict = union_dicts({x: features}, weights_feed_dict)
         prediction = session.run(y_pred, feed_dict=region_feed_dict)
     return prediction

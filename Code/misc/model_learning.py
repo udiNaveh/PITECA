@@ -30,6 +30,7 @@ tasks_file = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy"
 spatial_filters_path = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', 'ica_both_lowdim.dtseries.nii')
 subjects_features_order = os.path.join(definitions.LOCAL_DATA_DIR, 'subjects_features_order.txt')
 all_features_path = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order.npy")
+all_features_path_mat = r'C:\Users\ASUS\Downloads\AllFeatures.mat'
 
 fsf_nn_pred_path = r'D:\Projects\PITECA\Data\model\nn\predictions\predictions_validation_s71-100_nn_2hl_fsf.npy'
 nn_pred_path = r'D:\Projects\PITECA\Data\model\nn\predictions\predictions_validation_s71-100_nn_2hl.npy'
@@ -40,6 +41,7 @@ linear_pred_path_fsf = r'D:\Projects\PITECA\Data\model\linear\loo_betas_7_tasks_
 tasks_dir =  r'D:\Projects\PITECA\Data\actual'
 features_path = r'D:\Projects\PITECA\Data\extracted features'
 predictions_cifti_path = r'D:\Projects\PITECA\Data_for_testing\predictions_linear'
+
 
 
 TASKS = {Task.MATH_STORY: 0,
@@ -78,8 +80,8 @@ n_additional_features = n_filters if USE_RAW_FILTERS_AS_FEATURES else 0
 
 nn_scope_name = 'nn1_h2_reg'
 tensors_two_hidden_layer_nn =\
-    regression_with_two_hidden_layers_build(NUM_FEATURES + n_additional_features, 1, nn_scope_name)
-x, y, y_pred = tensors_two_hidden_layer_nn
+    regression_with_two_hidden_layers_build(NUM_FEATURES + n_additional_features, 1, nn_scope_name, dropout_keep_p=0.5)
+x, y, y_pred, is_training = tensors_two_hidden_layer_nn
 loss_function = build_loss(y, y_pred, nn_scope_name, REG_LAMBDA, HUBER_DELTA)
 
 
@@ -316,8 +318,6 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
     losses2 = np.zeros([n_tasks, n_subjects])
     all_arranged_in_dicts = {}
 
-
-
     if saved_pred is None:
         for i, subject in enumerate(subjects):
             subject_idx = int(subject.subject_id)-1
@@ -337,12 +337,8 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
             task_name = [taskname for taskname, idx in TASKS.items() if idx == task_index][0]
             if task_index not in mean_actuals:
                 mean_actuals[task_index] = np.mean(
-                tasks[task_index, :STANDART_BM.N_CORTEX, [int(subject.subject_id) - 1 for s in subjects]], axis=0)
+                tasks[task_index, :STANDART_BM.N_CORTEX, [int(s.subject_id) - 1 for s in subjects]], axis=0)
             task_subject_pred = pred[task_index, :, i]
-
-
-
-
             task_subject_actual = tasks[task_index,:STANDART_BM.N_CORTEX, subject_idx]
 
             if task_index not in all_arranged_in_dicts:
@@ -358,7 +354,7 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
                 only_mean_roi_actual[ind] = np.mean(task_subject_actual[ind])
 
 
-            correlations_by_roi[task_index, i, :] = get_corr_by_region(hard_filters, task_subject_actual, task_subject_pred)
+            #correlations_by_roi[task_index, i, :] = get_corr_by_region(hard_filters, task_subject_actual, task_subject_pred)
             # task_subject_pred = task_subject_pred[some_filters > 0]
             # task_subject_actual = task_subject_actual[some_filters > 0]
             # only_mean_roi_prediction = only_mean_roi_prediction[some_filters > 0]
@@ -368,7 +364,7 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
             correlations_with_mean[task_index, i] = np.corrcoef(mean_actuals[task_index], task_subject_pred)[0, 1]
 
 
-            correlations_of_mean_roi[task_index, i] = np.corrcoef(only_mean_roi_actual, only_mean_roi_prediction)[0, 1]
+            #correlations_of_mean_roi[task_index, i] = np.corrcoef(only_mean_roi_actual, only_mean_roi_prediction)[0, 1]
 
             losses[task_index,i] = rms_loss(task_subject_pred, task_subject_actual)
             losses2[task_index, i] = rms_loss(task_subject_pred, task_subject_actual, True, True)
@@ -469,17 +465,17 @@ def run_regression():
     #random.shuffle(subjects)
 
 
-    tasks_for_model = TASKS
+    tasks_for_model = [Task.MATH_STORY]
     subjects_training = subjects[:training_size]
-    subjects_validation = subjects[training_size:]
-    subjects_test = []
+    subjects_validation = subjects[training_size:training_size+validation_size]
+    subjects_test = subjects[training_size+validation_size : ]
     partition = (subjects_training,subjects_validation, subjects_test)
 
 
-    # train_by_roi_and_task(partition, tasks_for_model, hard_filters, tensors_two_hidden_layer_nn,
-    #                       scope_name=nn_scope_name)
+    train_by_roi_and_task(partition, tasks_for_model, hard_filters, tensors_two_hidden_layer_nn,
+                          scope_name=nn_scope_name)
 
-    #train_tf_by_task(partition, tasks_for_model, tensors_two_hidden_layer_nn, scope_name=nn_scope_name)
+
 
     # for task in tasks_for_model:
     #     saved_betas_matrix = pickle.load(
