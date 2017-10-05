@@ -77,6 +77,7 @@ class LinearModel(IModel):
         below_threshold = self.spatial_filters_soft < 1e-2
         self.spatial_filters_soft[below_threshold] = 0
         self.spatial_filters_soft = self.spatial_filters_soft[:STANDART_BM.N_CORTEX, :]
+
         self.__spatial_filters_hard = np.argmax(np.transpose(ica_both_lowdim[:, :STANDART_BM.N_CORTEX]), axis = 1)
         return True
 
@@ -142,10 +143,10 @@ class TFRoiBasedModel(IModel):
                        Task.T : 6
                        }
 
-    def __init__(self, tasks):
+    def __init__(self, tasks, feature_extractor = None):
         super(TFRoiBasedModel, self).__init__(tasks)
         self._weights = {}
-        self.feature_extractor = FeatureExtractor()
+        self.feature_extractor = FeatureExtractor() if feature_extractor is None else feature_extractor
         self.is_loaded =  False
 
 
@@ -166,7 +167,7 @@ class TFRoiBasedModel(IModel):
         soft_filters /= np.reshape(np.sum(soft_filters, axis=1), [STANDART_BM.N_CORTEX, 1])
         hard_filters = np.round(softmax(spatial_filters_raw.astype(float) * 1000))
         hard_filters[spatial_filters_raw < SPATIAL_FILTERS_THRESHOLD] = 0
-        self.spatial_filters_soft = soft_filters
+        self.spatial_filters = soft_filters
         self.spatial_filters_hard = hard_filters
         self.x, self.y_pred = self.get_placeholders()
         self.variables = self.get_trainable_variables()
@@ -202,13 +203,12 @@ class TFRoiBasedModel(IModel):
             for task in self.tasks:
                 subject_task_prediction = np.zeros([1, STANDART_BM.N_CORTEX])
                 start = time.time()
-                for j in range(np.size(self.spatial_filters_soft, axis=1)):
+                for j in range(np.size(self.spatial_filters, axis=1)):
                     if j in self._weights[task]:
-                        ind = self.spatial_filters_soft[: STANDART_BM.N_CORTEX, j] > 0
-                        weighting = self.spatial_filters_soft[:,j][ind]
+                        ind = self.spatial_filters[: STANDART_BM.N_CORTEX, j] > 0
+                        weighting = self.spatial_filters[:, j][ind]
                         features = subject_feats[ind]
                         weights = self._weights[task][j]
-                        assert len(self.variables) == len(weights) # TODO delete
                         region_feed_dict = union_dicts({self.x: features},
                                                        {tensor: weights[i] for i, tensor in enumerate(self.variables)})
                         roi_prediction = np.squeeze(sess.run(self.y_pred, feed_dict=region_feed_dict))
@@ -228,8 +228,8 @@ class NN2lhModel(TFRoiBasedModel):
     hl2_size = 50
     input_size = NUM_FEATURES
 
-    def __init__(self, tasks):
-        super(NN2lhModel, self).__init__(tasks)
+    def __init__(self, tasks, feature_extractor=None):
+        super(NN2lhModel, self).__init__(tasks, feature_extractor)
 
     def load_weights(self):
         for task in self.tasks:
@@ -241,7 +241,7 @@ class NN2lhModel(TFRoiBasedModel):
     def get_placeholders(self):
         x, y, y_pred = \
         regression_with_two_hidden_layers_build(input_dim= NN2lhModel.input_size, output_dim=1, scope_name='nn1_h2_reg',
-                                                layer1_size=NN2lhModel.hl1_size, layer2_size=NN2lhModel.l2_size)
+                                                layer1_size=NN2lhModel.hl1_size, layer2_size=NN2lhModel.hl2_size)
         return x, y_pred
 
     def get_trainable_variables(self):
@@ -255,8 +255,8 @@ class NN2lhModelWithFiltersAsFeatures(TFRoiBasedModel):
     hl2_size = 50
     input_size = NUM_FEATURES + NUM_SPATIAL_FILTERS
 
-    def __init__(self, tasks):
-        super(NN2lhModelWithFiltersAsFeatures, self).__init__(tasks)
+    def __init__(self, tasks, feature_extractor=None):
+        super(NN2lhModelWithFiltersAsFeatures, self).__init__(tasks, feature_extractor)
 
     def load_weights(self):
         for task in self.tasks:
@@ -276,7 +276,7 @@ class NN2lhModelWithFiltersAsFeatures(TFRoiBasedModel):
                       tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='nn1_h2_reg_fsf')]
 
     def preprocess_features(self, subject_features):
-        subject_features = np.transpose(subject_features)
+        subject_features = np.transpose(subject_features[:, : STANDART_BM.N_CORTEX])
         subject_features = demean_and_normalize(subject_features)
         subject_features = np.concatenate((subject_features, self.spatial_filters_raw), axis = 1)
         return subject_features
@@ -284,8 +284,8 @@ class NN2lhModelWithFiltersAsFeatures(TFRoiBasedModel):
 
 
 class TFLinear(TFRoiBasedModel):
-    def __init__(self, tasks):
-        super(TFLinear, self).__init__(tasks)
+    def __init__(self, tasks, feature_extractor=None):
+        super(TFLinear, self).__init__(tasks, feature_extractor)
 
     def load_weights(self):
         for task in self.tasks:
@@ -312,8 +312,13 @@ class TFLinear(TFRoiBasedModel):
 
 
 class TFLinearAveraged(TFRoiBasedModel):
-    def __init__(self, tasks):
-        super(TFLinearAveraged, self).__init__(tasks)
+    def __init__(self, tasks, feature_extractor=None):
+        super(TFLinearAveraged, self).__init__(tasks, feature_extractor)
+
+    def _load(self):
+        super(TFLinearAveraged, self)._load()
+        self.spatial_filters = self.spatial_filters_hard
+        return True
 
     def load_weights(self):
         for task in self.tasks:
@@ -326,12 +331,12 @@ class TFLinearAveraged(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg')
+            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg_avg')
         return x, y_pred
 
     def get_trainable_variables(self):
         return [v for v in tf.trainable_variables() if v in
-                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg')][:1]
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg_avg')][:1]
 
     def preprocess_features(self, subject_features):
         subject_features = np.transpose(subject_features)
@@ -342,8 +347,8 @@ class TFLinearAveraged(TFRoiBasedModel):
 class TFLinearFSF(TFRoiBasedModel):
     input_size = NUM_FEATURES + NUM_SPATIAL_FILTERS
 
-    def __init__(self, tasks):
-        super(TFLinearFSF, self).__init__(tasks)
+    def __init__(self, tasks, feature_extractor=None):
+        super(TFLinearFSF, self).__init__(tasks, feature_extractor)
 
     def load_weights(self):
         for task in self.tasks:
@@ -356,31 +361,35 @@ class TFLinearFSF(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-            linear_regression_build(input_dim=NUM_FEATURES+1+ NUM_SPATIAL_FILTERS, output_dim=1, scope_name='lin_reg')
+            linear_regression_build(input_dim=NUM_FEATURES+1+ NUM_SPATIAL_FILTERS, output_dim=1, scope_name='lin_reg_fsf')
         return x, y_pred
 
     def get_trainable_variables(self):
         return [v for v in tf.trainable_variables() if v in
-                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg')][:1]
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg_fsf')][:1]
 
 
     def preprocess_features(self, subject_features):
         subject_features = np.transpose(subject_features)
+        subject_features = np.concatenate((subject_features, self.spatial_filters_raw), axis=1)
         subject_features = demean_and_normalize(subject_features)
-        subject_features = np.concatenate((subject_features, self.spatial_filters_raw), axis = 1)
+
         return add_ones_column(subject_features)
+
 
 class FeatureExtractor:
 
     def __init__(self):
         self.matrices = dict()
         self.is_loaded = False
+        self.bm = pickle.load(open(definitions.BM_CORTEX_PATH, 'rb'))
 
     def load(self):
         arr = np.load(definitions.SC_CLUSTERS_PATH)
         self.matrices['SC_CLUSTERS'] = arr
         arr = np.load(definitions.ICA_LR_MATCHED_PINV_PATH)
         self.matrices['ICA_LR_MATCHED'] = arr
+
         self.is_loaded = True
         return
 
@@ -388,27 +397,25 @@ class FeatureExtractor:
         assert isinstance(subject,Subject)
         if subject.features_exist:
             arr, (series, bm) = open_cifti(subject.features_path)
-            return arr, bm
+            return arr, self.bm
         else:
             if not self.is_loaded:
                 self.load()
             return self.extract_features(subject)
 
-
     def extract_features(self,subject):
+        start_extraction_time = time.time()
         rfmri_data, (series, bm) = open_cifti(subject.input_path) # arr is time * 91k
         n_vertices, t = rfmri_data.shape
 
         # preprocess
         rfmri_data_normalized = variance_normalise(rfmri_data) # % noise variance normalisation
         data = detrend(rfmri_data_normalized) # subtract linear trend from time series each vertex
-
         # perform dual regression to obtain individual cortical spatial maps
         # step 1 - get subject's individual time series for each by network
         ts_by_network = np.dot(data, self.matrices['ICA_LR_MATCHED'])  # time x 76
         # step 2 - get subject's individual cortical spatial maps
         LHRH = fsl_glm(ts_by_network, data).transpose() # 91k x 76
-
         # create spatial maps for the whole brain
         ROIS = np.zeros([STANDART_BM.N_TOTAL_VERTICES, 108])
         #  left hemisphere networks
@@ -421,10 +428,31 @@ class FeatureExtractor:
         rfmri_data_normalized = demean(rfmri_data_normalized)  # remove mean from each column
         # multiple regression - characteristic time series for each network
         T2 = np.dot(np.linalg.pinv(ROIS), rfmri_data_normalized.transpose()) # 108 x time
-        # get the featires - correlation coefficient for each vertex with each netwrok
+        # get the features - correlation coefficient for each vertex with each netwrok
         features_map = np.dot(normalize(T2, axis=1), normalize(rfmri_data_normalized, axis=0))
-        save_to_dtseries(subject.features_path, bm, features_map)
-        return features_map, bm
+        features_map = features_map[:, : STANDART_BM.N_CORTEX]
+        save_to_dtseries(subject.features_path, self.bm, features_map)
+
+        end_extraction_time = time.time()
+
+        print("feature extracted for subject {0} in {1:.1f} seconds".format(subject.subject_id, end_extraction_time-start_extraction_time))
+
+        return features_map, self.bm
+
+
+class MemFeatureExtractor(FeatureExtractor):
+
+    def __init__(self, features_mat, map):
+        super(MemFeatureExtractor, self).__init__()
+        self.matrices['all features'] = features_mat
+        self.subjects_mapping = map
+
+    def get_features(self,subject):
+        mat = self.matrices['all features']
+        idx = self.subjects_mapping[int(subject.subject_id)]
+        return (mat[:,idx, :]).transpose(), self.bm
+
+
 
 
 available_models = {
@@ -438,11 +466,11 @@ available_models = {
 available_models_keys = list(available_models.keys())
 available_models_keys.sort()
 
-def model_factory(model_name, tasks):
+def model_factory(model_name, tasks, fe=None):
     if model_name not in available_models:
         raise ValueError("There is no prediction model named {}".format(model_name))
     my_model_class = available_models[model_name]
-    my_model = my_model_class(tasks)
+    my_model = my_model_class(tasks, fe)
     return my_model
 
 

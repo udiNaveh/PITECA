@@ -187,6 +187,17 @@ def get_significance_maps_overlap(arr1_significance, arr2_significance):
     iou_both = np.count_nonzero(overlap_both) / np.count_nonzero(union_both)
     map = 1 * arr1_significance + 3 * arr2_significance
 
+
+    ##
+
+    map = np.zeros_like(arr1_significance)
+    map[np.logical_and(arr1_significance==1 , arr2_significance==1)] = 3
+    map[np.logical_and(arr1_significance == -1 , arr2_significance == -1)] = -3
+    map[np.logical_and(arr1_significance == 1 , arr2_significance == 0)] = 4
+    map[np.logical_and(arr1_significance == 0 , arr2_significance == 1)] = 2
+    map[np.logical_and(arr1_significance == -1 , arr2_significance == 0)] = -4
+    map[np.logical_and(arr1_significance == 0 , arr2_significance == -1)] = -2
+
     return map, iou_pos, iou_neg, iou_both
 
 

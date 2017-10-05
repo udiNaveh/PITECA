@@ -23,16 +23,7 @@ all_features = np.load(AllFeatures_File)
 
 class TestModel(unittest.TestCase):
 
-    def test_linear_model(self):
-        subjects = create_subjects_udi(range(2, 100), LOCAL_FEATURES_DIR, OUTPUTPATH)
-        lmodel = LinearModel([Task.MATH_STORY, Task.MATCH_REL], all_features)
-        predictions= {}
-        predictions_softmax = {}
-        for subj in subjects:
-            print("predicting subject {}".format(subj.subject_id))
-            predictions[subj] = lmodel.predict(subj, filters='hard', save=False)
-            print("predicting subject {}, soft filters".format(subj.subject_id))
-            predictions_softmax[subj] = lmodel.predict(subj, filters='soft', save=False)
+
         
 
 

@@ -27,20 +27,12 @@ class Subject:
         filename = path_utils.generate_file_name(self.output_dir, task, "{0}_{1}_predicted".format(self.subject_id, task.full_name))
         return path_utils.generate_final_filename(filename)
 
+    def get_actual_task_filepath(self, task, actual_dir):
+        filename = path_utils.generate_file_name(actual_dir, task, "{0}_{1}".format(self.subject_id, task.full_name))
+        return path_utils.generate_final_filename(filename)
+
 # TODO: make order in those functions and remove their documentation
 
-'''
-Functions for Udi's needs
-'''
-def create_subjects_udi(ids, extracted_featuresr_dir, outputpath):
-    subjects = []
-    for id in ids:
-        id = zeropad(id, 6)
-        subjects.append(Subject(subject_id=id,
-                                features_path=join_path(extracted_featuresr_dir, id + '_features.dtseries.nii'),
-                                features_exist=True,
-                                output_dir = outputpath))
-    return subjects
 
 '''
 Function for Keren's needs
