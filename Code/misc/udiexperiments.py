@@ -3,6 +3,7 @@ from sharedutils.subject import *
 from sharedutils.linalg_utils import *
 from sharedutils.cmd_utils import run_wb_view, show_maps_in_wb_view
 from model.models import IModel
+from analysis.analyzer import *
 import time
 import os
 import sys
@@ -13,22 +14,146 @@ import ast
 import definitions
 import importlib.util
 import matplotlib.pyplot as plt
+import pickle
 
 from misc.model_hyperparams import *
+tasks_file = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
+all_tasks_200s = r'D:\Projects\PITECA\Data_for_testing\time_series\AllTasks.npy'
+all_tasks_200s_new_path = r'D:\Projects\PITECA\Data_for_testing\time_series\allTasksReordered.npy'
 
+mapping_path100_to_200 = r'D:\Projects\PITECA\Data\docs\100_to_200'
+all_features_path = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order.npy")
 
-TASKS = {Task.MATH_STORY: 0,
-                   Task.TOM: 1,
-                   Task.MATCH_REL: 2,
-                   Task.TWO_BK: 3,
-                   Task.REWARD: 4,
-                   Task.FACES_SHAPES: 5,
-                   Task.T: 6
-                   }
-
+all_features_path_200 = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order_200.npy")
+all_features_path_mat = r'C:\Users\ASUS\Downloads\AllFeatures.mat'
 
 
 
+#all_features_raw = np.load(all_features_path)
+
+
+
+TASKS = [Task.MATH_STORY,
+                   Task.TOM,
+                   Task.MATCH_REL,
+                   Task.TWO_BK,
+                   Task.REWARD,
+                   Task.FACES_SHAPES,
+                   Task.T,
+                   ]
+
+
+
+def explore_tasks():
+    subjects = np.arange(0,200)
+    tasks = np.load(all_tasks_200s_new_path)
+
+    task_language = tasks[0,:,:STANDART_BM.N_CORTEX]
+    task_mean = np.mean(task_language, axis=1)
+    task_std = np.std(task_language, axis=1)
+    task_max  = np.percentile(task_language, 95, axis=1)
+    task_min = np.percentile(task_language, 5, axis=1)
+    mean_all = np.mean(task_language)
+    std_all = np.std(task_language)
+
+    plt.scatter(subjects, task_min)
+    plt.scatter(subjects, task_max)
+    plt.scatter(subjects, task_mean)
+    plt.show()
+    print("")
+
+
+
+
+
+def create_tasks_files():
+    tasks_ciftis_path = r'D:\Projects\PITECA\Data_for_testing\actual_task_activation'
+    tasks = np.load(all_tasks_200s)
+    tasks = tasks[:,:5,:]
+    subjects = ['100307', '101107', '102816', '105014', '105216']
+    full_bm = pickle.load(open(definitions.BM_FULL_PATH, 'rb'))
+    for i in range(len(TASKS)):
+        for j in range(len(subjects)):
+            task_data = tasks[i,j,:]
+            task_data = task_data.reshape([1, np.size(task_data)])
+            task_name = TASKS[i].full_name
+            filename = os.path.join(tasks_ciftis_path, task_name, '{0}_{1}'.format(subjects[j],task_name))
+            save_to_dtseries(filename, full_bm, task_data)
+            print('saved {}'.format(os.path.basename(filename)))
+    return
+
+def create_features_files():
+    path2dir = r'D:\Projects\PITECA\Data\extracted features\features from mat'
+    subjects = ['100307', '101107', '102816', '105014', '105216']
+    cortex_bm = pickle.load(open(definitions.BM_CORTEX_PATH, 'rb'))
+    features_200_first_5 = np.load(all_features_path_200)[:,[100,0,101,102,103],:]
+    for j in range(len(subjects)):
+        data = features_200_first_5[:, j, :]
+        data = data.transpose()
+        filename = os.path.join(path2dir, '{}_features'.format(subjects[j]))
+        save_to_dtseries(filename, cortex_bm, data)
+        print('saved {}'.format(os.path.basename(filename)))
+
+
+def load_tasks():
+    tasks200 = np.load(all_tasks_200s)
+    tasks100 = np.load(tasks_file)
+    map_100_to_200 = {}
+    with open(mapping_path100_to_200) as f:
+        for line in f:
+            a, b = line.split(':')
+            a = int(a);
+            b = int(b)
+            map_100_to_200[a] = b
+
+    map_200_to_100 = {b: a for a, b in map_100_to_200.items()}
+    tasks_200_new = np.zeros_like(tasks200)
+    tasks_200_new[:,:100,:] = tasks100
+    tasks_200_new[:, 100:, :] = tasks200[:,[i for i in range(200) if i not in map_200_to_100],:]
+
+def save_new_tasks():
+    map_100_to_200 = {}
+    with open(mapping_path100_to_200) as f:
+        for line in f:
+            a, b = line.split(':')
+            a = int(a);
+            b = int(b)
+            map_100_to_200[a] = b
+    map_200_to_100 = {b: a for a, b in map_100_to_200.items()}
+    only_in_200_idxs = [i for i in range(200) if i not in map_200_to_100]
+
+    tasks200 = np.load(all_tasks_200s)
+    tasks_200_new = np.zeros_like(tasks200)
+    tasks_200_new[:,:100,:] = tasks200[:,[map_100_to_200[i] for i in range(100)],:]
+    tasks_200_new[:, 100:, :] = tasks200[:, only_in_200_idxs, :]
+    orig = np.load(tasks_file)
+    for i in range(100):
+        print(np.max(np.abs(tasks_200_new[:,i,:] - orig[:,i,:])))
+    np.save(all_tasks_200s_new_path, tasks_200_new)
+
+
+def test_ratio():
+    features_200_first100 = np.load(all_features_path_200)[:,:100,:]
+    features_100 = np.load(all_features_path)
+    for i in range(100):
+        a = demean_and_normalize(features_100[:,i,:])
+        b = demean_and_normalize(features_200_first100[:,i,:])
+        print (np.max(np.abs(a-b)), np.mean(np.abs(a-b)))
+
+def test_correlations(path_to_tasks_dir, path_to_actual_dir):
+
+    subjects_ids = ['100307', '101107', '102816', '105014', '105216']
+    subjects = []
+    for sid in subjects_ids:
+        s = Subject()
+        s.subject_id = sid
+        s.output_dir = path_to_tasks_dir
+        s.predicted = {t : s.get_predicted_task_filepath(t).replace('(1)','')+'.dtseries.nii' for t in AVAILABLE_TASKS}
+        s.actual = {t: s.get_actual_task_filepath(t, path_to_actual_dir).replace('(1)','')+'.dtseries.nii' for t in AVAILABLE_TASKS}
+        subjects.append(s)
+    for task in AVAILABLE_TASKS:
+        corr = np.diag(get_predicted_actual_correlations(subjects, task))
+        print(task.full_name, corr)
 
 def test_time_to_validate(dir):
     for _ in range(1):
@@ -132,7 +257,7 @@ def xxx():
     spec.loader.exec_module(foo)
     foo.MyClass()
 
-def read_results_text_file(path):
+def read_results_text_file_and_plot(path):
     results = {}
     current_model_name = ''
     current_task_name = ''
@@ -145,7 +270,7 @@ def read_results_text_file(path):
             else:
                 line = line.strip()
                 if '=' not in line:
-                    current_model_name = line
+                    current_model_name = line[:3] +'_' + line[-5:]
                     results[current_model_name] = {}
                 else:
                     rh_lh = line.split('=')
@@ -164,9 +289,9 @@ def read_results_text_file(path):
 
     for task in results:
         models_names  = [k for k in results[task].keys()]
-        models_names = sorted(models_names, key = lambda  name : results[task][name]['correlation'])
-        corrs = [results[task][k]['correlation'] for k in models_names]
-        corrs_with_mean = [results[task][k]['avg_corr_with_mean'] for k in models_names]
+        models_names = sorted(models_names, key = lambda  name : results[task][name]['mean corr with self'])
+        corrs = [results[task][k]['mean corr with self'] for k in models_names]
+        corrs_with_mean = [results[task][k]['mean corr with other'] for k in models_names]
 
         plotchartsoverlap(corrs, corrs_with_mean, [name for name in models_names], title=task)
 
@@ -202,13 +327,13 @@ def plotchartsoverlap(correlation, avg_corr_with_mean, model_names, title):
                      alpha=opacity,
                      color='r',
                      error_kw=error_config,
-                     label='correlation')
+                     label='corr-self')
 
     rects2 = plt.bar(index + bar_width, avg_corr_with_mean, bar_width,
                      alpha=opacity,
                      color='c',
                      error_kw=error_config,
-                     label='avg_corr_with_mean')
+                     label='corr-other')
 
     plt.xlabel('model name')
     plt.ylabel('Pearson correlation')
@@ -226,7 +351,12 @@ def plotchartsoverlap(correlation, avg_corr_with_mean, model_names, title):
 
     return
 
+def save_bm():
+    bm = load_standart_cortex_bm()
+    #pickle.dump(bm, safe_open(r'C:\Users\ASUS\PycharmProjects\PITECA\Data\Models\FeatureExtractor\full_bm.pkl', 'wb'))
+
 
 if __name__ == "__main__":
-    results_path = r'D:\Projects\PITECA\Data\docs\7030_models_results_2'
-    read_results_text_file(results_path)
+    explore_tasks()
+    #results_path = r'D:\Projects\PITECA\Data\docs\7030_models_results_corrected_test'
+    #read_results_text_file_and_plot(results_path)
