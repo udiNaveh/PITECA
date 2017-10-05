@@ -121,7 +121,7 @@ class GraphicDlg(QDialog):
             elif self.analysis_task == AnalysisTask.Compare_Correlations:
                 # graph 4
                 if event.inaxes.get_xlabel() == SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == SUBJECTS_Y_LABEL:
-                    correlation = self.subj_subj_data[subject_x_index, subject_y_index]
+                    correlation = self.subj_subj_data[subject_y_index, subject_x_index]
                     between1 = "subject {}".format(self.ids[subject_x_index])
                     between2 = "subject {}".format(self.ids[subject_y_index])
                 # not a heat map location
