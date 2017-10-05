@@ -28,11 +28,12 @@ class AnalyzeController:
         :return: a list of Subjects
         '''
         subjects = []
-
         predicted_files = path_utils.extract_filenames(predicted_files_str)
         for file in predicted_files:
             curr_subject = subject.Subject()
             curr_subject.subject_id = path_utils.get_id(file)
+            if curr_subject.subject_id == None:
+                return []
             curr_subject.predicted = {task: file}
             subjects.append(curr_subject)
 
@@ -52,6 +53,11 @@ class AnalyzeController:
                         subject for subject in subjects if subject.subject_id == path_utils.get_id(file))
                     match_subject.actual = {task: file}
 
+        # assert only unique subjects
+        ids = [subject.subject_id for subject in subjects]
+        if len(ids) != len(set(ids)):
+            dialog_utils.print_error("Duplicate subjects. Please make sure to have only unique subjects in Analysis")
+            return None
         return subjects
 
     def __handle_results(self, analysis_task, dlg, data, subjects):
@@ -59,12 +65,14 @@ class AnalyzeController:
         gb.should_exit_on_error = False
 
         if analysis_task == AnalysisTask.Analysis_Mean:
-            dialog_utils.inform_user("Done! Analysis result is saved in {}".format(get_analysis_results_folder()))
+            dialog_utils.report_results("Done! Analysis result is saved in {}".format(get_analysis_results_folder()),
+                                        get_analysis_results_folder())
 
         elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations, AnalysisTask.Compare_Significance]:
 
             if analysis_task == AnalysisTask.Compare_Significance:
-                dialog_utils.inform_user("Done! Comparison result is saved in {}".format(ANALYSIS_DIR))
+                dialog_utils.report_results("Done! Comparison result is saved in {}".format(ANALYSIS_DIR),
+                                            get_analysis_results_folder())
                 title_base = "Intersection over Union of subjects overlap maps"
 
             if analysis_task == AnalysisTask.Analysis_Correlations:
@@ -194,4 +202,3 @@ class AnalyzeController:
         thread.exception_occurred_sig.connect(lambda: self.__handle_unexpected_exception(dlg, thread))
         thread.start()
         # TODO: duplicated code with onAnalysisButtonClicked
-

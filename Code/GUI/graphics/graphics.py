@@ -8,6 +8,7 @@ import numpy as np
 import math
 import scipy.io as sio
 from textwrap import wrap
+import definitions
 
 from sharedutils import dialog_utils, constants
 from GUI.analyze_working_thread import AnalysisTask
@@ -120,7 +121,7 @@ class GraphicDlg(QDialog):
             elif self.analysis_task == AnalysisTask.Compare_Correlations:
                 # graph 4
                 if event.inaxes.get_xlabel() == SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == SUBJECTS_Y_LABEL:
-                    correlation = self.subj_subj_data[subject_x_index, subject_y_index]
+                    correlation = self.subj_subj_data[subject_y_index, subject_x_index]
                     between1 = "subject {}".format(self.ids[subject_x_index])
                     between2 = "subject {}".format(self.ids[subject_y_index])
                 # not a heat map location
@@ -134,7 +135,8 @@ class GraphicDlg(QDialog):
                                            .format(correlation, between1, between2))
 
     def save_data(self):
-        name, extension = dialog_utils.save_file('*.mat ;; *.npy')
+        dir = definitions.ANALYSIS_DIR
+        name, extension = dialog_utils.save_file('*.mat ;; *.npy', dir)
         if name == '':
             return
         extension = extension.split('.')[1]

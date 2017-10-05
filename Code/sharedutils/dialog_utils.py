@@ -2,6 +2,7 @@ from GUI.popups.question_dlg import QuestionDialog
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt
 import definitions
+from GUI.popups import results_dlg_controller, results_dlg_view
 import os
 
 '''
@@ -47,6 +48,15 @@ def inform_user(msg):
     msg_box.setText(msg)
     msg_box.addButton(QtWidgets.QMessageBox.Ok)
     msg_box.exec_()
+
+def report_results(msg, folder):
+    dlg = results_dlg_controller.ResultsDlg(msg, folder)
+    ui = results_dlg_view.Ui_ResultsDialog()
+    ui.setupUi(dlg)
+    dlg.update_ui(ui)
+    dlg.setWindowModality(Qt.ApplicationModal)
+    dlg.show()
+    dlg.exec_()
 
 def browse_files(line_edit, dir):
     dlg = QtWidgets.QFileDialog()
