@@ -49,8 +49,8 @@ def inform_user(msg):
     msg_box.addButton(QtWidgets.QMessageBox.Ok)
     msg_box.exec_()
 
-def report_results(msg, folder):
-    dlg = results_dlg_controller.ResultsDlg(msg, folder)
+def report_results(msg, folder, exit_on_open_folder=True):
+    dlg = results_dlg_controller.ResultsDlg(msg, folder, exit_on_open_folder)
     ui = results_dlg_view.Ui_ResultsDialog()
     ui.setupUi(dlg)
     dlg.update_ui(ui)

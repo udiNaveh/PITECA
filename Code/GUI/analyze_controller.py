@@ -72,7 +72,7 @@ class AnalyzeController:
 
             if analysis_task == AnalysisTask.Compare_Significance:
                 dialog_utils.report_results("Done! Comparison result is saved in {}".format(ANALYSIS_DIR),
-                                            get_analysis_results_folder())
+                                            get_analysis_results_folder(), False)
                 title_base = "Intersection over Union of subjects overlap maps"
 
             if analysis_task == AnalysisTask.Analysis_Correlations:
