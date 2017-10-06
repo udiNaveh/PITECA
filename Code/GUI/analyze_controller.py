@@ -10,6 +10,7 @@ from GUI.graphics import graphics
 from definitions import CANONICAL_CIFTI_PATH, ANALYSIS_DIR
 import definitions
 from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG, MAX_SUBJECTS
+import sharedutils.constants
 from GUI.settings_controller import get_analysis_results_folder
 
 class AnalyzeController:
@@ -33,6 +34,7 @@ class AnalyzeController:
             curr_subject = subject.Subject()
             curr_subject.subject_id = path_utils.get_id(file)
             if curr_subject.subject_id == None:
+                dialog_utils.inform_user(constants.NAMING_CONVENTION_ERROR)
                 return []
             curr_subject.predicted = {task: file}
             subjects.append(curr_subject)

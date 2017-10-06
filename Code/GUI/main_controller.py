@@ -72,6 +72,7 @@ def piteca_excepthook(exctype, value, tb):
         print(value)  # TODO: remove this! Here only for development needs
         return
     if int(QThread.currentThreadId()) == main_thread_id:
+        traceback.print_tb(tb)
         dialog_utils.print_error(str(value) + ". PITECA will be now closed")
         sys.exit()
     else:
