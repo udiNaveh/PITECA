@@ -26,6 +26,9 @@ SUBJECTS_Y_LABEL = "subjects"
 MEAN_Y_LABEL = "with mean"
 CANONICAL_Y_LABEL = "with canonical"
 
+min_corr=0
+max_corr=1
+
 class GraphicDlg(QDialog):
     def __init__(self, analysis_task, data, subjects, title, parent=None):
         super(GraphicDlg, self).__init__(parent)
@@ -153,7 +156,7 @@ class GraphicDlg(QDialog):
         self.figure.clear()
         self.figure.suptitle(self.title)
 
-        cmap = 'RdBu'
+        cmap = 'Reds'
         edgecolors = 'black'
 
         # create an axis
@@ -174,15 +177,15 @@ class GraphicDlg(QDialog):
         color_ax = divider.append_axes("right", "5%", pad="5%")
 
         if self.analysis_task == AnalysisTask.Analysis_Correlations:
-            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.subj_subj_data, cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
-            # add correlations to mean and canonical
+            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.subj_subj_data, cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
+            # add correlations to mean
             subjects_by_mean_ax = divider.append_axes("bottom", "7%", pad="60%")
-            subjects_by_canonical_ax = divider.append_axes("bottom", "7%", pad="50%")
+            # subjects_by_canonical_ax = divider.append_axes("bottom", "7%", pad="50%")
 
             self.figure.add_axes(subjects_by_mean_ax)
-            self.figure.add_axes(subjects_by_canonical_ax)
-            subjects_by_mean_ax.pcolor([self.subj_mean_data], cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
-            subjects_by_canonical_ax.pcolor([self.subj_canonical_data], cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
+            # self.figure.add_axes(subjects_by_canonical_ax)
+            subjects_by_mean_ax.pcolor([self.subj_mean_data], cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
+            # subjects_by_canonical_ax.pcolor([self.subj_canonical_data], cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
 
             subjects_by_mean_ax.set_ylabel(MEAN_Y_LABEL, rotation=0)
             subjects_by_mean_ax.yaxis.set_label_coords(-0.5, 0)
@@ -190,14 +193,14 @@ class GraphicDlg(QDialog):
             subjects_by_mean_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
             subjects_by_mean_ax.set_yticks(np.arange(0))
 
-            subjects_by_canonical_ax.set_ylabel(CANONICAL_Y_LABEL, rotation=0)
-            subjects_by_canonical_ax.yaxis.set_label_coords(-0.5, 0)
-            subjects_by_canonical_ax.set_xticks(np.arange(len(self.subj_canonical_data)) + 0.5)
-            subjects_by_canonical_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
-            subjects_by_canonical_ax.set_yticks(np.arange(0))
+            # subjects_by_canonical_ax.set_ylabel(CANONICAL_Y_LABEL, rotation=0)
+            # subjects_by_canonical_ax.yaxis.set_label_coords(-0.5, 0)
+            # subjects_by_canonical_ax.set_xticks(np.arange(len(self.subj_canonical_data)) + 0.5)
+            # subjects_by_canonical_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
+            # subjects_by_canonical_ax.set_yticks(np.arange(0))
 
         else:
-            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.data, cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
+            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.data, cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
 
         self.figure.colorbar(heatmap_s_s, cax=color_ax)
         self.canvas.draw()
