@@ -21,10 +21,8 @@ This module provides plotting methods of 4 heatmap graphs:
 4. Correlation between the predicted activations of all subjects to their actual activation (subj_subj_data)
 """
 
-SUBJECTS_X_LABEL = "subjects"
-SUBJECTS_Y_LABEL = "subjects"
 MEAN_Y_LABEL = "with mean"
-CANONICAL_Y_LABEL = "with canonical"
+# CANONICAL_Y_LABEL = "with canonical"
 
 min_corr=0
 max_corr=1
@@ -69,11 +67,15 @@ class GraphicDlg(QDialog):
         self.font_size = (14 / (math.ceil(num_of_chars / 29))) if num_of_chars > 29 else 7
 
         if self.analysis_task == AnalysisTask.Analysis_Correlations:
+            self.SUBJECTS_X_LABEL = "subjects"
+            self.SUBJECTS_Y_LABEL = "subjects"
             self.subj_subj_data = data[0] # 2 dims
             self.subj_mean_data = data[1] # 1 dim
             self.subj_canonical_data = data[2] # 1 dim
             self.plot_heatmap()
         elif analysis_task == AnalysisTask.Compare_Correlations:
+            self.SUBJECTS_X_LABEL = "subjects: Predicted"
+            self.SUBJECTS_Y_LABEL = "subjects: Actual"
             self.subj_subj_data = data # 2 dims
             self.plot_heatmap()
 
@@ -103,7 +105,7 @@ class GraphicDlg(QDialog):
 
             if self.analysis_task == AnalysisTask.Analysis_Correlations:
                 # graph (1)
-                if event.inaxes.get_xlabel() == SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == SUBJECTS_Y_LABEL:
+                if event.inaxes.get_xlabel() == self.SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == self.SUBJECTS_Y_LABEL:
                     correlation = self.subj_subj_data[subject_x_index, subject_y_index]
                     between1 = "subject {}".format(self.ids[subject_x_index])
                     between2 = "subject {}".format(self.ids[subject_y_index])
@@ -113,17 +115,17 @@ class GraphicDlg(QDialog):
                     between1 = self.ids[subject_x_index]
                     between2 = "mean activation"
                 # graph (3)
-                elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == CANONICAL_Y_LABEL:
-                    correlation = self.subj_canonical_data[subject_x_index]
-                    between1 = "subject {}".format(self.ids[subject_x_index])
-                    between2 = "canonical activation"
+                # elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == CANONICAL_Y_LABEL:
+                #     correlation = self.subj_canonical_data[subject_x_index]
+                #     between1 = "subject {}".format(self.ids[subject_x_index])
+                #     between2 = "canonical activation"
                 # not a heat map location
                 else:
                     return
 
             elif self.analysis_task == AnalysisTask.Compare_Correlations:
                 # graph 4
-                if event.inaxes.get_xlabel() == SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == SUBJECTS_Y_LABEL:
+                if event.inaxes.get_xlabel() == self.SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == self.SUBJECTS_Y_LABEL:
                     correlation = self.subj_subj_data[subject_y_index, subject_x_index]
                     between1 = "subject {}".format(self.ids[subject_x_index])
                     between2 = "subject {}".format(self.ids[subject_y_index])
@@ -153,6 +155,8 @@ class GraphicDlg(QDialog):
 
     def plot_heatmap(self):
 
+        plt.gcf().subplots_adjust(bottom=0.2)
+
         self.figure.clear()
         self.figure.suptitle(self.title)
 
@@ -162,8 +166,8 @@ class GraphicDlg(QDialog):
         # create an axis
         subjects_by_subjects_ax = self.figure.gca()
         subjects_by_subjects_ax.set_aspect('equal', adjustable='box')
-        subjects_by_subjects_ax.set_xlabel(SUBJECTS_X_LABEL)
-        subjects_by_subjects_ax.set_ylabel(SUBJECTS_Y_LABEL)
+        subjects_by_subjects_ax.set_xlabel(self.SUBJECTS_X_LABEL)
+        subjects_by_subjects_ax.set_ylabel(self.SUBJECTS_Y_LABEL)
         subjects_by_subjects_ax.set_xticks(np.arange(len(self.subj_subj_data)) + 0.5)
         subjects_by_subjects_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
         subjects_by_subjects_ax.set_yticks(np.arange(len(self.subj_subj_data)) + 0.5)
@@ -209,6 +213,9 @@ class GraphicDlg(QDialog):
         # plt.tight_layout()
 
     def plot_barchart(self):
+
+        plt.gcf().subplots_adjust(bottom=0.2)
+
         self.figure.clear()
         ax = self.figure.gca()
         self.figure.suptitle(self.title)
