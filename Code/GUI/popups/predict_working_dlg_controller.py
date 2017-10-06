@@ -20,12 +20,11 @@ class PredictWorkingDlg(QtWidgets.QDialog):
         self.progress_bar_ui.setupUi(self)
         self.progress_thread = PredictWorkingThread(self.prediction_model, self.subjects, self.progress_bar_ui.progressBar)
         self.progress_thread.finished_sig.connect(lambda: on_predict_finish(self))
+        self.closeEvent = lambda event: self.onClose(event)
 
-    def onFinish(self):
+    def onClose(self, event):
+        self.progress_thread.terminate()
         self.close()
-        print("hi")
-
-
     # def closeEvent(self, event):
     #     if self.progress_thread.isFinished():
     #         event.accept()
