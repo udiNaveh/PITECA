@@ -7,7 +7,7 @@ import GUI.globals as gb
 from GUI.popups import analysis_working_dlg_controller
 from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
 from GUI.graphics import graphics
-from definitions import CANONICAL_CIFTI_PATH, ANALYSIS_DIR
+from definitions import ANALYSIS_DIR
 import definitions
 from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG, MAX_SUBJECTS
 from GUI.settings_controller import get_analysis_results_folder
@@ -140,7 +140,7 @@ class AnalyzeController:
         # Prepare additional analysis parameters
         analysis_task = None
         outputdir = get_analysis_results_folder()
-        other_path = CANONICAL_CIFTI_PATH
+        other_path = path_utils.get_canonical_path(self.task)
         if self.ui.analysisMeanRadioButton.isChecked():
             analysis_task = AnalysisTask.Analysis_Mean
 
@@ -181,7 +181,7 @@ class AnalyzeController:
         # Prepare additional analysis parameters
         analysis_task = None
         outputdir = get_analysis_results_folder()
-        other_path = CANONICAL_CIFTI_PATH
+        other_path = path_utils.get_canonical_path(self.task)
 
         if self.ui.comparisonCorrelationsRadioButton.isChecked():
             analysis_task = AnalysisTask.Compare_Correlations
