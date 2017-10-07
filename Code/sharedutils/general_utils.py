@@ -31,3 +31,16 @@ def safe_open(path, *args):
 #             assert subj_number not in mapping
 #             mapping[subj_number] = i
 #     return mapping
+
+def inverse_dicts(dict):
+
+    inversed = {}
+    keys = [k for k in dict.keys()]
+    for k in keys:
+        for inner_key in dict[k]:
+            if inner_key not in inversed:
+                inversed[inner_key] = {}
+            inversed[inner_key][k] = dict[k][inner_key]
+    return inversed
+
+

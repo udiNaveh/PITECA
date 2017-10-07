@@ -143,9 +143,9 @@ def fsl_glm(x, y):
     return t
 
 
-def rms_loss(prediction, actual, reduce_mean=False, use_normalization=False):
+def rmse_loss(prediction, actual, reduce_mean=False, use_normalization=False):
     """
-    computes the residual sum of squares loss (using mean rather than sum)
+    computes the root mean square error loss.
     each line in prediction is one observation
     """
     if not np.shape(prediction) == np.shape(actual):
@@ -164,5 +164,4 @@ def rms_loss(prediction, actual, reduce_mean=False, use_normalization=False):
         prediction =  z_score(prediction, axis=1)
         actual = z_score(actual, axis= 1)
 
-    rms = np.mean(np.square(prediction - actual))
-    return rms
+    return np.sqrt(np.mean(np.square(prediction - actual)))

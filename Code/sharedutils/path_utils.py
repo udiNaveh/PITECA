@@ -1,5 +1,6 @@
 from sharedutils.constants import FEATS_EXT, PREDICT_OUTPUT_EXT, DTSERIES_EXT
 from GUI.settings_controller import get_features_folder
+from definitions import CANONICAL_CIFTI_DIR
 import os
 
 
@@ -46,3 +47,6 @@ def generate_final_filename(filename):
     while os.path.isfile(filename + "({})".format(i)):
         i += 1
     return filename + "({})".format(i)
+
+def get_canonical_path(task):
+    return os.path.join(CANONICAL_CIFTI_DIR, 'canonical_{}.dtseries.nii'.format(task.full_name))
