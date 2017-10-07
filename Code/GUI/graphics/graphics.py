@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -31,6 +31,8 @@ class GraphicDlg(QDialog):
     def __init__(self, analysis_task, data, subjects, title, parent=None):
         super(GraphicDlg, self).__init__(parent)
 
+
+
         # a figure instance to plot on
         sizeObject = QtWidgets.QDesktopWidget().screenGeometry(-1)
         self.figure = plt.figure()
@@ -55,6 +57,11 @@ class GraphicDlg(QDialog):
 
         self.layout.addWidget(self.save_button)
         self.setLayout(self.layout)
+
+        self.setWindowTitle("Graph")
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(definitions.PITECA_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.setWindowIcon(icon)
 
         # Add results illustration
         self.ids = [subject.subject_id for subject in subjects]
