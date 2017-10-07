@@ -7,11 +7,13 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import definitions
 
 class Ui_ResultsDialog(object):
     def setupUi(self, ResultsDialog):
         ResultsDialog.setObjectName("ResultsDialog")
         ResultsDialog.resize(297, 112)
+        ResultsDialog.setWindowIcon(QtGui.QIcon(definitions.PITECA_ICON_PATH))
         self.gridLayout = QtWidgets.QGridLayout(ResultsDialog)
         self.gridLayout.setObjectName("gridLayout")
         self.openInFolderButton = QtWidgets.QPushButton(ResultsDialog)
