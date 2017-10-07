@@ -47,3 +47,12 @@ class Ui_ResultsDialog(object):
         self.viewInWbButton.setText(_translate("ResultsDialog", "View in wb"))
 
 
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    ResultsDialog = QtWidgets.QDialog()
+    ui = Ui_ResultsDialog()
+    ui.setupUi(ResultsDialog)
+    ResultsDialog.show()
+    sys.exit(app.exec_())
+

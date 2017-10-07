@@ -68,13 +68,19 @@ class AnalyzeController:
 
         if analysis_task == AnalysisTask.Analysis_Mean:
             dialog_utils.report_results("Done! Analysis result is saved in {}".format(get_analysis_results_folder()),
-                                        get_analysis_results_folder())
+                                        get_analysis_results_folder(), gb.curr_cifti_filename)
 
         elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations, AnalysisTask.Compare_Significance]:
 
             if analysis_task == AnalysisTask.Compare_Significance:
+
+                if len(subjects) == 1:
+                    filepath = gb.curr_cifti_filename
+                else:
+                    filepath = None
+
                 dialog_utils.report_results("Done! Comparison result is saved in {}".format(ANALYSIS_DIR),
-                                            get_analysis_results_folder(), False)
+                                            get_analysis_results_folder(), filepath, False)
                 title_base = "Intersection over Union of subjects overlap maps"
 
             if analysis_task == AnalysisTask.Analysis_Correlations:
