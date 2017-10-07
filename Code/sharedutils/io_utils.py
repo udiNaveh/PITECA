@@ -6,6 +6,7 @@ import sharedutils.asynch_utils as asynch_utils
 import sharedutils.cmd_utils
 import scipy.io as sio
 import h5py
+import GUI.globals as gb
 
 '''
 All methods that read or write to files.
@@ -88,6 +89,7 @@ def save_to_dtseries(filename, brain_model, mat, fill_with_zeros = False):
     series = cifti.Series(start=0, step=1, size=mat.shape[0])
     if not filename.endswith(".dtseries.nii"):
         filename += ".dtseries.nii"
+    gb.curr_cifti_filename = filename
     cifti.write(filename, mat, (series, brain_model))
     return filename
 

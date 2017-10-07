@@ -22,7 +22,7 @@ def run_wb_command(args):
     return system_call(['wb_command'] + args)
 
 def run_wb_view(args):
-    return system_call(['Start', 'wb_view'] + args)
+    return system_call(['C:/workbench/bin_windows64/wb_view'] + args)
 
 def run_command(command, args):
     assert isinstance(command, str)
