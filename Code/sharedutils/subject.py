@@ -1,7 +1,7 @@
 from sharedutils.constants import *
 from sharedutils.general_utils import *
 from os.path import join as join_path
-from sharedutils import path_utils
+from sharedutils import path_utils, dialog_utils, constants
 import os
 
 
@@ -39,11 +39,18 @@ Function for Keren's needs
 (prediction flow + analysis flow)
 '''
 def create_subjects(input_files_str, output_dir):
+    errors = 0
     subjects = []
     input_files = path_utils.extract_filenames(input_files_str)
     for input_path in input_files:
         id = path_utils.get_id(input_path)
-        features_path = path_utils.get_features_path(id)
-        subject = Subject(id, output_dir, input_path, features_path)
-        subjects.append(subject)
+        if id is None:
+            errors += 1
+        else:
+            features_path = path_utils.get_features_path(id)
+            subject = Subject(id, output_dir, input_path, features_path)
+            subjects.append(subject)
+    if errors > 0:
+        dialog_utils.inform_user(constants.NAMING_CONVENTION_ERROR)
+        return []
     return subjects

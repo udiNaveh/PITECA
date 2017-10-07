@@ -4,7 +4,7 @@ from PyQt5.QtCore import QFile, QIODevice, QThread
 from GUI.views import Ui_MainView
 from GUI.analyze_controller import AnalyzeController
 from GUI.settings_controller import SettingsController
-from sharedutils import constants, dialog_utils
+from sharedutils import constants, dialog_utils, cmd_utils
 import sys
 from threading import current_thread
 import threading
@@ -72,6 +72,7 @@ def piteca_excepthook(exctype, value, tb):
         print(value)  # TODO: remove this! Here only for development needs
         return
     if int(QThread.currentThreadId()) == main_thread_id:
+        traceback.print_tb(tb)
         dialog_utils.print_error(str(value) + ". PITECA will be now closed")
         sys.exit()
     else:
@@ -85,6 +86,7 @@ def piteca_excepthook(exctype, value, tb):
 
 if __name__ == "__main__":
     pass
+    # cmd_utils.show_maps_in_wb_view("C:/Users/User/Sadna/mydata/drive-download-20170925T144453Z-001/predictions_nn/000071_GAMBLING_REWARD_predicted.dtseries.nii")
     main_thread_id = int(QThread.currentThreadId())
     setup_thread_excepthook()
     sys.excepthook = piteca_excepthook

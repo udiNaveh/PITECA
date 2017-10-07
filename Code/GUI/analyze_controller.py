@@ -10,6 +10,7 @@ from GUI.graphics import graphics
 from definitions import ANALYSIS_DIR
 import definitions
 from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG, MAX_SUBJECTS
+import sharedutils.constants
 from GUI.settings_controller import get_analysis_results_folder
 
 class AnalyzeController:
@@ -33,6 +34,7 @@ class AnalyzeController:
             curr_subject = subject.Subject()
             curr_subject.subject_id = path_utils.get_id(file)
             if curr_subject.subject_id == None:
+                dialog_utils.inform_user(constants.NAMING_CONVENTION_ERROR)
                 return []
             curr_subject.predicted = {task: file}
             subjects.append(curr_subject)
@@ -66,13 +68,19 @@ class AnalyzeController:
 
         if analysis_task == AnalysisTask.Analysis_Mean:
             dialog_utils.report_results("Done! Analysis result is saved in {}".format(get_analysis_results_folder()),
-                                        get_analysis_results_folder())
+                                        get_analysis_results_folder(), gb.curr_cifti_filename)
 
         elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations, AnalysisTask.Compare_Significance]:
 
             if analysis_task == AnalysisTask.Compare_Significance:
+
+                if len(subjects) == 1:
+                    filepath = gb.curr_cifti_filename
+                else:
+                    filepath = None
+
                 dialog_utils.report_results("Done! Comparison result is saved in {}".format(ANALYSIS_DIR),
-                                            get_analysis_results_folder())
+                                            get_analysis_results_folder(), filepath, False)
                 title_base = "Intersection over Union of subjects overlap maps"
 
             if analysis_task == AnalysisTask.Analysis_Correlations:

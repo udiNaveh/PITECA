@@ -18,7 +18,7 @@ import scipy.io as sio
 import h5py
 import pickle
 import definitions
-
+import GUI.globals as gb
 
 
 def open_cifti(path):
@@ -85,6 +85,7 @@ def save_to_dtseries(filename, brain_model, mat):
     series = cifti.Series(start=0, step=1, size=mat.shape[0])
     if not filename.endswith(".dtseries.nii"):
         filename += ".dtseries.nii"
+    gb.curr_cifti_filename = filename
     cifti.write(filename, mat, (series, brain_model))
     return filename
 

@@ -51,6 +51,8 @@ class PredictTabModel:
         if len(self.subjects) > MAX_SUBJECTS:
             inform_user("Too many files to process. Maximum number is 25 files.")
             return
+        if len(self.subjects) == 0:
+            return
 
         # Open a dialog to ask the user for permission to use existing features
         use_existing = False

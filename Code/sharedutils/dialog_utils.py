@@ -49,14 +49,16 @@ def inform_user(msg):
     msg_box.addButton(QtWidgets.QMessageBox.Ok)
     msg_box.exec_()
 
-def report_results(msg, folder):
-    dlg = results_dlg_controller.ResultsDlg(msg, folder)
+
+def report_results(msg, folder, filepath, exit_on_open_folder=True):
+    dlg = results_dlg_controller.ResultsDlg(msg, folder, exit_on_open_folder, filepath)
     ui = results_dlg_view.Ui_ResultsDialog()
     ui.setupUi(dlg)
     dlg.update_ui(ui)
     dlg.setWindowModality(Qt.ApplicationModal)
     dlg.show()
     dlg.exec_()
+
 
 def browse_files(line_edit, dir):
     dlg = QtWidgets.QFileDialog()
