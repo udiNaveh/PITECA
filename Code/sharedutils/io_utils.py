@@ -1,3 +1,13 @@
+"""
+All methods that read or write to files.
+These are mainly wrapper functions for third-party io functions 
+(implemented in the cifti package, or other packages we will use).
+This can allow us handle exception in a certain way or add some needed processing stages
+to data. It can also make other code more readable.
+Other methods for reading or saving files can be added here - for example saving graphs created
+in the analysis module.
+"""
+
 import cifti
 import numpy as np
 from sharedutils.constants import *
@@ -6,17 +16,8 @@ import sharedutils.asynch_utils as asynch_utils
 import sharedutils.cmd_utils
 import scipy.io as sio
 import h5py
-
-'''
-All methods that read or write to files.
-These are mainly wrapper functions for third-party io functions 
-(implemented in the cifti package, or other packages we will use).
-This can allow us handle exception in a certain way or add some needed processing stages
-to data. It can also make other code more readable.
-Other methods for reading or saving files can be added here - for example saving graphs created
-in the analysis module.
-
-'''
+import pickle
+import definitions
 
 
 
@@ -66,7 +67,7 @@ def open_features_file(path):
     return arr, (series, bm)
 
 
-def save_to_dtseries(filename, brain_model, mat, fill_with_zeros = False):
+def save_to_dtseries(filename, brain_model, mat):
     '''
     save a dtseries.nii file given the data matrix and the brain model.
     The series axis is generated so as to fit the size of the matrix (every row is a time point).
@@ -75,10 +76,6 @@ def save_to_dtseries(filename, brain_model, mat, fill_with_zeros = False):
     :param filename: the file to save
     :param brain_model: a Cifti.Axis.BrainModel object
     :param mat: the data matrix
-    :param fill_with_zeros: havn't implemented yet. The idea is that if we make prediction for only
-      the cortex vertices, we can make a brain model that contains only the cortex vertices
-      and save to a file like that (save disc space). On the other hand someone (like Ido) might want to have
-      all the 91282 vertices and just have zeros in the unused vertices.
     :return:
     '''
     if len(np.shape(mat)) == 2:
@@ -92,11 +89,19 @@ def save_to_dtseries(filename, brain_model, mat, fill_with_zeros = False):
     return filename
 
 
+def get_bm(bm_type):
+    if bm_type == 'full':
+        bm = pickle.load(open(definitions.BM_FULL_PATH, 'rb'))
+        return bm
+    elif bm_type == 'cortex':
+        bm = pickle.load(open(definitions.BM_CORTEX_PATH, 'rb'))
+        return bm
+    else:
+        raise ValueError('BM type ""{}"" does not exist'.format(bm_type))
+
+
 def save_to_dscalar(filename, brain_model, mat, names, zeropad = False):
     raise NotImplementedError
-
-
-
 
 
 def open_mat_file(filepath):
@@ -124,17 +129,7 @@ def load_ndarray_from_mat(filepath, array_name = None):
     else:
         return arrays.popitem()[1]
 
-#TODO DELETE
-def get_subject_to_feature_index_mapping(path):
-    mapping = {}
-    with open(path, 'r') as f:
-        for i in range(100):
-            subj_number = int(f.readline()) + 1
-            assert subj_number not in mapping
-            mapping[subj_number] = i
-    return mapping
 
 
 
 
-    return bm

@@ -4,6 +4,7 @@ from sharedutils.linalg_utils import *
 from sharedutils.cmd_utils import run_wb_view, show_maps_in_wb_view
 from model.models import IModel
 from analysis.analyzer import *
+from sharedutils.general_utils import inverse_dicts
 import time
 import os
 import sys
@@ -62,24 +63,20 @@ def explore_tasks():
     plt.show()
     print("")
 
-
-
-
+def open_canonical_files():
+    tasks_ciftis_path = r'D:\Projects\PITECA\Data_for_testing\actual_task_activation'
+    file_names = [os.path.join(tasks_ciftis_path, 'canonical_{}.dtseries.nii'.format(task.full_name)) for task in TASKS]
+    show_maps_in_wb_view(file_names)
 
 def create_tasks_files():
     tasks_ciftis_path = r'D:\Projects\PITECA\Data_for_testing\actual_task_activation'
     tasks = np.load(all_tasks_200s)
-    tasks = tasks[:,:5,:]
-    subjects = ['100307', '101107', '102816', '105014', '105216']
     full_bm = pickle.load(open(definitions.BM_FULL_PATH, 'rb'))
-    for i in range(len(TASKS)):
-        for j in range(len(subjects)):
-            task_data = tasks[i,j,:]
-            task_data = task_data.reshape([1, np.size(task_data)])
-            task_name = TASKS[i].full_name
-            filename = os.path.join(tasks_ciftis_path, task_name, '{0}_{1}'.format(subjects[j],task_name))
-            save_to_dtseries(filename, full_bm, task_data)
-            print('saved {}'.format(os.path.basename(filename)))
+    for i, task in enumerate(TASKS):
+        mean_data = np.reshape(np.mean(tasks[i, :,:], axis=0), [1, STANDART_BM.N_TOTAL_VERTICES])
+        f_name = 'canonical_{}'.format(task.full_name)
+        save_to_dtseries(os.path.join(tasks_ciftis_path, f_name), full_bm, mean_data)
+        print('saved canonical for {}'.format(task.full_name))
     return
 
 def create_features_files():
@@ -300,16 +297,6 @@ def read_results_text_file_and_plot(path):
 
     print("")
 
-def inverse_dicts(dict):
-
-    inversed = {}
-    keys = [k for k in dict.keys()]
-    for k in keys:
-        for inner_key in dict[k]:
-            if inner_key not in inversed:
-                inversed[inner_key] = {}
-            inversed[inner_key][k] = dict[k][inner_key]
-    return inversed
 
 
 def plotchartsoverlap(correlation, avg_corr_with_mean, model_names, title):
@@ -351,12 +338,8 @@ def plotchartsoverlap(correlation, avg_corr_with_mean, model_names, title):
 
     return
 
-def save_bm():
-    bm = load_standart_cortex_bm()
-    #pickle.dump(bm, safe_open(r'C:\Users\ASUS\PycharmProjects\PITECA\Data\Models\FeatureExtractor\full_bm.pkl', 'wb'))
-
 
 if __name__ == "__main__":
-    explore_tasks()
+    open_canonical_files()
     #results_path = r'D:\Projects\PITECA\Data\docs\7030_models_results_corrected_test'
     #read_results_text_file_and_plot(results_path)

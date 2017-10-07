@@ -211,11 +211,6 @@ def get_significance_overlap_maps_for_subjects(subjects, task, outputdir):
     the actual activation of the j'th subject for task.
     '''
 
-    # need to get brainmodel from somewhere. bad solution just for now.
-    arr, (ax, bm) = open_cifti(subjects[0].predicted[task])
-    del arr, ax
-
-
     subjects_predicted_maps = get_predicted_task_maps_by_subject(subjects, task)
     subjects_actual_maps = get_actual_task_maps_by_subject(subjects, task)
     # need to insure that maps are paired
@@ -235,7 +230,8 @@ def get_significance_overlap_maps_for_subjects(subjects, task, outputdir):
         iou_positive.append(iou_pos)
         iou_negative.append(iou_neg)
         filename = generate_file_name(outputdir, task, "{0}_predicted_actual_overlap".format(s.subject_id))
-        save_to_dtseries(generate_final_filename(filename), bm, map)
+        bm_cortex = get_bm('cortex')
+        save_to_dtseries(generate_final_filename(filename), bm_cortex, map)
 
     return [iou_positive, iou_negative]
 

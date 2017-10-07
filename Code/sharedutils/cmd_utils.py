@@ -39,7 +39,8 @@ def run_command(command, args):
 def convert_to_CIFTI2(input_cifti, output_cifti2):
     return run_wb_command(["-file-convert", "-cifti-version-convert", input_cifti, '2', output_cifti2])
 
-def show_maps_in_wb_view(cifti_path):
-    definitions.DEFAULT_LEFT_SURFACE_PATH
-    run_wb_view([definitions.DEFAULT_LEFT_SURFACE_PATH, definitions.DEFAULT_RIGHT_SURFACE_PATH, cifti_path])
+def show_maps_in_wb_view(cifti_paths):
+    if isinstance(cifti_paths, str):
+        cifti_paths = [cifti_paths]
+    run_wb_view([definitions.DEFAULT_LEFT_SURFACE_PATH, definitions.DEFAULT_RIGHT_SURFACE_PATH] + cifti_paths)
 
