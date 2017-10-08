@@ -1,7 +1,12 @@
+import os
+
 from sharedutils.constants import FEATS_EXT, PREDICT_OUTPUT_EXT, DTSERIES_EXT
 from GUI.settings_controller import get_features_folder
 from definitions import CANONICAL_CIFTI_DIR
-import os
+
+"""
+This utility gathers functions to specific PITECA string-path manipulation needs.
+"""
 
 
 def get_id(absolute_path):
@@ -10,7 +15,6 @@ def get_id(absolute_path):
         int(id) # validates that id is an integer
         return id
     except ValueError:
-        # TODO: handle error @error_handling
         return None
 
 

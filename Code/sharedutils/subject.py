@@ -1,11 +1,13 @@
 from sharedutils.constants import *
-from sharedutils.general_utils import *
 from os.path import join as join_path
 from sharedutils import path_utils, dialog_utils, constants
-import os
 
 
 class Subject:
+    """
+    A class to represent a subject element that contains relevant data about the subjects in the prediction
+    and analysis flows, across modules.
+    """
 
     def __init__(self, subject_id=None, output_dir=None, input_path=None, features_path=None, features_exist=False,
                  predicted={}, actual = {}):
@@ -34,11 +36,15 @@ class Subject:
 # TODO: make order in those functions and remove their documentation
 
 
-'''
-Function for Keren's needs
-(prediction flow + analysis flow)
-'''
+
 def create_subjects(input_files_str, output_dir):
+    """
+    A utility function to prepare Subject elements in the beginning of the prediction flow,
+    with data from the UI.
+    :param input_files_str: the string of all input files as got in the line edit ("[filepath1, ..., filepath23]")
+    :param output_dir: the string of the output dir.
+    :return: a list of Subject(s)
+    """
     errors = 0
     subjects = []
     input_files = path_utils.extract_filenames(input_files_str)

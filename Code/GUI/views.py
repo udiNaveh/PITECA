@@ -7,12 +7,15 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 from sharedutils.constants import Domain, AVAILABLE_TASKS
 from definitions import PITECA_ICON_PATH
 from model import models
-from GUI.settings_controller import get_model
 
 class Ui_MainView(object):
+    """
+    Defines PITECA's main window UI.
+    """
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(453, 573)

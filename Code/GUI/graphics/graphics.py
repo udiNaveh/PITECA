@@ -1,17 +1,16 @@
-from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtWidgets import QDialog, QVBoxLayout
-
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 import numpy as np
 import math
 import scipy.io as sio
-from textwrap import wrap
-import definitions
+
+from PyQt5 import QtWidgets, QtGui
+from PyQt5.QtWidgets import QDialog, QVBoxLayout
 
 from sharedutils import dialog_utils, constants
 from GUI.analyze_working_thread import AnalysisTask
+import definitions
 
 """
 This module provides plotting methods of 4 heatmap graphs:
@@ -31,10 +30,7 @@ class GraphicDlg(QDialog):
     def __init__(self, analysis_task, data, subjects, title, parent=None):
         super(GraphicDlg, self).__init__(parent)
 
-
-
         # a figure instance to plot on
-        sizeObject = QtWidgets.QDesktopWidget().screenGeometry(-1)
         self.figure = plt.figure()
 
         # this is the Canvas Widget that displays the `figure`
@@ -54,10 +50,8 @@ class GraphicDlg(QDialog):
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.toolbar)
         self.layout.addWidget(self.canvas)
-
         self.layout.addWidget(self.save_button)
         self.setLayout(self.layout)
-
         self.setWindowTitle("Graph")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(definitions.PITECA_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -73,6 +67,7 @@ class GraphicDlg(QDialog):
         num_of_chars = len(''.join(self.ids)) + len(self.ids)
         self.font_size = (14 / (math.ceil(num_of_chars / 29))) if num_of_chars > 29 else 7
 
+        # Set graph attributes specifically by tasks
         if self.analysis_task == AnalysisTask.Analysis_Correlations:
             self.SUBJECTS_X_LABEL = "subjects"
             self.SUBJECTS_Y_LABEL = "subjects"
@@ -85,7 +80,6 @@ class GraphicDlg(QDialog):
             self.SUBJECTS_Y_LABEL = "subjects: Actual"
             self.subj_subj_data = data # 2 dims
             self.plot_heatmap()
-
         if analysis_task == AnalysisTask.Analysis_Correlations or analysis_task == AnalysisTask.Compare_Correlations:
             if analysis_task == AnalysisTask.Compare_Correlations:
                 mean_of_diagonal = np.mean(np.diagonal(self.subj_subj_data))
@@ -94,7 +88,6 @@ class GraphicDlg(QDialog):
             # a label to show correlation
             self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
             self.layout.addWidget(self.correlation_label)
-
         elif analysis_task == AnalysisTask.Compare_Significance:
             # self.data is 2 dimensional array
             self.plot_barchart()
@@ -106,6 +99,11 @@ class GraphicDlg(QDialog):
             self.plot_heatmap()
 
     def onClick(self, event):
+        """
+        The function that should be called when user clicks on the graph.
+        Changes the label that shows the exact correlation if user clicked inside graph borders,
+        or do nothing if user clicks elsewhere.
+        """
         if event.button == 1 and event.xdata and event.ydata:
             subject_x_index = math.floor(event.xdata)
             subject_y_index = math.floor(event.ydata)
@@ -147,6 +145,11 @@ class GraphicDlg(QDialog):
                                            .format(correlation, between1, between2))
 
     def save_data(self):
+        """
+        The function that is called when user clicks on "save data" button
+        Opens a browse dialog and saves the data shown in the graph in the format and folder
+        the user selected.
+        """
         dir = definitions.ANALYSIS_DIR
         name, extension = dialog_utils.save_file('*.mat ;; *.npy', dir)
         if name == '':
@@ -161,6 +164,9 @@ class GraphicDlg(QDialog):
             raise Exception('File extension is not supported.')
 
     def plot_heatmap(self):
+        """
+        Plots a heatmap graph according to data
+        """
 
         plt.gcf().subplots_adjust(bottom=0.2)
 
@@ -220,6 +226,9 @@ class GraphicDlg(QDialog):
         # plt.tight_layout()
 
     def plot_barchart(self):
+        """
+        Plots a barchart graph according to data
+        """
 
         plt.gcf().subplots_adjust(bottom=0.2)
 

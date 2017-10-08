@@ -1,12 +1,12 @@
 from PyQt5.QtWidgets import QWidget, QMessageBox, QMainWindow, QLabel, QGridLayout, QDesktopWidget
 from PyQt5 import QtWidgets, QtGui
-import definitions
 
+import definitions
 
 
 class QuestionDialog(QWidget):
     '''
-    Includes view + controller
+    Includes view + controller of a generic dialog shown to get an answer of yes or no from user.
     '''
 
     def __init__(self, default_ans, title, msg):

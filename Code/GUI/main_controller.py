@@ -1,16 +1,16 @@
+import sys
+import threading
+import traceback
+
 from GUI.predict_controller import PredictController
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtCore import QFile, QIODevice, QThread
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import QThread
+
+import GUI.globals as gb
 from GUI.views import Ui_MainView
 from GUI.analyze_controller import AnalyzeController
 from GUI.settings_controller import SettingsController
-from sharedutils import constants, dialog_utils, cmd_utils
-import sys
-from threading import current_thread
-import threading
-import GUI.globals as gb
-from PyQt5.QtWidgets import QStyleFactory
-import traceback
+from sharedutils import constants, dialog_utils
 
 
 '''
