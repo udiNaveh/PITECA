@@ -12,6 +12,7 @@ import definitions
 from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG, MAX_SUBJECTS
 import sharedutils.constants
 from GUI.settings_controller import get_analysis_results_folder
+import os
 
 class AnalyzeController:
 
@@ -67,8 +68,12 @@ class AnalyzeController:
         gb.should_exit_on_error = False
 
         if analysis_task == AnalysisTask.Analysis_Mean:
-            dialog_utils.report_results("Done! Analysis result is saved in {}".format(get_analysis_results_folder()),
-                                        get_analysis_results_folder(), gb.curr_cifti_filename)
+
+            analysis_folder = get_analysis_results_folder()
+            folder_path = os.path.join(analysis_folder, self.task.domain().name, self.task.name)
+
+            dialog_utils.report_results("Done! Analysis result is saved in {}".format(folder_path),
+                                        folder_path, gb.curr_cifti_filename)
 
         elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations, AnalysisTask.Compare_Significance]:
 
@@ -79,8 +84,11 @@ class AnalyzeController:
                 else:
                     filepath = None
 
-                dialog_utils.report_results("Done! Comparison result is saved in {}".format(ANALYSIS_DIR),
-                                            get_analysis_results_folder(), filepath, False)
+                analysis_folder = get_analysis_results_folder()
+                folder_path = os.path.join(analysis_folder, self.task.domain().name, self.task.name)
+
+                dialog_utils.report_results("Done! Comparison result is saved in {}".format(folder_path),
+                                            folder_path, filepath, False)
                 title_base = "Intersection over Union of subjects overlap maps"
 
             if analysis_task == AnalysisTask.Analysis_Correlations:
