@@ -21,8 +21,8 @@ This module provides plotting methods of 4 heatmap graphs:
 4. Correlation between the predicted activations of all subjects to their actual activation (subj_subj_data)
 """
 
-MEAN_Y_LABEL = "with mean"
-# CANONICAL_Y_LABEL = "with canonical"
+# MEAN_Y_LABEL = "with mean"
+CANONICAL_Y_LABEL = "correlation with\n canonical activation"
 
 min_corr=0
 max_corr=1
@@ -117,15 +117,15 @@ class GraphicDlg(QDialog):
                     between1 = "subject {}".format(self.ids[subject_x_index])
                     between2 = "subject {}".format(self.ids[subject_y_index])
                 # graph (2)
-                elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == MEAN_Y_LABEL:
-                    correlation = self.subj_mean_data[subject_x_index]
-                    between1 = self.ids[subject_x_index]
-                    between2 = "mean activation"
+                # elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == MEAN_Y_LABEL:
+                #     correlation = self.subj_mean_data[subject_x_index]
+                #     between1 = self.ids[subject_x_index]
+                #     between2 = "mean activation"
                 # graph (3)
-                # elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == CANONICAL_Y_LABEL:
-                #     correlation = self.subj_canonical_data[subject_x_index]
-                #     between1 = "subject {}".format(self.ids[subject_x_index])
-                #     between2 = "canonical activation"
+                elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == CANONICAL_Y_LABEL:
+                    correlation = self.subj_canonical_data[subject_x_index]
+                    between1 = "subject {}".format(self.ids[subject_x_index])
+                    between2 = "canonical activation"
                 # not a heat map location
                 else:
                     return
@@ -190,25 +190,25 @@ class GraphicDlg(QDialog):
         if self.analysis_task == AnalysisTask.Analysis_Correlations:
             heatmap_s_s = subjects_by_subjects_ax.pcolor(self.subj_subj_data, cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
             # add correlations to mean
-            subjects_by_mean_ax = divider.append_axes("bottom", "7%", pad="60%")
-            # subjects_by_canonical_ax = divider.append_axes("bottom", "7%", pad="50%")
+            # subjects_by_mean_ax = divider.append_axes("bottom", "7%", pad="60%")
+            subjects_by_canonical_ax = divider.append_axes("bottom", "7%", pad="50%")
 
-            self.figure.add_axes(subjects_by_mean_ax)
-            # self.figure.add_axes(subjects_by_canonical_ax)
-            subjects_by_mean_ax.pcolor([self.subj_mean_data], cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
-            # subjects_by_canonical_ax.pcolor([self.subj_canonical_data], cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
+            # self.figure.add_axes(subjects_by_mean_ax)
+            self.figure.add_axes(subjects_by_canonical_ax)
+            # subjects_by_mean_ax.pcolor([self.subj_mean_data], cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
+            subjects_by_canonical_ax.pcolor([self.subj_canonical_data], cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
 
-            subjects_by_mean_ax.set_ylabel(MEAN_Y_LABEL, rotation=0)
-            subjects_by_mean_ax.yaxis.set_label_coords(-0.5, 0)
-            subjects_by_mean_ax.set_xticks(np.arange(len(self.subj_mean_data)) + 0.5)
-            subjects_by_mean_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
-            subjects_by_mean_ax.set_yticks(np.arange(0))
+            # subjects_by_mean_ax.set_ylabel(MEAN_Y_LABEL, rotation=0)
+            # subjects_by_mean_ax.yaxis.set_label_coords(-0.5, 0)
+            # subjects_by_mean_ax.set_xticks(np.arange(len(self.subj_mean_data)) + 0.5)
+            # subjects_by_mean_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
+            # subjects_by_mean_ax.set_yticks(np.arange(0))
 
-            # subjects_by_canonical_ax.set_ylabel(CANONICAL_Y_LABEL, rotation=0)
-            # subjects_by_canonical_ax.yaxis.set_label_coords(-0.5, 0)
-            # subjects_by_canonical_ax.set_xticks(np.arange(len(self.subj_canonical_data)) + 0.5)
-            # subjects_by_canonical_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
-            # subjects_by_canonical_ax.set_yticks(np.arange(0))
+            subjects_by_canonical_ax.set_ylabel(CANONICAL_Y_LABEL, rotation=0)
+            subjects_by_canonical_ax.yaxis.set_label_coords(-0.5, 0)
+            subjects_by_canonical_ax.set_xticks(np.arange(len(self.subj_canonical_data)) + 0.5)
+            subjects_by_canonical_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
+            subjects_by_canonical_ax.set_yticks(np.arange(0))
 
         else:
             heatmap_s_s = subjects_by_subjects_ax.pcolor(self.data, cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
