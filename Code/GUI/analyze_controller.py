@@ -1,20 +1,20 @@
+import os
+
+from PyQt5.QtCore import Qt
+
 from sharedutils import constants, path_utils, subject, dialog_utils
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QCursor
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5 import QtCore
 import GUI.globals as gb
 from GUI.popups import analysis_working_dlg_controller
 from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
 from GUI.graphics import graphics
-from definitions import ANALYSIS_DIR
 import definitions
-from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG, MAX_SUBJECTS
-import sharedutils.constants
 from GUI.settings_controller import get_analysis_results_folder
-import os
+
 
 class AnalyzeController:
+    """
+    A class to control the GUI logic of the Analysis tab
+    """
 
     global should_exit_on_error
 
@@ -64,6 +64,14 @@ class AnalyzeController:
         return subjects
 
     def __handle_results(self, analysis_task, dlg, data, subjects):
+        """
+        The function to be called after the analysis progress is done.
+        For each analysis task, handle the results in a different way.
+        :param analysis_task: The task chosen by the user (mean/correlations/significance).
+        :param dlg: The progress dialog to be closed.
+        :param data: The results returned from the analyzer.
+        :param subjects: A list of Subject(s), their data was analyzed.
+        """
         dlg.close()
         gb.should_exit_on_error = False
 
@@ -111,31 +119,56 @@ class AnalyzeController:
 
 
     def __handle_unexpected_exception(self, dlg, thread):
+        """
+        The function to be called when unhandled exception occurs in param thread.
+        Terminates the thread, closing the progress dialog and pops up an error message.
+        :param dlg: Progress dialog, to be closed.
+        :param thread: The analysis thread where the exception occured, to be terminated.
+        """
         dlg.close()
         thread.quit()
         dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG)
 
     def wait_dlg_close_event(self, event, dlg, thread):
+        """
+        The function to be called when user clicks the "X" button on the analysis progress dialog.
+        :param event: the close event came from the UI
+        :param dlg: the dialog to be closed
+        :param thread: the analysis thread to be terminated
+        """
         thread.terminate() # TODO: terminate() is not recommended, but quit() doesn't work for some reason
         event.accept()
 
     def update_tasks(self):
+        """
+        Method for updating the UI when user changes the domain
+        """
         self.ui.taskComboBox.clear()
         domain = constants.Domain[self.ui.domainComboBox.currentText()]
         self.ui.taskComboBox.addItems([task.name for task in domain.value])
 
     def onPredictedInputBrowseButtonClicked(self):
+        """
+        The function to be called when user clicks on the predicted "browse" button.
+        """
         dir = definitions.DATA_DIR
         dialog_utils.browse_files(self.ui.selectPredictedLineEdit, dir)
 
     def onActualInputBrowseButtonClicked(self):
+        """
+        The function to be called when user clicks on the actuals "browse" button.
+        """
         dir = definitions.ROOT_DIR
         dialog_utils.browse_files(self.ui.addActualLineEdit, dir)
 
     def onRunAnalysisButtonClicked(self):
+        """
+        The function to be called when user clicked on "Analyze" button.
+        Starts the analysis progress according to the action selected in the UI.
+        """
         predicted_files_str = self.ui.selectPredictedLineEdit.text()
         if not predicted_files_str:
-            dialog_utils.print_error(PROVIDE_INPUT_MSG)
+            dialog_utils.print_error(constants.PROVIDE_INPUT_MSG)
             return
 
         self.task = constants.Task[self.ui.taskComboBox.currentText()]
@@ -144,13 +177,13 @@ class AnalyzeController:
         if not subjects:
             return
 
-        if len(subjects) > MAX_SUBJECTS:
+        if len(subjects) > constants.MAX_SUBJECTS:
             dialog_utils.inform_user("Too many files to process. Maximum number is 25 files.")
             return
 
         # Check all input provided
         if not predicted_files_str:
-            dialog_utils.print_error(PROVIDE_INPUT_MSG)
+            dialog_utils.print_error(constants.PROVIDE_INPUT_MSG)
             return
 
         # Prepare additional analysis parameters
@@ -165,7 +198,7 @@ class AnalyzeController:
             # TODO: add other_path = ...
 
         else:
-            dialog_utils.print_error(SELECT_ACTION_MSG)
+            dialog_utils.print_error(constants.SELECT_ACTION_MSG)
             return
 
         thread = AnalysisWorkingThread(analysis_task, subjects, self.task, outputdir, other_path)
@@ -178,11 +211,15 @@ class AnalyzeController:
         thread.start()
 
     def onRunComparisonButtonClicked(self):
+        """
+        The function to be called when user clicked on "Compare" button.
+        Starts the analysis progress according to the action selected in the UI.
+        """
         predicted_files_str = self.ui.selectPredictedLineEdit.text()
         actual_files_str = self.ui.addActualLineEdit.text()
 
         if not predicted_files_str or not actual_files_str:
-            dialog_utils.print_error(PROVIDE_INPUT_MSG)
+            dialog_utils.print_error(constants.PROVIDE_INPUT_MSG)
             return
 
         self.task = constants.Task[self.ui.taskComboBox.currentText()]
@@ -190,7 +227,7 @@ class AnalyzeController:
         if not subjects:
             return
 
-        if len(subjects) > MAX_SUBJECTS:
+        if len(subjects) > constants.MAX_SUBJECTS:
             dialog_utils.inform_user("Too many files to process. Maximum number is 25 files.")
             return
 
@@ -206,7 +243,7 @@ class AnalyzeController:
             analysis_task = AnalysisTask.Compare_Significance
 
         else:
-            dialog_utils.print_error(SELECT_ACTION_MSG)
+            dialog_utils.print_error(constants.SELECT_ACTION_MSG)
             return
 
         thread = AnalysisWorkingThread(analysis_task, subjects, self.task, outputdir, other_path)

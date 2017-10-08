@@ -7,6 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 import definitions
 
 class Ui_PredictWorkingDlg(object):
@@ -33,14 +34,3 @@ class Ui_PredictWorkingDlg(object):
     def retranslateUi(self, PredictWorkingDlg):
         _translate = QtCore.QCoreApplication.translate
         PredictWorkingDlg.setWindowTitle(_translate("PredictWorkingDlg", "Prediction"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    PredictWorkingDlg = QtWidgets.QDialog()
-    ui = Ui_PredictWorkingDlg()
-    ui.setupUi(PredictWorkingDlg)
-    PredictWorkingDlg.show()
-    sys.exit(app.exec_())
-

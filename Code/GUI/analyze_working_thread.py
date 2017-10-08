@@ -1,11 +1,15 @@
+from enum import Enum
+
 from PyQt5.QtCore import QThread
 from PyQt5 import QtCore
-import time, math
+
 from analysis import analyzer
-from enum import Enum
 
 
 class AnalysisTask(Enum):
+    """
+    An enum class to represent and pass between modules the analysis task selected by the user.
+    """
     Analysis_Mean = 1
     Analysis_Correlations = 2
 
@@ -14,6 +18,9 @@ class AnalysisTask(Enum):
 
 
 class AnalysisWorkingThread(QThread):
+    """
+    Thread for separating the analysis work from GUI.
+    """
 
     progress_finished_sig = QtCore.pyqtSignal()
     exception_occurred_sig = QtCore.pyqtSignal()

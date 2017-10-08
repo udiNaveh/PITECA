@@ -1,12 +1,14 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-from GUI.popups.predict_working_dlg_view import Ui_PredictWorkingDlg
-from GUI.predict_working_thread import PredictWorkingThread
-from sharedutils import dialog_utils, constants, cmd_utils
 import platform, os, subprocess
+
+from PyQt5 import QtWidgets
+
+from sharedutils import cmd_utils
 
 
 class ResultsDlg(QtWidgets.QDialog):
+    """
+    The dialog shown to the user after a progress that created and saved new CIFTI files.
+    """
 
     def __init__(self, label_text, folder, exit_on_open_folder, filepath):
         super(ResultsDlg, self).__init__()
@@ -24,6 +26,7 @@ class ResultsDlg(QtWidgets.QDialog):
         ui.viewInWbButton.clicked.connect(lambda: self.open_in_wb())
 
     def open_in_folder(self):
+        # Implementation if we do want to close this dialog after "open in folder":
         # if self.exit_on_open_folder:
         #     self.close()
         if platform.system() == "Windows":
