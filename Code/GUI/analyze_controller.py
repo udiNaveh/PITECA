@@ -59,7 +59,7 @@ class AnalyzeController:
         # assert only unique subjects
         ids = [subject.subject_id for subject in subjects]
         if len(ids) != len(set(ids)):
-            dialog_utils.print_error("Duplicate subjects. Please make sure to have only unique subjects in Analysis")
+            dialog_utils.print_error(constants.DUP_IDS)
             return None
         return subjects
 
