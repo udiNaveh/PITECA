@@ -6,7 +6,7 @@ from sharedutils.constants import *
 from sharedutils.dialog_utils import *
 from sharedutils.subject import create_subjects
 from GUI import settings_controller
-import GUI.globals as gb
+
 
 
 class PredictTabModel:
@@ -51,6 +51,10 @@ class PredictTabModel:
             inform_user("Too many files to process. Maximum number is 25 files.")
             return
         if len(self.subjects) == 0:
+            return
+        ids = [subject.subject_id for subject in self.subjects]
+        if len(ids) != len(set(ids)):
+            inform_user(DUP_IDS)
             return
 
         # Open a dialog to ask the user for permission to use existing features

@@ -121,6 +121,7 @@ QUESTION_TITLE = "Question"
 PROVIDE_INPUT_MSG = "Please provide input."
 SELECT_ACTION_MSG = "Please select an action."
 NAMING_CONVENTION_ERROR = "Some files don't apply naming convention. Please change names and try again."
+DUP_IDS = "Duplicate subjects. Please make sure to have only unique subjects."
 
 # Existing features
 EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \
