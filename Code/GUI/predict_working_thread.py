@@ -12,7 +12,6 @@ class PredictWorkingThread(QThread):
 
     progress_update_sig = QtCore.pyqtSignal()
     exception_occurred_sig = QtCore.pyqtSignal()
-    # TODO: This signal has to be defined in each thread of PITECA (Change to inheritance implemantation)
     finished_sig = QtCore.pyqtSignal()
 
     def __init__(self, model, subjects, progress_bar, parent=None):

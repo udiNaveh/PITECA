@@ -79,7 +79,6 @@ def browse_files(line_edit, dir):
     files = dlg.getOpenFileNames(None, 'Select Files', dir, filters)[0]
     if files:
         line_edit.setText(str(files))
-        # TODO: consider editing scenarios
 
 
 def browse_dir(line_edit, dir):
@@ -91,7 +90,6 @@ def browse_dir(line_edit, dir):
     dir = QtWidgets.QFileDialog.getExistingDirectory(None, 'Select Folder', dir)
     if dir:
         line_edit.setText(dir)
-        # TODO: consider editing scenarios
     return dir
 
 

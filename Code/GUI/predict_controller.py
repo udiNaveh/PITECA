@@ -3,7 +3,7 @@ from GUI.settings_controller import get_prediction_outputs_folder
 from PyQt5 import QtCore
 
 from GUI.predict_model import PredictTabModel
-from sharedutils.constants import Domain, Task # TODO: change this to import constants
+from sharedutils.constants import Domain, Task
 from sharedutils import dialog_utils
 import definitions
 

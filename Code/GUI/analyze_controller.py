@@ -136,7 +136,7 @@ class AnalyzeController:
         :param dlg: the dialog to be closed
         :param thread: the analysis thread to be terminated
         """
-        thread.terminate() # TODO: terminate() is not recommended, but quit() doesn't work for some reason
+        thread.terminate()
         event.accept()
 
     def update_tasks(self):
@@ -195,7 +195,6 @@ class AnalyzeController:
 
         elif self.ui.analysisCorrelationsRadioButton.isChecked():
             analysis_task = AnalysisTask.Analysis_Correlations
-            # TODO: add other_path = ...
 
         else:
             dialog_utils.print_error(constants.SELECT_ACTION_MSG)
@@ -254,4 +253,3 @@ class AnalyzeController:
         thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results, subjects))
         thread.exception_occurred_sig.connect(lambda: self.__handle_unexpected_exception(dlg, thread))
         thread.start()
-        # TODO: duplicated code with onAnalysisButtonClicked

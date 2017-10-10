@@ -77,7 +77,6 @@ def piteca_excepthook(exctype, value, tb):
         sys.exit()
     else:
         # The exception_occurred_sig should be defined in every thread class in PITECA
-        print("Inside piteca_excepthook")
         print(value) # TODO: remove this! Here only for development needs
         print(exctype)
         traceback.print_tb(tb)
