@@ -104,8 +104,8 @@ def get_predictions_correlations(subjects, task, other_path):
 
     # assume other_arr is of shape 1x91282s
     unified_mat = np.concatenate((subjects_predictions_matrix,
-                                  mean_pred.reshape([1, STANDART_BM.N_CORTEX]),
-                                  other_arr[:, :STANDART_BM.N_CORTEX]))
+                                  mean_pred.reshape([1, STANDARD_BM.N_CORTEX]),
+                                  other_arr[:, :STANDARD_BM.N_CORTEX]))
     correlation_matrix = np.corrcoef(unified_mat)
     return (np.asarray(correlation_matrix[:n_subjects, :n_subjects], float),  # subject x subject correlations
             np.asarray(correlation_matrix[:n_subjects, -2], float),  # correlations with group mean
@@ -136,7 +136,7 @@ def get_predicted_actual_correlations(subjects, task, subjects_predicted_and_act
     predicted_matrix = __arrays_to_matrix([subjects_predicted_maps[s] for s in subjects])
     actual_matrix = __arrays_to_matrix([subjects_actual_maps[s] for s in subjects])
 
-    correlation_matrix = np.corrcoef(actual_matrix[:, :STANDART_BM.N_CORTEX],
+    correlation_matrix = np.corrcoef(actual_matrix[:, :STANDARD_BM.N_CORTEX],
                                      predicted_matrix)[n_subjects:, :n_subjects]
 
     return correlation_matrix
@@ -226,7 +226,7 @@ def get_significance_overlap_maps_for_subjects(subjects, task, outputdir):
     iou_negative = []
     for s in subjects:
         map, iou_pos, iou_neg, iou_both = get_significance_maps_overlap(all_maps[s].predicted,
-                                                                        all_maps[s].actual[:,STANDART_BM.CORTEX])
+                                                                        all_maps[s].actual[:, STANDARD_BM.CORTEX])
         iou_positive.append(iou_pos)
         iou_negative.append(iou_neg)
         filename = generate_file_name(outputdir, task, "{0}_predicted_actual_overlap".format(s.subject_id))

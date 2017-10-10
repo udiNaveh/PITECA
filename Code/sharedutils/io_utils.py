@@ -12,12 +12,13 @@ import cifti
 import numpy as np
 from sharedutils.constants import *
 import sharedutils.cmd_utils as cmd_utils
-import sharedutils.asynch_utils as asynch_utils
-import sharedutils.cmd_utils
 import scipy.io as sio
 import h5py
 import pickle
+import os
+from tempfile import TemporaryDirectory
 import definitions
+from definitions import PitecaError
 import GUI.globals as gb
 
 
@@ -29,41 +30,47 @@ def open_cifti(path):
     '''
     try:
         return cifti.read(path)
-    except FileNotFoundError:
-        pass
-        # @error_handle
-        return None
 
-    except ValueError as e:
-        if str(e) == 'Only CIFTI-2 files are supported':
-            # @error_handle
-            answer, cifti2path = asynch_utils.do_convert_to_CIFTI2(path)
-            if answer==False:
-                # write to logger that the file could not be opened because it was not cifti2
-                return None
-            else:
-                success = cmd_utils.convert_to_CIFTI2(path, cifti2path)
-                # not actually a boolean. need to change implementation, maybe use try-except.
-                if success:
-                    return open_rfmri_file(cifti2path)
-    # other exceptions?
+    except ValueError as ve:
+        if str(ve) == 'Only CIFTI-2 files are supported':
+            with TemporaryDirectory() as tmp_dir:
+                cifti2path = os.path.join(tmp_dir, os.path.basename(path))
+                cmd_utils.convert_to_CIFTI2(path, cifti2path)
+                arr, (ax, bm) = cifti.read(cifti2path)
+                arr2 = np.copy(arr)
+                del arr
+                return arr2, (ax, bm)
+        else:
+            raise ve
 
 
-def open_rfmri_file(path):
+def open_dtseries(path):
     arr, (series, bm) = open_cifti(path)
     if not isinstance(series, cifti.axis.Series):
-        raise ValueError("input file is not a time series")
-    if np.size(arr, 1) < MIN_TIME_UNITS:
-        raise ValueError("Input file must include at least {0} time units".format(MIN_TIME_UNITS))
+        raise PitecaError("Input file is not a time series")
+    if np.size(arr, 1) not in (STANDARD_BM.N_CORTEX, STANDARD_BM.N_TOTAL_VERTICES):
+        raise PitecaError("Data in file does not match standard brain model")
+    return arr, (series, bm)
+
+
+def open_rfmri_input_data(path):
+    arr, (series, bm) = open_dtseries(path)
+    if np.size(arr, 0) < MIN_TIME_UNITS:
+        raise PitecaError("Input file must include at least {0} time units".format(MIN_TIME_UNITS))
     return arr, (series, bm)
 
 
 def open_features_file(path):
-    arr, (series, bm) = open_cifti(path)
-    if not isinstance(series, cifti.axis.Series):
-        raise ValueError("input file is not a time series")
-    if np.size(arr, 1) != NUM_FEATURES:
-        raise ValueError("features file must include {} features".format(NUM_FEATURES))
+    arr, (series, bm) = open_dtseries(path)
+    if np.size(arr, 0) != NUM_FEATURES:
+        raise PitecaError("features file must include {} features".format(NUM_FEATURES))
+    return arr, (series, bm)
+
+
+def open_1d_file(path):
+    arr, (series, bm) = open_dtseries(path)
+    if np.size(arr, 0) > 1:
+        raise ValueError("Input file is in 2D, expected 1D data")
     return arr, (series, bm)
 
 

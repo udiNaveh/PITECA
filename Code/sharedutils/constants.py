@@ -1,6 +1,3 @@
-import numpy as np
-import os.path as path
-
 '''
 A file with all the constants we need for the program.
 I used anonymous objects to divide these constants into contexts (rightt now only
@@ -11,6 +8,9 @@ that use it still work.
 
 '''
 
+import numpy as np
+
+
 
 
 MIN_TIME_UNITS = 300
@@ -18,14 +18,14 @@ NUM_FEATURES = 108
 NUM_SPATIAL_FILTERS = 50
 
 # Brain parcellations
-STANDART_BM = type('Dummy', (object,), {})
-STANDART_BM.N_LH = 29696
-STANDART_BM.N_RH = 29716
-STANDART_BM.N_CORTEX = STANDART_BM.N_LH + STANDART_BM.N_RH
-STANDART_BM.N_SC = 31870
-STANDART_BM.N_TOTAL_VERTICES = STANDART_BM.N_LH + STANDART_BM.N_RH + STANDART_BM.N_SC
-STANDART_BM.CORTEX = np.array([i < STANDART_BM.N_CORTEX for i in range(STANDART_BM.N_TOTAL_VERTICES)])
-STANDART_BM.SUBCORTEX = np.bitwise_not(STANDART_BM.CORTEX)
+STANDARD_BM = type('Dummy', (object,), {})
+STANDARD_BM.N_LH = 29696
+STANDARD_BM.N_RH = 29716
+STANDARD_BM.N_CORTEX = STANDARD_BM.N_LH + STANDARD_BM.N_RH
+STANDARD_BM.N_SC = 31870
+STANDARD_BM.N_TOTAL_VERTICES = STANDARD_BM.N_LH + STANDARD_BM.N_RH + STANDARD_BM.N_SC
+STANDARD_BM.CORTEX = np.array([i < STANDARD_BM.N_CORTEX for i in range(STANDARD_BM.N_TOTAL_VERTICES)])
+STANDARD_BM.SUBCORTEX = np.bitwise_not(STANDARD_BM.CORTEX)
 
 
 from enum import Enum

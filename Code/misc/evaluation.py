@@ -73,7 +73,7 @@ def get_correlations_for_subjects(subjects, task_getter, model, predictions=None
 def run_evaluation(model_name):
     print('running evaluation for model: ' + model_name)
     all_tasks = np.load(all_tasks_200s_new_path)
-    all_tasks = all_tasks[:,:,:STANDART_BM.N_CORTEX]
+    all_tasks = all_tasks[:, :, :STANDARD_BM.N_CORTEX]
     all_features = np.load(all_features_path_200)
     subjects_mapping = {i+1 :i for i in range(200)}
     tasks_mapping = {t : idx for idx, t in enumerate(TASKS)}

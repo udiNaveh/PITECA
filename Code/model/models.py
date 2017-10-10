@@ -76,14 +76,14 @@ class LinearModel(IModel):
         self.spatial_filters_soft = softmax(np.transpose(ica_both_lowdim) * TEMPERATURE)
         below_threshold = self.spatial_filters_soft < 1e-2
         self.spatial_filters_soft[below_threshold] = 0
-        self.spatial_filters_soft = self.spatial_filters_soft[:STANDART_BM.N_CORTEX, :]
+        self.spatial_filters_soft = self.spatial_filters_soft[:STANDARD_BM.N_CORTEX, :]
 
-        self.__spatial_filters_hard = np.argmax(np.transpose(ica_both_lowdim[:, :STANDART_BM.N_CORTEX]), axis = 1)
+        self.__spatial_filters_hard = np.argmax(np.transpose(ica_both_lowdim[:, :STANDARD_BM.N_CORTEX]), axis = 1)
         return True
 
     def __preprocess(self, subject_features):
-        subject_features = subject_features[:, :STANDART_BM.N_CORTEX]
-        subject_features = np.concatenate((np.ones([STANDART_BM.N_CORTEX, 1]), np.transpose(subject_features)), axis=1)
+        subject_features = subject_features[:, :STANDARD_BM.N_CORTEX]
+        subject_features = np.concatenate((np.ones([STANDARD_BM.N_CORTEX, 1]), np.transpose(subject_features)), axis=1)
         subject_features = demean_and_normalize(subject_features)
         subject_features[:, 0] = 1.0
         return subject_features
@@ -104,7 +104,7 @@ class LinearModel(IModel):
             print("soft filter prediction took {0:.4f} seconds".format(stop-start))
         elif filters == 'hard':
             start = time.time()
-            pred = np.zeros([STANDART_BM.N_CORTEX, len(self.tasks)])
+            pred = np.zeros([STANDARD_BM.N_CORTEX, len(self.tasks)])
             for j in range(np.size(self.spatial_filters_soft, axis=1)):
                 ind = self.__spatial_filters_hard == j
                 M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
@@ -114,7 +114,7 @@ class LinearModel(IModel):
             print("hard filter prediction took {0:.4f} seconds".format(stop - start))
         elif filters == 'soft fast':
             start = time.time()
-            pred = np.zeros([STANDART_BM.N_CORTEX, len(self.tasks)])
+            pred = np.zeros([STANDARD_BM.N_CORTEX, len(self.tasks)])
             for j in range(np.size(self.spatial_filters_soft, axis=1)):
                 ind = self.__spatial_filters_hard == j
                 M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
@@ -160,11 +160,11 @@ class TFRoiBasedModel(IModel):
 
     def _load(self):
         spatial_filters_raw, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
-        spatial_filters_raw = np.transpose(spatial_filters_raw[:, STANDART_BM.CORTEX])
+        spatial_filters_raw = np.transpose(spatial_filters_raw[:, STANDARD_BM.CORTEX])
         soft_filters = softmax(spatial_filters_raw.astype(float) * TEMPERATURE)
         soft_filters[soft_filters < FILTERS_EPSILON] = 0.0
         soft_filters[:, 2] = 0
-        soft_filters /= np.reshape(np.sum(soft_filters, axis=1), [STANDART_BM.N_CORTEX, 1])
+        soft_filters /= np.reshape(np.sum(soft_filters, axis=1), [STANDARD_BM.N_CORTEX, 1])
         hard_filters = np.round(softmax(spatial_filters_raw.astype(float) * 1000))
         hard_filters[spatial_filters_raw < SPATIAL_FILTERS_THRESHOLD] = 0
         self.spatial_filters = soft_filters
@@ -201,11 +201,11 @@ class TFRoiBasedModel(IModel):
         prediction_paths = {}
         with tf.Session() as sess:
             for task in self.tasks:
-                subject_task_prediction = np.zeros([1, STANDART_BM.N_CORTEX])
+                subject_task_prediction = np.zeros([1, STANDARD_BM.N_CORTEX])
                 start = time.time()
                 for j in range(np.size(self.spatial_filters, axis=1)):
                     if j in self._weights[task]:
-                        ind = self.spatial_filters[: STANDART_BM.N_CORTEX, j] > 0
+                        ind = self.spatial_filters[: STANDARD_BM.N_CORTEX, j] > 0
                         weighting = self.spatial_filters[:, j][ind]
                         features = subject_feats[ind]
                         weights = self._weights[task][j]
@@ -276,7 +276,7 @@ class NN2lhModelWithFiltersAsFeatures(TFRoiBasedModel):
                       tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='nn1_h2_reg_fsf')]
 
     def preprocess_features(self, subject_features):
-        subject_features = np.transpose(subject_features[:, : STANDART_BM.N_CORTEX])
+        subject_features = np.transpose(subject_features[:, : STANDARD_BM.N_CORTEX])
         subject_features = demean_and_normalize(subject_features)
         subject_features = np.concatenate((subject_features, self.spatial_filters_raw), axis = 1)
         return subject_features
@@ -417,12 +417,12 @@ class FeatureExtractor:
         # step 2 - get subject's individual cortical spatial maps
         LHRH = fsl_glm(ts_by_network, data).transpose() # 91k x 76
         # create spatial maps for the whole brain
-        ROIS = np.zeros([STANDART_BM.N_TOTAL_VERTICES, 108])
+        ROIS = np.zeros([STANDARD_BM.N_TOTAL_VERTICES, 108])
         #  left hemisphere networks
-        ROIS[: STANDART_BM.N_LH, : 38] = LHRH[: STANDART_BM.N_LH, : 38]
+        ROIS[: STANDARD_BM.N_LH, : 38] = LHRH[: STANDARD_BM.N_LH, : 38]
         # right hemisphere networks
-        ROIS[STANDART_BM.N_LH : STANDART_BM.N_CORTEX , 38 :76] = \
-            LHRH[STANDART_BM.N_LH : STANDART_BM.N_CORTEX , 38 :76]
+        ROIS[STANDARD_BM.N_LH : STANDARD_BM.N_CORTEX , 38 :76] = \
+            LHRH[STANDARD_BM.N_LH : STANDARD_BM.N_CORTEX , 38 :76]
         # for subcortical networks - use data of group
         ROIS[:, 76:] = self.matrices['SC_CLUSTERS']
         rfmri_data_normalized = demean(rfmri_data_normalized)  # remove mean from each column
@@ -430,7 +430,7 @@ class FeatureExtractor:
         T2 = np.dot(np.linalg.pinv(ROIS), rfmri_data_normalized.transpose()) # 108 x time
         # get the features - correlation coefficient for each vertex with each netwrok
         features_map = np.dot(normalize(T2, axis=1), normalize(rfmri_data_normalized, axis=0))
-        features_map = features_map[:, : STANDART_BM.N_CORTEX]
+        features_map = features_map[:, : STANDARD_BM.N_CORTEX]
         save_to_dtseries(subject.features_path, self.bm, features_map)
 
         end_extraction_time = time.time()

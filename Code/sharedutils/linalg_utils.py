@@ -152,9 +152,9 @@ def rmse_loss(prediction, actual, reduce_mean=False, use_normalization=False):
         raise ValueError("prediction and actual must be the same shape")
 
     #if len(np.shape(prediction))==1:
-    prediction = np.reshape(prediction, [1, len(prediction)])
+    #prediction = np.reshape(prediction, [1, len(prediction)])
     #if len(np.shape(actual))==1:
-    actual = np.reshape(actual, [1, len(actual)])
+    #actual = np.reshape(actual, [1, len(actual)])
 
     if reduce_mean:
         prediction = demean(prediction, axis=1)

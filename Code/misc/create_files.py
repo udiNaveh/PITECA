@@ -3,16 +3,16 @@ import os
 
 import definitions
 from sharedutils.io_utils import open_cifti, open_mat_file, load_ndarray_from_mat
-from sharedutils.constants import STANDART_BM
+from sharedutils.constants import STANDARD_BM
 
 
 
 def create_pinvG():
     arr, (series, bm) = open_cifti(definitions.ICA_LR_MATCHED_PATH)
     arr = np.transpose(arr)
-    G = np.zeros([STANDART_BM.N_TOTAL_VERTICES, 76])
-    G[:STANDART_BM.N_LH, :38] = arr[:STANDART_BM.N_LH, :]
-    G[STANDART_BM.N_LH : STANDART_BM.N_CORTEX, 38:76] = arr[STANDART_BM.N_LH : STANDART_BM.N_CORTEX, :]
+    G = np.zeros([STANDARD_BM.N_TOTAL_VERTICES, 76])
+    G[:STANDARD_BM.N_LH, :38] = arr[:STANDARD_BM.N_LH, :]
+    G[STANDARD_BM.N_LH : STANDARD_BM.N_CORTEX, 38:76] = arr[STANDARD_BM.N_LH : STANDARD_BM.N_CORTEX, :]
     pinvG = np.linalg.pinv(G)
     pinvGT = pinvG.transpose()
     np.save(os.path.join(definitions.DATA_DIR, "pinvg"), pinvGT)
