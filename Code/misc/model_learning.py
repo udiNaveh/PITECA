@@ -37,12 +37,6 @@ nn_pred_path = r'D:\Projects\PITECA\Data\model\nn\predictions\predictions_valida
 linear_pred_path = r'D:\Projects\PITECA\Data\model\linear\loo_betas_7_tasks_take2\linear_weights_70_s_2\predictions_validation_s71-100_linear.npy'
 linear_pred_path_fsf = r'D:\Projects\PITECA\Data\model\linear\loo_betas_7_tasks_take2\linear_weights_70_s_2\predictions_validation_s71-100_linear_fsf.npy'
 
-# TODO DELETE
-tasks_dir =  r'D:\Projects\PITECA\Data\actual'
-features_path = r'D:\Projects\PITECA\Data\extracted features'
-predictions_cifti_path = r'D:\Projects\PITECA\Data_for_testing\predictions_linear'
-
-
 
 TASKS = {Task.MATH_STORY: 0,
                    Task.TOM: 1,

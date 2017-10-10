@@ -100,5 +100,3 @@ class SettingsController:
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)
 
-
-    # TODO: add a button to reset to default settings

@@ -33,9 +33,6 @@ class Subject:
         filename = path_utils.generate_file_name(actual_dir, task, "{0}_{1}".format(self.subject_id, task.full_name))
         return path_utils.generate_final_filename(filename)
 
-# TODO: make order in those functions and remove their documentation
-
-
 
 def create_subjects(input_files_str, output_dir):
     """
