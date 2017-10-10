@@ -246,7 +246,7 @@ class GraphicDlg(QDialog):
         rects2 = ax.bar(ind + width, negative_indices, width, color='mediumspringgreen')
 
         # add some text for labels, title and axes ticks
-        ax.set_ylabel('Indices')
+        ax.set_ylabel('IOU')
         ax.set_xlabel('Subjects')
         ax.set_xticks(ind + width / 2)
         ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
