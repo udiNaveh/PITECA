@@ -7,15 +7,14 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from definitions import PITECA_ICON_PATH
+
+import definitions
 
 class Ui_ResultsDialog(object):
     def setupUi(self, ResultsDialog):
         ResultsDialog.setObjectName("ResultsDialog")
         ResultsDialog.resize(297, 112)
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(PITECA_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        ResultsDialog.setWindowIcon(icon)
+        ResultsDialog.setWindowIcon(QtGui.QIcon(definitions.PITECA_ICON_PATH))
         self.gridLayout = QtWidgets.QGridLayout(ResultsDialog)
         self.gridLayout.setObjectName("gridLayout")
         self.openInFolderButton = QtWidgets.QPushButton(ResultsDialog)
@@ -28,11 +27,17 @@ class Ui_ResultsDialog(object):
         self.okButton.setObjectName("okButton")
         self.gridLayout.addWidget(self.okButton, 1, 0, 1, 1)
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.gridLayout.addItem(spacerItem, 1, 2, 1, 1)
+        self.gridLayout.addItem(spacerItem, 1, 3, 1, 1)
         self.msgLabel = QtWidgets.QLabel(ResultsDialog)
         self.msgLabel.setText("")
         self.msgLabel.setObjectName("msgLabel")
-        self.gridLayout.addWidget(self.msgLabel, 0, 0, 1, 3)
+        self.gridLayout.addWidget(self.msgLabel, 0, 0, 1, 4)
+        self.viewInWbButton = QtWidgets.QPushButton(ResultsDialog)
+        self.viewInWbButton.setEnabled(False)
+        self.viewInWbButton.setMinimumSize(QtCore.QSize(90, 0))
+        self.viewInWbButton.setMaximumSize(QtCore.QSize(90, 16777215))
+        self.viewInWbButton.setObjectName("viewInWbButton")
+        self.gridLayout.addWidget(self.viewInWbButton, 1, 2, 1, 1)
 
         self.retranslateUi(ResultsDialog)
         QtCore.QMetaObject.connectSlotsByName(ResultsDialog)
@@ -42,3 +47,6 @@ class Ui_ResultsDialog(object):
         ResultsDialog.setWindowTitle(_translate("ResultsDialog", "Results"))
         self.openInFolderButton.setText(_translate("ResultsDialog", "Open in Folder"))
         self.okButton.setText(_translate("ResultsDialog", "OK"))
+        self.viewInWbButton.setText(_translate("ResultsDialog", "View in wb"))
+
+

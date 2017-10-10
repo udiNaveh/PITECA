@@ -1,18 +1,20 @@
+import os
+
+from PyQt5.QtCore import Qt
+
 from sharedutils import constants, path_utils, subject, dialog_utils
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QCursor
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5 import QtCore
 import GUI.globals as gb
 from GUI.popups import analysis_working_dlg_controller
 from GUI.analyze_working_thread import AnalysisWorkingThread, AnalysisTask
 from GUI.graphics import graphics
-from definitions import CANONICAL_CIFTI_PATH, ANALYSIS_DIR
 import definitions
-from sharedutils.constants import UNEXPECTED_EXCEPTION_MSG, PROVIDE_INPUT_MSG, SELECT_ACTION_MSG, MAX_SUBJECTS
 from GUI.settings_controller import get_analysis_results_folder
 
+
 class AnalyzeController:
+    """
+    A class to control the GUI logic of the Analysis tab
+    """
 
     global should_exit_on_error
 
@@ -33,6 +35,7 @@ class AnalyzeController:
             curr_subject = subject.Subject()
             curr_subject.subject_id = path_utils.get_id(file)
             if curr_subject.subject_id == None:
+                dialog_utils.inform_user(constants.NAMING_CONVENTION_ERROR)
                 return []
             curr_subject.predicted = {task: file}
             subjects.append(curr_subject)
@@ -61,18 +64,39 @@ class AnalyzeController:
         return subjects
 
     def __handle_results(self, analysis_task, dlg, data, subjects):
+        """
+        The function to be called after the analysis progress is done.
+        For each analysis task, handle the results in a different way.
+        :param analysis_task: The task chosen by the user (mean/correlations/significance).
+        :param dlg: The progress dialog to be closed.
+        :param data: The results returned from the analyzer.
+        :param subjects: A list of Subject(s), their data was analyzed.
+        """
         dlg.close()
         gb.should_exit_on_error = False
 
         if analysis_task == AnalysisTask.Analysis_Mean:
-            dialog_utils.report_results("Done! Analysis result is saved in {}".format(get_analysis_results_folder()),
-                                        get_analysis_results_folder())
+
+            analysis_folder = get_analysis_results_folder()
+            folder_path = os.path.join(analysis_folder, self.task.domain().name, self.task.name)
+
+            dialog_utils.report_results("Done! Analysis result is saved in {}".format(folder_path),
+                                        folder_path, gb.curr_cifti_filename)
 
         elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations, AnalysisTask.Compare_Significance]:
 
             if analysis_task == AnalysisTask.Compare_Significance:
-                dialog_utils.report_results("Done! Comparison result is saved in {}".format(ANALYSIS_DIR),
-                                            get_analysis_results_folder())
+
+                if len(subjects) == 1:
+                    filepath = gb.curr_cifti_filename
+                else:
+                    filepath = None
+
+                analysis_folder = get_analysis_results_folder()
+                folder_path = os.path.join(analysis_folder, self.task.domain().name, self.task.name)
+
+                dialog_utils.report_results("Done! Comparison result is saved in {}".format(folder_path),
+                                            folder_path, filepath, False)
                 title_base = "Intersection over Union of subjects overlap maps"
 
             if analysis_task == AnalysisTask.Analysis_Correlations:
@@ -95,31 +119,56 @@ class AnalyzeController:
 
 
     def __handle_unexpected_exception(self, dlg, thread):
+        """
+        The function to be called when unhandled exception occurs in param thread.
+        Terminates the thread, closing the progress dialog and pops up an error message.
+        :param dlg: Progress dialog, to be closed.
+        :param thread: The analysis thread where the exception occured, to be terminated.
+        """
         dlg.close()
         thread.quit()
         dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG)
 
     def wait_dlg_close_event(self, event, dlg, thread):
-        thread.terminate() # TODO: terminate() is not recommended, but quit() doesn't work for some reason
+        """
+        The function to be called when user clicks the "X" button on the analysis progress dialog.
+        :param event: the close event came from the UI
+        :param dlg: the dialog to be closed
+        :param thread: the analysis thread to be terminated
+        """
+        thread.terminate()
         event.accept()
 
     def update_tasks(self):
+        """
+        Method for updating the UI when user changes the domain
+        """
         self.ui.taskComboBox.clear()
         domain = constants.Domain[self.ui.domainComboBox.currentText()]
         self.ui.taskComboBox.addItems([task.name for task in domain.value])
 
     def onPredictedInputBrowseButtonClicked(self):
+        """
+        The function to be called when user clicks on the predicted "browse" button.
+        """
         dir = definitions.DATA_DIR
         dialog_utils.browse_files(self.ui.selectPredictedLineEdit, dir)
 
     def onActualInputBrowseButtonClicked(self):
+        """
+        The function to be called when user clicks on the actuals "browse" button.
+        """
         dir = definitions.ROOT_DIR
         dialog_utils.browse_files(self.ui.addActualLineEdit, dir)
 
     def onRunAnalysisButtonClicked(self):
+        """
+        The function to be called when user clicked on "Analyze" button.
+        Starts the analysis progress according to the action selected in the UI.
+        """
         predicted_files_str = self.ui.selectPredictedLineEdit.text()
         if not predicted_files_str:
-            dialog_utils.print_error(PROVIDE_INPUT_MSG)
+            dialog_utils.print_error(constants.PROVIDE_INPUT_MSG)
             return
 
         self.task = constants.Task[self.ui.taskComboBox.currentText()]
@@ -128,28 +177,27 @@ class AnalyzeController:
         if not subjects:
             return
 
-        if len(subjects) > MAX_SUBJECTS:
+        if len(subjects) > constants.MAX_SUBJECTS:
             dialog_utils.inform_user("Too many files to process. Maximum number is 25 files.")
             return
 
         # Check all input provided
         if not predicted_files_str:
-            dialog_utils.print_error(PROVIDE_INPUT_MSG)
+            dialog_utils.print_error(constants.PROVIDE_INPUT_MSG)
             return
 
         # Prepare additional analysis parameters
         analysis_task = None
         outputdir = get_analysis_results_folder()
-        other_path = CANONICAL_CIFTI_PATH
+        other_path = path_utils.get_canonical_path(self.task)
         if self.ui.analysisMeanRadioButton.isChecked():
             analysis_task = AnalysisTask.Analysis_Mean
 
         elif self.ui.analysisCorrelationsRadioButton.isChecked():
             analysis_task = AnalysisTask.Analysis_Correlations
-            # TODO: add other_path = ...
 
         else:
-            dialog_utils.print_error(SELECT_ACTION_MSG)
+            dialog_utils.print_error(constants.SELECT_ACTION_MSG)
             return
 
         thread = AnalysisWorkingThread(analysis_task, subjects, self.task, outputdir, other_path)
@@ -162,11 +210,15 @@ class AnalyzeController:
         thread.start()
 
     def onRunComparisonButtonClicked(self):
+        """
+        The function to be called when user clicked on "Compare" button.
+        Starts the analysis progress according to the action selected in the UI.
+        """
         predicted_files_str = self.ui.selectPredictedLineEdit.text()
         actual_files_str = self.ui.addActualLineEdit.text()
 
         if not predicted_files_str or not actual_files_str:
-            dialog_utils.print_error(PROVIDE_INPUT_MSG)
+            dialog_utils.print_error(constants.PROVIDE_INPUT_MSG)
             return
 
         self.task = constants.Task[self.ui.taskComboBox.currentText()]
@@ -174,14 +226,14 @@ class AnalyzeController:
         if not subjects:
             return
 
-        if len(subjects) > MAX_SUBJECTS:
+        if len(subjects) > constants.MAX_SUBJECTS:
             dialog_utils.inform_user("Too many files to process. Maximum number is 25 files.")
             return
 
         # Prepare additional analysis parameters
         analysis_task = None
         outputdir = get_analysis_results_folder()
-        other_path = CANONICAL_CIFTI_PATH
+        other_path = path_utils.get_canonical_path(self.task)
 
         if self.ui.comparisonCorrelationsRadioButton.isChecked():
             analysis_task = AnalysisTask.Compare_Correlations
@@ -190,7 +242,7 @@ class AnalyzeController:
             analysis_task = AnalysisTask.Compare_Significance
 
         else:
-            dialog_utils.print_error(SELECT_ACTION_MSG)
+            dialog_utils.print_error(constants.SELECT_ACTION_MSG)
             return
 
         thread = AnalysisWorkingThread(analysis_task, subjects, self.task, outputdir, other_path)
@@ -201,4 +253,3 @@ class AnalyzeController:
         thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results, subjects))
         thread.exception_occurred_sig.connect(lambda: self.__handle_unexpected_exception(dlg, thread))
         thread.start()
-        # TODO: duplicated code with onAnalysisButtonClicked

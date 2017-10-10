@@ -1,13 +1,12 @@
-from GUI.popups.question_dlg import QuestionDialog
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt
-import definitions
+
+from GUI.popups.question_dlg import QuestionDialog
 from GUI.popups import results_dlg_controller, results_dlg_view
-import os
+import definitions
 
 '''
 This utility enables popup from any part of the code. 
-For now we have only one type of dialog: a question dialog (user should choose Yes or No)
 '''
 
 
@@ -49,8 +48,18 @@ def inform_user(msg):
     msg_box.addButton(QtWidgets.QMessageBox.Ok)
     msg_box.exec_()
 
-def report_results(msg, folder):
-    dlg = results_dlg_controller.ResultsDlg(msg, folder)
+
+def report_results(msg, folder, filepath, exit_on_open_folder=True):
+    """
+    This function pops up a dialog that informs the user about a CIFTI files
+    that were created by PITECA and saved in the computer.
+    :param msg: The string message to show in the dialog.
+    :param folder: The string path of the folder to be opened when "Open in folder" is clicked.
+    :param filepath: The string path of the file that was created. Provided for situations where only one file
+    was created and the "Open in wb" is enabled.
+    :param exit_on_open_folder: a boolean argument defines if dialog should be closed after "Open in..." buttons.
+    """
+    dlg = results_dlg_controller.ResultsDlg(msg, folder, exit_on_open_folder, filepath)
     ui = results_dlg_view.Ui_ResultsDialog()
     ui.setupUi(dlg)
     dlg.update_ui(ui)
@@ -58,20 +67,29 @@ def report_results(msg, folder):
     dlg.show()
     dlg.exec_()
 
+
 def browse_files(line_edit, dir):
+    """
+    A function to open browse dialog to select files.
+    :param line_edit: the UI element where the selected file paths shown.
+    :param dir: The directory the browser should be opened at.
+    """
     dlg = QtWidgets.QFileDialog()
     filters = "CIFTI (*.dtseries.nii)"
     files = dlg.getOpenFileNames(None, 'Select Files', dir, filters)[0]
     if files:
         line_edit.setText(str(files))
-        # TODO: consider editing scenarios
 
 
 def browse_dir(line_edit, dir):
+    """
+    A function to open browse dialog to select a folder.
+    :param line_edit: the UI element where the selected folder path shown.
+    :param dir: The directory the browser should be opened at.
+    """
     dir = QtWidgets.QFileDialog.getExistingDirectory(None, 'Select Folder', dir)
     if dir:
         line_edit.setText(dir)
-        # TODO: consider editing scenarios
     return dir
 
 

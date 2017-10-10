@@ -1,6 +1,12 @@
+import os
+
 from sharedutils.constants import FEATS_EXT, PREDICT_OUTPUT_EXT, DTSERIES_EXT
 from GUI.settings_controller import get_features_folder
-import os
+from definitions import CANONICAL_CIFTI_DIR
+
+"""
+This utility gathers functions to specific PITECA string-path manipulation needs.
+"""
 
 
 def get_id(absolute_path):
@@ -9,7 +15,6 @@ def get_id(absolute_path):
         int(id) # validates that id is an integer
         return id
     except ValueError:
-        # TODO: handle error @error_handling
         return None
 
 
@@ -46,3 +51,6 @@ def generate_final_filename(filename):
     while os.path.isfile(filename + "({})".format(i)):
         i += 1
     return filename + "({})".format(i)
+
+def get_canonical_path(task):
+    return os.path.join(CANONICAL_CIFTI_DIR, 'canonical_{}.dtseries.nii'.format(task.full_name))

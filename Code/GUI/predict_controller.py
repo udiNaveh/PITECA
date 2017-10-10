@@ -1,15 +1,17 @@
-import os
 from GUI.settings_controller import get_prediction_outputs_folder
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtCore
 
 from GUI.predict_model import PredictTabModel
-from sharedutils.constants import Domain, Task # TODO: change this to import constants
-from sharedutils import general_utils, dialog_utils
+from sharedutils.constants import Domain, Task
+from sharedutils import dialog_utils
 import definitions
 
 
 class PredictController:
+    """
+    Connects user action on GUI to the prediction flow logic in the prediction model.
+    """
 
     def __init__(self, ui):
         self.ui = ui
@@ -19,6 +21,9 @@ class PredictController:
         dialog_utils.browse_files(self.ui.inputFilesLineEdit, dir)
 
     def findCheckedTasks(self):
+        """
+        Returns a list Task(s), that are checked in the UI.
+        """
 
         contrasts = dict()
         root = self.ui.tasksTree.invisibleRootItem()
@@ -41,11 +46,6 @@ class PredictController:
             for contrast in task:
                 res.append(contrast)
         return res
-
-    def onContClicked(self):
-        self.ui.existingFeatsUi.update_ids_to_extract()
-        self.ids_to_extract = self.ui.existingFeatsDlg.ids_to_extract
-        self.ui.existingFeatsDlg.close()
 
     def onRunPredictClicked(self):
         inputFiles = self.ui.inputFilesLineEdit.text()

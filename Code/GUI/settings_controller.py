@@ -1,21 +1,30 @@
 import configparser
+
 import definitions
-import os
 from sharedutils import dialog_utils
+
+"""
+This module handles the settings of PITECA enabled for user's change in the settings tab.
+It provides getter functions for other module to know the current settings.
+"""
 
 features_folder = None
 prediction_outputs_folder = None
 analysis_results_folder = None
 model = None
 
+
 def get_features_folder():
     return features_folder
+
 
 def get_prediction_outputs_folder():
     return prediction_outputs_folder
 
+
 def get_analysis_results_folder():
     return analysis_results_folder
+
 
 def get_model():
     return model
@@ -91,5 +100,3 @@ class SettingsController:
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)
 
-
-    # TODO: add a button to reset to default settings

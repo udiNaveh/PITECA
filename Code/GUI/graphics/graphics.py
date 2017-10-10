@@ -1,17 +1,16 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QDialog, QVBoxLayout
-
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 import numpy as np
 import math
 import scipy.io as sio
-from textwrap import wrap
-import definitions
+
+from PyQt5 import QtWidgets, QtGui
+from PyQt5.QtWidgets import QDialog, QVBoxLayout
 
 from sharedutils import dialog_utils, constants
 from GUI.analyze_working_thread import AnalysisTask
+import definitions
 
 """
 This module provides plotting methods of 4 heatmap graphs:
@@ -21,17 +20,17 @@ This module provides plotting methods of 4 heatmap graphs:
 4. Correlation between the predicted activations of all subjects to their actual activation (subj_subj_data)
 """
 
-SUBJECTS_X_LABEL = "subjects"
-SUBJECTS_Y_LABEL = "subjects"
-MEAN_Y_LABEL = "with mean"
-CANONICAL_Y_LABEL = "with canonical"
+# MEAN_Y_LABEL = "with mean"
+CANONICAL_Y_LABEL = "correlation with\n canonical activation"
+
+min_corr=0
+max_corr=1
 
 class GraphicDlg(QDialog):
     def __init__(self, analysis_task, data, subjects, title, parent=None):
         super(GraphicDlg, self).__init__(parent)
 
         # a figure instance to plot on
-        sizeObject = QtWidgets.QDesktopWidget().screenGeometry(-1)
         self.figure = plt.figure()
 
         # this is the Canvas Widget that displays the `figure`
@@ -51,9 +50,12 @@ class GraphicDlg(QDialog):
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.toolbar)
         self.layout.addWidget(self.canvas)
-
         self.layout.addWidget(self.save_button)
         self.setLayout(self.layout)
+        self.setWindowTitle("Graph")
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(definitions.PITECA_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.setWindowIcon(icon)
 
         # Add results illustration
         self.ids = [subject.subject_id for subject in subjects]
@@ -65,15 +67,19 @@ class GraphicDlg(QDialog):
         num_of_chars = len(''.join(self.ids)) + len(self.ids)
         self.font_size = (14 / (math.ceil(num_of_chars / 29))) if num_of_chars > 29 else 7
 
+        # Set graph attributes specifically by tasks
         if self.analysis_task == AnalysisTask.Analysis_Correlations:
+            self.SUBJECTS_X_LABEL = "subjects"
+            self.SUBJECTS_Y_LABEL = "subjects"
             self.subj_subj_data = data[0] # 2 dims
             self.subj_mean_data = data[1] # 1 dim
             self.subj_canonical_data = data[2] # 1 dim
             self.plot_heatmap()
         elif analysis_task == AnalysisTask.Compare_Correlations:
+            self.SUBJECTS_X_LABEL = "subjects: Predicted"
+            self.SUBJECTS_Y_LABEL = "subjects: Actual"
             self.subj_subj_data = data # 2 dims
             self.plot_heatmap()
-
         if analysis_task == AnalysisTask.Analysis_Correlations or analysis_task == AnalysisTask.Compare_Correlations:
             if analysis_task == AnalysisTask.Compare_Correlations:
                 mean_of_diagonal = np.mean(np.diagonal(self.subj_subj_data))
@@ -82,7 +88,6 @@ class GraphicDlg(QDialog):
             # a label to show correlation
             self.correlation_label = QtWidgets.QLabel('Click on entry to see the exact correlation value')
             self.layout.addWidget(self.correlation_label)
-
         elif analysis_task == AnalysisTask.Compare_Significance:
             # self.data is 2 dimensional array
             self.plot_barchart()
@@ -94,21 +99,26 @@ class GraphicDlg(QDialog):
             self.plot_heatmap()
 
     def onClick(self, event):
+        """
+        The function that should be called when user clicks on the graph.
+        Changes the label that shows the exact correlation if user clicked inside graph borders,
+        or do nothing if user clicks elsewhere.
+        """
         if event.button == 1 and event.xdata and event.ydata:
             subject_x_index = math.floor(event.xdata)
             subject_y_index = math.floor(event.ydata)
 
             if self.analysis_task == AnalysisTask.Analysis_Correlations:
                 # graph (1)
-                if event.inaxes.get_xlabel() == SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == SUBJECTS_Y_LABEL:
+                if event.inaxes.get_xlabel() == self.SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == self.SUBJECTS_Y_LABEL:
                     correlation = self.subj_subj_data[subject_x_index, subject_y_index]
                     between1 = "subject {}".format(self.ids[subject_x_index])
                     between2 = "subject {}".format(self.ids[subject_y_index])
                 # graph (2)
-                elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == MEAN_Y_LABEL:
-                    correlation = self.subj_mean_data[subject_x_index]
-                    between1 = self.ids[subject_x_index]
-                    between2 = "mean activation"
+                # elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == MEAN_Y_LABEL:
+                #     correlation = self.subj_mean_data[subject_x_index]
+                #     between1 = self.ids[subject_x_index]
+                #     between2 = "mean activation"
                 # graph (3)
                 elif event.inaxes.get_xlabel() == "" and event.inaxes.get_ylabel() == CANONICAL_Y_LABEL:
                     correlation = self.subj_canonical_data[subject_x_index]
@@ -120,7 +130,7 @@ class GraphicDlg(QDialog):
 
             elif self.analysis_task == AnalysisTask.Compare_Correlations:
                 # graph 4
-                if event.inaxes.get_xlabel() == SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == SUBJECTS_Y_LABEL:
+                if event.inaxes.get_xlabel() == self.SUBJECTS_X_LABEL and event.inaxes.get_ylabel() == self.SUBJECTS_Y_LABEL:
                     correlation = self.subj_subj_data[subject_y_index, subject_x_index]
                     between1 = "subject {}".format(self.ids[subject_x_index])
                     between2 = "subject {}".format(self.ids[subject_y_index])
@@ -135,6 +145,11 @@ class GraphicDlg(QDialog):
                                            .format(correlation, between1, between2))
 
     def save_data(self):
+        """
+        The function that is called when user clicks on "save data" button
+        Opens a browse dialog and saves the data shown in the graph in the format and folder
+        the user selected.
+        """
         dir = definitions.ANALYSIS_DIR
         name, extension = dialog_utils.save_file('*.mat ;; *.npy', dir)
         if name == '':
@@ -149,18 +164,23 @@ class GraphicDlg(QDialog):
             raise Exception('File extension is not supported.')
 
     def plot_heatmap(self):
+        """
+        Plots a heatmap graph according to data
+        """
+
+        plt.gcf().subplots_adjust(bottom=0.2)
 
         self.figure.clear()
         self.figure.suptitle(self.title)
 
-        cmap = 'RdBu'
+        cmap = 'Reds'
         edgecolors = 'black'
 
         # create an axis
         subjects_by_subjects_ax = self.figure.gca()
         subjects_by_subjects_ax.set_aspect('equal', adjustable='box')
-        subjects_by_subjects_ax.set_xlabel(SUBJECTS_X_LABEL)
-        subjects_by_subjects_ax.set_ylabel(SUBJECTS_Y_LABEL)
+        subjects_by_subjects_ax.set_xlabel(self.SUBJECTS_X_LABEL)
+        subjects_by_subjects_ax.set_ylabel(self.SUBJECTS_Y_LABEL)
         subjects_by_subjects_ax.set_xticks(np.arange(len(self.subj_subj_data)) + 0.5)
         subjects_by_subjects_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
         subjects_by_subjects_ax.set_yticks(np.arange(len(self.subj_subj_data)) + 0.5)
@@ -174,21 +194,21 @@ class GraphicDlg(QDialog):
         color_ax = divider.append_axes("right", "5%", pad="5%")
 
         if self.analysis_task == AnalysisTask.Analysis_Correlations:
-            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.subj_subj_data, cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
-            # add correlations to mean and canonical
-            subjects_by_mean_ax = divider.append_axes("bottom", "7%", pad="60%")
+            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.subj_subj_data, cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
+            # add correlations to mean
+            # subjects_by_mean_ax = divider.append_axes("bottom", "7%", pad="60%")
             subjects_by_canonical_ax = divider.append_axes("bottom", "7%", pad="50%")
 
-            self.figure.add_axes(subjects_by_mean_ax)
+            # self.figure.add_axes(subjects_by_mean_ax)
             self.figure.add_axes(subjects_by_canonical_ax)
-            subjects_by_mean_ax.pcolor([self.subj_mean_data], cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
-            subjects_by_canonical_ax.pcolor([self.subj_canonical_data], cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
+            # subjects_by_mean_ax.pcolor([self.subj_mean_data], cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
+            subjects_by_canonical_ax.pcolor([self.subj_canonical_data], cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
 
-            subjects_by_mean_ax.set_ylabel(MEAN_Y_LABEL, rotation=0)
-            subjects_by_mean_ax.yaxis.set_label_coords(-0.5, 0)
-            subjects_by_mean_ax.set_xticks(np.arange(len(self.subj_mean_data)) + 0.5)
-            subjects_by_mean_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
-            subjects_by_mean_ax.set_yticks(np.arange(0))
+            # subjects_by_mean_ax.set_ylabel(MEAN_Y_LABEL, rotation=0)
+            # subjects_by_mean_ax.yaxis.set_label_coords(-0.5, 0)
+            # subjects_by_mean_ax.set_xticks(np.arange(len(self.subj_mean_data)) + 0.5)
+            # subjects_by_mean_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
+            # subjects_by_mean_ax.set_yticks(np.arange(0))
 
             subjects_by_canonical_ax.set_ylabel(CANONICAL_Y_LABEL, rotation=0)
             subjects_by_canonical_ax.yaxis.set_label_coords(-0.5, 0)
@@ -197,7 +217,7 @@ class GraphicDlg(QDialog):
             subjects_by_canonical_ax.set_yticks(np.arange(0))
 
         else:
-            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.data, cmap=cmap, vmin=-1, vmax=1, edgecolors=edgecolors)
+            heatmap_s_s = subjects_by_subjects_ax.pcolor(self.data, cmap=cmap, vmin=min_corr, vmax=max_corr, edgecolors=edgecolors)
 
         self.figure.colorbar(heatmap_s_s, cax=color_ax)
         self.canvas.draw()
@@ -206,6 +226,12 @@ class GraphicDlg(QDialog):
         # plt.tight_layout()
 
     def plot_barchart(self):
+        """
+        Plots a barchart graph according to data
+        """
+
+        plt.gcf().subplots_adjust(bottom=0.2)
+
         self.figure.clear()
         ax = self.figure.gca()
         self.figure.suptitle(self.title)

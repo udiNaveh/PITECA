@@ -1,16 +1,16 @@
+import sys
+import threading
+import traceback
+
 from GUI.predict_controller import PredictController
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtCore import QFile, QIODevice, QThread
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import QThread
+
+import GUI.globals as gb
 from GUI.views import Ui_MainView
 from GUI.analyze_controller import AnalyzeController
 from GUI.settings_controller import SettingsController
 from sharedutils import constants, dialog_utils
-import sys
-from threading import current_thread
-import threading
-import GUI.globals as gb
-from PyQt5.QtWidgets import QStyleFactory
-import traceback
 
 
 '''
@@ -72,11 +72,11 @@ def piteca_excepthook(exctype, value, tb):
         print(value)  # TODO: remove this! Here only for development needs
         return
     if int(QThread.currentThreadId()) == main_thread_id:
+        traceback.print_tb(tb)
         dialog_utils.print_error(str(value) + ". PITECA will be now closed")
         sys.exit()
     else:
         # The exception_occurred_sig should be defined in every thread class in PITECA
-        print("Inside piteca_excepthook")
         print(value) # TODO: remove this! Here only for development needs
         print(exctype)
         traceback.print_tb(tb)
@@ -85,6 +85,7 @@ def piteca_excepthook(exctype, value, tb):
 
 if __name__ == "__main__":
     pass
+    # cmd_utils.show_maps_in_wb_view("C:/Users/User/Sadna/mydata/drive-download-20170925T144453Z-001/predictions_nn/000071_GAMBLING_REWARD_predicted.dtseries.nii")
     main_thread_id = int(QThread.currentThreadId())
     setup_thread_excepthook()
     sys.excepthook = piteca_excepthook
