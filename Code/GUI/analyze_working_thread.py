@@ -23,7 +23,7 @@ class AnalysisWorkingThread(QThread):
     """
 
     progress_finished_sig = QtCore.pyqtSignal()
-    exception_occurred_sig = QtCore.pyqtSignal()
+    exception_occurred_sig = QtCore.pyqtSignal(str)
 
 
     def __init__(self,

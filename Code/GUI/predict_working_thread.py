@@ -11,7 +11,7 @@ class PredictWorkingThread(QThread):
     """
 
     progress_update_sig = QtCore.pyqtSignal()
-    exception_occurred_sig = QtCore.pyqtSignal()
+    exception_occurred_sig = QtCore.pyqtSignal(str)
     finished_sig = QtCore.pyqtSignal()
 
     def __init__(self, model, subjects, progress_bar, parent=None):
