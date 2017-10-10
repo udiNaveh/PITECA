@@ -145,7 +145,7 @@ class AnalyzeController:
         """
         self.ui.taskComboBox.clear()
         domain = constants.Domain[self.ui.domainComboBox.currentText()]
-        self.ui.taskComboBox.addItems([task.name for task in domain.value])
+        self.ui.taskComboBox.addItems([task.name for task in domain.value if task in constants.AVAILABLE_TASKS])
 
     def onPredictedInputBrowseButtonClicked(self):
         """

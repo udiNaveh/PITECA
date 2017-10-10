@@ -76,8 +76,8 @@ class GraphicDlg(QDialog):
             self.subj_canonical_data = data[2] # 1 dim
             self.plot_heatmap()
         elif analysis_task == AnalysisTask.Compare_Correlations:
-            self.SUBJECTS_X_LABEL = "subjects: Predicted"
-            self.SUBJECTS_Y_LABEL = "subjects: Actual"
+            self.SUBJECTS_X_LABEL = "subjects: Actual"
+            self.SUBJECTS_Y_LABEL = "subjects: Predicted"
             self.subj_subj_data = data # 2 dims
             self.plot_heatmap()
         if analysis_task == AnalysisTask.Analysis_Correlations or analysis_task == AnalysisTask.Compare_Correlations:
