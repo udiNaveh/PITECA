@@ -1,24 +1,7 @@
-import numpy as np
-import tensorflow as tf
-import os
-import random
-import pickle
-import matplotlib.pyplot as plt
-import cifti
-from sharedutils.constants import *
-from sharedutils.linalg_utils import *
-from sharedutils.io_utils import *
-from sharedutils.subject import *
-from sharedutils.general_utils import safe_open
-from model.models import *
-
-import sharedutils.general_utils as general_utils
-import definitions
-
-from misc.nn_model import *
-from misc.model_hyperparams import *
 from analysis.analyzer import get_predicted_actual_correlations
-
+from model.models import *
+from model.nn_model import *
+from sharedutils.general_utils import safe_open
 
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 

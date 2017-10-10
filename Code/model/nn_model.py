@@ -1,3 +1,7 @@
+from model.model_hyperparams import HL1_SIZE, HL2_SIZE, LEARNING_RATE
+from model.models import *
+from sharedutils.general_utils import union_dicts
+from sharedutils.ml_utils import BestWeightsQueue, Dataset
 import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import normalize
@@ -14,13 +18,10 @@ import definitions
 from sharedutils.ml_utils import BestWeightsQueue, Dataset
 
 from sharedutils.general_utils import union_dicts
-from misc.model_hyperparams import HL1_SIZE, HL2_SIZE, LEARNING_RATE
 # hyper parameters
 
 
-
 PRINT_DURING_LEARNING = True
-
 
 def linear_regression_build(input_dim, output_dim, scope_name):
     x = tf.placeholder(tf.float32, shape=(None, input_dim), name='x')
@@ -233,20 +234,18 @@ def build_nn_for_filters(input_dim , scope_name, weights, n_filters=50):
 
 def build_loss(y_tensor, y_pred_tensor, scope_name, reg_lambda = 0.0, huber_delta = 1.0):
     loss = tf.losses.huber_loss(labels=y_tensor, predictions=y_pred_tensor, delta=huber_delta)
-    regularizer =  tf.losses.get_regularization_loss(scope = scope_name)
+    regularizer = tf.losses.get_regularization_loss(scope = scope_name)
     loss += regularizer* reg_lambda
     return loss
 
 
 def train_model(tensors, loss, training, validation, max_epochs, batch_size, scope_name):
-    x, y, y_pred = tensors
-    features, activation = training
-    features_validation, activation_validation = validation
-    check_every = min(2 *int(np.size(features, 0) // batch_size), 500)
-    dataset = Dataset(features, activation)
-    n_samples = np.size(features, 0)
 
-    trained_variables = BestWeightsQueue(max_size=6)
+    x, y, y_pred = tensors
+    check_every = min(2 *int(np.size(training.data, 0) // batch_size), 200)
+
+
+    trained_variables = BestWeightsQueue(max_size=10)
 
     variables = [v for v in tf.trainable_variables() if v in
                  tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope= scope_name)]
@@ -258,27 +257,28 @@ def train_model(tensors, loss, training, validation, max_epochs, batch_size, sco
     with tf.Session() as session:
         session.run(init)
         iter =0
-        while dataset.epochs_completed < max_epochs:
+        while training.epochs_completed < max_epochs:
             iter+=1
-            x_batch, y_batch = dataset.next_batch(batch_size= batch_size)
+            x_batch, y_batch, additonal_data_batch = training.next_batch(batch_size= batch_size)
             batch_feed_dict = {x: x_batch, y: y_batch}
-            region_feed_dict =  {x: features, y: activation}
+            region_feed_dict = {x: training.data, y: training.labels}
             curr_loss, _ = session.run([loss, optimizer], feed_dict=batch_feed_dict)
             if iter % check_every == 0:
                 # check residual sum of square loss on validation set
-                activation_validation_prediction = session.run(y_pred, feed_dict={x: features_validation})
+                activation_validation_prediction = session.run(y_pred, feed_dict={x: validation.data})
                 training_loss, training_pred = session.run([loss, y_pred], feed_dict=region_feed_dict)
-                rss_training = rmse_loss(training_pred, activation)
-                rss_validation = rmse_loss(activation_validation_prediction, activation_validation)
+                rmse_training = rmse_loss(training_pred, training.labels)
+                rss_validation = rmse_loss(activation_validation_prediction, validation.labels)
                 current_weights = [w.eval() for w in variables]
                 if PRINT_DURING_LEARNING:
-                    print("iteration: {0}, training loss = {1:.2f}, training rss = {2:.2f}, validation rss = {3:.2f}".format(iter, training_loss, rss_training, rss_validation))
+                    print("iteration: {0}, training loss = {1:.2f}, training rss = {2:.2f}, validation rss = {3:.2f}".format(iter, training_loss, rmse_training, rss_validation))
 
                 if not trained_variables.update(rss_validation, current_weights):
                     # current loss is not among the k-best
                     break
 
     return trained_variables.get_best_weights()
+
 
 def predict_from_model(tensors, features, saved_weights, scope_name):
 
