@@ -127,7 +127,7 @@ class AnalyzeController:
         """
         dlg.close()
         thread.quit()
-        dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG + ": {}".format(value))
+        dialog_utils.print_error(value)
 
     def wait_dlg_close_event(self, event, dlg, thread):
         """

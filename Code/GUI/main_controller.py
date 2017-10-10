@@ -11,6 +11,7 @@ from GUI.views import Ui_MainView
 from GUI.analyze_controller import AnalyzeController
 from GUI.settings_controller import SettingsController
 from sharedutils import constants, dialog_utils
+import definitions
 
 
 '''
@@ -80,7 +81,11 @@ def piteca_excepthook(exctype, value, tb):
         print(value) # TODO: remove this! Here only for development needs
         print(exctype)
         traceback.print_tb(tb)
-        QThread.currentThread().exception_occurred_sig.emit(str(value))
+        if exctype == definitions.PitecaError:
+            msg = str(value)
+        else:
+            msg = constants.UNEXPECTED_EXCEPTION_MSG
+        QThread.currentThread().exception_occurred_sig.emit(msg)
 
 
 if __name__ == "__main__":

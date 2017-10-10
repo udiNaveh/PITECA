@@ -40,7 +40,7 @@ class PredictTabModel:
         """
         progress_bar_dlg.progress_thread.quit()
         progress_bar_dlg.close()
-        print_error(UNEXPECTED_EXCEPTION_MSG + ": {}".format(value))
+        print_error(value)
 
     def run_prediction_flow(self, ui):
         # Setup
