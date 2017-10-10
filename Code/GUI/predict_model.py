@@ -6,6 +6,7 @@ from sharedutils.constants import *
 from sharedutils.dialog_utils import *
 from sharedutils.subject import create_subjects
 from GUI import settings_controller
+import GUI.globals as gb
 
 
 class PredictTabModel:
@@ -32,14 +33,14 @@ class PredictTabModel:
                 self.subjects_with_feats.append(subject)
 
 
-    def __handle_predict_exception(self, progress_bar_dlg):
+    def __handle_predict_exception(self, progress_bar_dlg, value):
         """
         A function to handle all unhandled exceptions in the prediction thread.
         :param progress_bar_dlg: The prediction progress dialog to be closed.
         """
         progress_bar_dlg.progress_thread.quit()
         progress_bar_dlg.close()
-        print_error(UNEXPECTED_EXCEPTION_MSG)
+        print_error(UNEXPECTED_EXCEPTION_MSG + ": {}".format(value))
 
     def run_prediction_flow(self, ui):
         # Setup
@@ -64,7 +65,7 @@ class PredictTabModel:
         # prepare progress bar dialog
         progress_bar_dlg = PredictWorkingDlg(self.prediction_model, self.subjects)
         progress_bar_dlg.progress_thread.exception_occurred_sig.connect(
-            lambda: self.__handle_predict_exception(progress_bar_dlg)
+            lambda value: self.__handle_predict_exception(progress_bar_dlg, value)
         )
         progress_bar_dlg.setWindowModality(Qt.ApplicationModal)
 

@@ -126,7 +126,7 @@ NAMING_CONVENTION_ERROR = "Some files don't apply naming convention. Please chan
 EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \
                   " \nDo you want to use the existing features?"
 
-UNEXPECTED_EXCEPTION_MSG = "An unexpected exception occurred."
+UNEXPECTED_EXCEPTION_MSG = "An unexpected exception occurred"
 
 # Quit prograss
 ARE_YOU_SURE_MSG = "Are you sure you want to quit?"

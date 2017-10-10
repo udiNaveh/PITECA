@@ -118,7 +118,7 @@ class AnalyzeController:
             gb.should_exit_on_error = True
 
 
-    def __handle_unexpected_exception(self, dlg, thread):
+    def __handle_unexpected_exception(self, dlg, thread, value):
         """
         The function to be called when unhandled exception occurs in param thread.
         Terminates the thread, closing the progress dialog and pops up an error message.
@@ -127,7 +127,7 @@ class AnalyzeController:
         """
         dlg.close()
         thread.quit()
-        dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG)
+        dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG + ": {}".format(value))
 
     def wait_dlg_close_event(self, event, dlg, thread):
         """
@@ -206,7 +206,7 @@ class AnalyzeController:
         dlg.setWindowModality(Qt.ApplicationModal)
         dlg.show()
         thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results, subjects))
-        thread.exception_occurred_sig.connect(lambda: self.__handle_unexpected_exception(dlg, thread))
+        thread.exception_occurred_sig.connect(lambda value: self.__handle_unexpected_exception(dlg, thread, value))
         thread.start()
 
     def onRunComparisonButtonClicked(self):
