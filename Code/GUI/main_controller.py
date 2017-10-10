@@ -80,7 +80,7 @@ def piteca_excepthook(exctype, value, tb):
         print(value) # TODO: remove this! Here only for development needs
         print(exctype)
         traceback.print_tb(tb)
-        QThread.currentThread().exception_occurred_sig.emit()
+        QThread.currentThread().exception_occurred_sig.emit(str(value))
 
 
 if __name__ == "__main__":
