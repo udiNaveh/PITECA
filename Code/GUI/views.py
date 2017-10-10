@@ -197,7 +197,7 @@ class Ui_MainView(object):
                     contrastItem.setCheckState(0, QtCore.Qt.Unchecked)
                     contrastItem.setText(0, task.name)
             self.domainComboBox.addItem(domain.name)
-        self.taskComboBox.addItems(task.name for task in Domain.EMOTION.value)
+        self.taskComboBox.addItems(task.name for task in Domain.EMOTION.value if task in AVAILABLE_TASKS)
         self.ModelComboBox.addItems(models.available_models_keys)
         """ End of Added manually """
 
