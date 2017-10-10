@@ -1,23 +1,17 @@
-from sharedutils.io_utils import *
-from sharedutils.subject import *
-from sharedutils.linalg_utils import *
-from sharedutils.cmd_utils import run_wb_view, show_maps_in_wb_view
-from model.models import IModel
-from analysis.analyzer import *
-from sharedutils.general_utils import inverse_dicts
-import time
-import os
-import sys
-import inspect
-import pkgutil
-
 import ast
-import definitions
 import importlib.util
-import matplotlib.pyplot as plt
+import os
 import pickle
+import time
 
-from misc.model_hyperparams import *
+import matplotlib.pyplot as plt
+
+import definitions
+from analysis.analyzer import *
+from sharedutils.cmd_utils import show_maps_in_wb_view
+from sharedutils.general_utils import inverse_dicts
+from sharedutils.linalg_utils import *
+
 tasks_file = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
 all_tasks_200s = r'D:\Projects\PITECA\Data_for_testing\time_series\AllTasks.npy'
 all_tasks_200s_new_path = r'D:\Projects\PITECA\Data_for_testing\time_series\allTasksReordered.npy'

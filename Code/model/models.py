@@ -1,18 +1,24 @@
-from sharedutils.linalg_utils import *
-from sharedutils.subject import *
+"""
+This module contains the different model that can be used
+to predict and generate activation maps for subjects based on their
+input rfmri data. 
+
+"""
+import os.path
+import pickle
 import numpy as np
 import tensorflow as tf
+from abc import ABC, abstractmethod
+import time
 from sharedutils.constants import *
 from sharedutils.io_utils import *
-import os.path
+from sharedutils.linalg_utils import *
+from sharedutils.general_utils import *
+from sharedutils.subject import *
 import definitions
-from abc import ABC, abstractmethod
-import definitions
-import time
-from misc.model_hyperparams import *
-from misc.nn_model import *
-import pickle
-# constants - use configs instead
+from model.model_hyperparams import *
+from model.data_manager import *
+import model.nn_model as nn_models
 
 
 
@@ -20,6 +26,9 @@ import pickle
 
 
 class IModel(ABC):
+    """
+    Base abstract class for all models
+    """
 
     def __init__(self, tasks):
         self.tasks = tasks
@@ -30,110 +39,18 @@ class IModel(ABC):
         pass
 
 
-class LinearModel(IModel):
-
-    available_tasks = {Task.MATH_STORY : 0,
-                       Task.TOM: 1,
-                       Task.MATCH_REL : 2,
-                       Task.TWO_BK: 3,
-                       Task.REWARD : 4,
-                       Task.FACES_SHAPES : 5,
-                       Task.T : 6
-                       }
-    # a mapping of currently available tasks in the model to their ordinal number in the
-    # data files related to the tasks. e.g. in the betas matrix the betas related to Task.REWARD
-    # are in the coordintas [4,:,:]
-
-    def __init__(self, tasks, features = None):
-        super(LinearModel, self).__init__(tasks)
-
-        self.__betas = None
-        self.spatial_filters_soft = None
-        self.__is_loaded = False
-        self.__feature_extractor = FeatureExtractor()
-
-    def __load(self):
-        '''
-        Loads from disk all the data matrices needed for the model. This is done once per
-        instance of LinearModel.
-        :return: 
-        '''
-        all_betas = np.load(definitions.LINEAR_MODEL_BETAS_PATH)
-        missing_tasks = []
-        for task in self.tasks:
-            if task not in LinearModel.available_tasks:
-                missing_tasks.append(task)
-                raise RuntimeWarning("no linear model for task {}".format(task.name))
-            # @error_handle. Notice that this is probably only for development,
-            # as the release version will include anyway only the tasks
-            # for which we have the model.
-
-        self.tasks = [t for t in self.tasks if t not in missing_tasks]
-        tasks_indices = [LinearModel.available_tasks[t] for t in self.tasks]
-        self.__betas = all_betas[tasks_indices,:,:]
-
-        ica_both_lowdim, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
-        self.spatial_filters_soft = softmax(np.transpose(ica_both_lowdim) * TEMPERATURE)
-        below_threshold = self.spatial_filters_soft < 1e-2
-        self.spatial_filters_soft[below_threshold] = 0
-        self.spatial_filters_soft = self.spatial_filters_soft[:STANDARD_BM.N_CORTEX, :]
-
-        self.__spatial_filters_hard = np.argmax(np.transpose(ica_both_lowdim[:, :STANDARD_BM.N_CORTEX]), axis = 1)
-        return True
-
-    def __preprocess(self, subject_features):
-        subject_features = subject_features[:, :STANDARD_BM.N_CORTEX]
-        subject_features = np.concatenate((np.ones([STANDARD_BM.N_CORTEX, 1]), np.transpose(subject_features)), axis=1)
-        subject_features = demean_and_normalize(subject_features)
-        subject_features[:, 0] = 1.0
-        return subject_features
-
-    def predict(self, subject, filters = 'soft', save = True):
-        fe = self.__feature_extractor
-        if not self.__is_loaded:
-            self.__is_loaded = self.__load()
-        betas = self.__betas
-        prediction_paths = {}
-        arr, bm = fe.get_features(subject)
-        subject_feats = self.__preprocess(arr)
-        if filters == 'soft':
-            start = time.time()
-            dotprod = subject_feats.dot(betas)
-            pred = np.sum(np.swapaxes(dotprod, 0, 1) * self.spatial_filters_soft, axis=2)
-            stop = time.time()
-            print("soft filter prediction took {0:.4f} seconds".format(stop-start))
-        elif filters == 'hard':
-            start = time.time()
-            pred = np.zeros([STANDARD_BM.N_CORTEX, len(self.tasks)])
-            for j in range(np.size(self.spatial_filters_soft, axis=1)):
-                ind = self.__spatial_filters_hard == j
-                M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
-                                    demean(subject_feats[ind, 1:])),axis=1)
-                pred[ind, :] = M.dot((betas[:,:,j]).swapaxes(0,1))
-            stop = time.time()
-            print("hard filter prediction took {0:.4f} seconds".format(stop - start))
-        elif filters == 'soft fast':
-            start = time.time()
-            pred = np.zeros([STANDARD_BM.N_CORTEX, len(self.tasks)])
-            for j in range(np.size(self.spatial_filters_soft, axis=1)):
-                ind = self.__spatial_filters_hard == j
-                M = np.concatenate((subject_feats[ind,0].reshape(np.count_nonzero(ind),1),\
-                                    demean(subject_feats[ind, 1:])),axis=1)
-                pred[ind, :] = M.dot((betas[:,:,j]).swapaxes(0,1))
-            stop = time.time()
-            print("soft fast filter prediction took {0:.4f} seconds".format(stop - start))
-        if not save:
-            return pred
-
-        for i,task in enumerate(self.tasks):
-            predicted_task_activation = pred[i,:]
-            if save:
-                prediction_paths[task] = save_to_dtseries(subject.get_predicted_task_filepath(task), bm, predicted_task_activation)
-        return prediction_paths
-
-
 class TFRoiBasedModel(IModel):
+    """
+    Base abstract class for all roi-based models. These models divide the cortex vertices into 49
+    rois, where each roi has its own predictive model. The predicted value for each vertex is
+    determined using the model of the roi to which it belongs. Note however that as soft filters are used,
+    a vertex's relation to the different roi's is describes as a (usually sparse) probability vector.
+    if vertex v is belongs 0.7 to roi j1 and 0.3 to roi j2, its predicted activation value will be
+    0.7 * f_j1(x)... 
+    
+    """
 
+    # TODO COMPLETE DOCUMENTATION
     available_tasks = {Task.MATH_STORY : 0,
                        Task.TOM: 1,
                        Task.MATCH_REL : 2,
@@ -192,21 +109,31 @@ class TFRoiBasedModel(IModel):
         subject_features = demean_and_normalize(subject_features)
         return subject_features
 
+    def get_spatial_filters(self, subject_feats):
+        return self.spatial_filters
+
     def predict(self, subject, save = True):
+        """
+        :param subject: an object of type Subject 
+        :param save: bool - whether or not to save the predicted activation into .dtseries.nii files
+        :return: a Tuple(subject_predictions, prediction_paths), with
+                subject_predictions : a dictionary mapping tasks to prediction matrices
+                prediction_paths : a dictionary mapping tasks to paths of saved predictions in .dtseries.nii files
+        """
         if not self.is_loaded:
             self.is_loaded = self._load()
         arr, bm = self.feature_extractor.get_features(subject)
         subject_feats = self.preprocess_features(arr)
-        subject_predictions = {}
-        prediction_paths = {}
+        spatial_filters = self.get_spatial_filters(subject_feats)
+        subject_predictions, prediction_paths = {}, {}
         with tf.Session() as sess:
             for task in self.tasks:
                 subject_task_prediction = np.zeros([1, STANDARD_BM.N_CORTEX])
                 start = time.time()
-                for j in range(np.size(self.spatial_filters, axis=1)):
+                for j in range(np.size(spatial_filters, axis=1)):
                     if j in self._weights[task]:
-                        ind = self.spatial_filters[: STANDARD_BM.N_CORTEX, j] > 0
-                        weighting = self.spatial_filters[:, j][ind]
+                        ind = spatial_filters[: STANDARD_BM.N_CORTEX, j] > 0
+                        weighting = spatial_filters[:, j][ind]
                         features = subject_feats[ind]
                         weights = self._weights[task][j]
                         region_feed_dict = union_dicts({self.x: features},
@@ -240,7 +167,7 @@ class NN2lhModel(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-        regression_with_two_hidden_layers_build(input_dim= NN2lhModel.input_size, output_dim=1, scope_name='nn1_h2_reg',
+            nn_models.regression_with_two_hidden_layers_build(input_dim= NN2lhModel.input_size, output_dim=1, scope_name='nn1_h2_reg',
                                                 layer1_size=NN2lhModel.hl1_size, layer2_size=NN2lhModel.hl2_size)
         return x, y_pred
 
@@ -267,7 +194,7 @@ class NN2lhModelWithFiltersAsFeatures(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-        regression_with_two_hidden_layers_build(input_dim= NN2lhModelWithFiltersAsFeatures.input_size, output_dim=1, scope_name='nn1_h2_reg_fsf',
+            nn_models.regression_with_two_hidden_layers_build(input_dim= NN2lhModelWithFiltersAsFeatures.input_size, output_dim=1, scope_name='nn1_h2_reg_fsf',
                                                 layer1_size=NN2lhModelWithFiltersAsFeatures.hl1_size, layer2_size=NN2lhModelWithFiltersAsFeatures.hl2_size)
         return x, y_pred
 
@@ -298,7 +225,7 @@ class TFLinear(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg')
+            nn_models.linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg')
         return x, y_pred
 
     def get_trainable_variables(self):
@@ -331,7 +258,7 @@ class TFLinearAveraged(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg_avg')
+            nn_models.linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg_avg')
         return x, y_pred
 
     def get_trainable_variables(self):
@@ -345,7 +272,6 @@ class TFLinearAveraged(TFRoiBasedModel):
 
 
 class TFLinearFSF(TFRoiBasedModel):
-    input_size = NUM_FEATURES + NUM_SPATIAL_FILTERS
 
     def __init__(self, tasks, feature_extractor=None):
         super(TFLinearFSF, self).__init__(tasks, feature_extractor)
@@ -361,7 +287,7 @@ class TFLinearFSF(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-            linear_regression_build(input_dim=NUM_FEATURES+1+ NUM_SPATIAL_FILTERS, output_dim=1, scope_name='lin_reg_fsf')
+            nn_models.linear_regression_build(input_dim=NUM_FEATURES+1+ NUM_SPATIAL_FILTERS, output_dim=1, scope_name='lin_reg_fsf')
         return x, y_pred
 
     def get_trainable_variables(self):
@@ -378,25 +304,33 @@ class TFLinearFSF(TFRoiBasedModel):
 
 
 class FeatureExtractor:
+    """
+    This class is used for performing feature extraction from rfmri input files (time-series).
+    The feature extractor input is a 2D matrix containing TimePoints values for each brain vertex,
+    and outputs a 2D matrix containing the values for 108 features for each cortical vertex.   
+    """
 
     def __init__(self):
         self.matrices = dict()
         self.is_loaded = False
-        self.bm = pickle.load(open(definitions.BM_CORTEX_PATH, 'rb'))
+        self.bm = get_bm('cortex')
 
     def load(self):
         arr = np.load(definitions.SC_CLUSTERS_PATH)
         self.matrices['SC_CLUSTERS'] = arr
         arr = np.load(definitions.ICA_LR_MATCHED_PINV_PATH)
-        self.matrices['ICA_LR_MATCHED'] = arr
-
+        self.matrices['PINV_ICA_LR_MATCHED'] = arr
         self.is_loaded = True
         return
 
     def get_features(self,subject):
-        assert isinstance(subject,Subject)
+        """
+        returns the features matrix for subject by extracting the features fron the subject's rfmri input,
+        or loading it from a saved features file.
+        """
+
         if subject.features_exist:
-            arr, (series, bm) = open_cifti(subject.features_path)
+            arr, (series, bm) = open_features_file(subject.features_path)
             return arr, self.bm
         else:
             if not self.is_loaded:
@@ -405,15 +339,16 @@ class FeatureExtractor:
 
     def extract_features(self,subject):
         start_extraction_time = time.time()
-        rfmri_data, (series, bm) = open_cifti(subject.input_path) # arr is time * 91k
+        rfmri_data, (series, bm) = open_rfmri_input_data(subject.input_path)   # arr is time * 91k
         n_vertices, t = rfmri_data.shape
 
         # preprocess
-        rfmri_data_normalized = variance_normalise(rfmri_data) # % noise variance normalisation
-        data = detrend(rfmri_data_normalized) # subtract linear trend from time series each vertex
-        # perform dual regression to obtain individual cortical spatial maps
+        rfmri_data_normalized = variance_normalise(rfmri_data)  # noise variance normalisation
+        data = detrend(rfmri_data_normalized)   # subtract linear trend from time series for each vertex
+
+        # dual regression: get individual cortical spatial maps:
         # step 1 - get subject's individual time series for each by network
-        ts_by_network = np.dot(data, self.matrices['ICA_LR_MATCHED'])  # time x 76
+        ts_by_network = np.dot(data, self.matrices['PINV_ICA_LR_MATCHED'])  # time x 76
         # step 2 - get subject's individual cortical spatial maps
         LHRH = fsl_glm(ts_by_network, data).transpose() # 91k x 76
         # create spatial maps for the whole brain
@@ -425,7 +360,7 @@ class FeatureExtractor:
             LHRH[STANDARD_BM.N_LH : STANDARD_BM.N_CORTEX , 38 :76]
         # for subcortical networks - use data of group
         ROIS[:, 76:] = self.matrices['SC_CLUSTERS']
-        rfmri_data_normalized = demean(rfmri_data_normalized)  # remove mean from each column
+        rfmri_data_normalized = demean(rfmri_data_normalized)  # remove mean from each column #TODO is it needed?
         # multiple regression - characteristic time series for each network
         T2 = np.dot(np.linalg.pinv(ROIS), rfmri_data_normalized.transpose()) # 108 x time
         # get the features - correlation coefficient for each vertex with each netwrok
@@ -435,22 +370,26 @@ class FeatureExtractor:
 
         end_extraction_time = time.time()
 
-        print("feature extracted for subject {0} in {1:.1f} seconds".format(subject.subject_id, end_extraction_time-start_extraction_time))
+        print("features extracted for subject {0} in {1:.1f} seconds".format(subject.subject_id, end_extraction_time-start_extraction_time))
 
         return features_map, self.bm
 
 
 class MemFeatureExtractor(FeatureExtractor):
 
-    def __init__(self, features_mat, map):
+    def __init__(self, features_mat, subjects, map={}):
         super(MemFeatureExtractor, self).__init__()
         self.matrices['all features'] = features_mat
-        self.subjects_mapping = map
+        self.subjects_mapping = map if map else {subject : int(subject.subject_id)-1 for subject in subjects}
 
     def get_features(self,subject):
         mat = self.matrices['all features']
-        idx = self.subjects_mapping[int(subject.subject_id)]
-        return (mat[:,idx, :]).transpose(), self.bm
+        features = np.squeeze(get_subjects_features_from_matrix(mat, [subject], mapping=self.subjects_mapping))
+        if np.size(features, axis=1) == NUM_FEATURES:
+            features = np.transpose(features)
+        if np.size(features, axis=0) != NUM_FEATURES:
+            raise PitecaError("features file must include {} features".format(NUM_FEATURES))
+        return features, self.bm
 
 
 
@@ -460,16 +399,21 @@ available_models = {
     'Linear by ROI': TFLinear,
     'Linear by ROI with group connectivity features': TFLinearFSF,
     'MLP by ROI' : NN2lhModel,
-    'MLP by ROI with group connectivity features' : NN2lhModelWithFiltersAsFeatures
-}
+    'MLP by ROI with group connectivity features' : NN2lhModelWithFiltersAsFeatures,}
 
 available_models_keys = list(available_models.keys())
 available_models_keys.sort()
 
-def model_factory(model_name, tasks, fe=None):
-    if model_name not in available_models:
-        raise ValueError("There is no prediction model named {}".format(model_name))
-    my_model_class = available_models[model_name]
+
+def model_factory(model, tasks, fe=None):
+    if isinstance(model, str):
+        if model not in available_models:
+            raise ValueError("There is no prediction model named {}".format(model))
+        my_model_class = available_models[model]
+    elif issubclass(model, IModel):
+        my_model_class = model
+    else:
+        raise ValueError("Argument is not an IModel")
     my_model = my_model_class(tasks, fe)
     return my_model
 
