@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-
+import os
 from GUI.popups.predict_working_dlg_controller import PredictWorkingDlg
 from model.models import model_factory, IModel
 from sharedutils.constants import *
@@ -29,7 +29,7 @@ class PredictTabModel:
         '''
         self.subjects = create_subjects(self.input_files_srt, self.output_dir)
         for subject in self.subjects:
-            if path.exists(subject.features_path):
+            if os.path.exists(subject.features_path):
                 self.subjects_with_feats.append(subject)
 
 

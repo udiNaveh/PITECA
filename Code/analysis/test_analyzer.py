@@ -81,7 +81,7 @@ class TestAnalyzer(unittest.TestCase):
             print(kvp[0].subject_id)
             arr = kvp[1]
             print (np.mean(arr), np.max(arr), np.min(arr), np.median(arr), np.std(arr))
-            arr = arr[0,:STANDART_BM.N_CORTEX]
+            arr = arr[0, :STANDARD_BM.N_CORTEX]
             print(np.mean(arr), np.max(arr), np.min(arr), np.median(arr), np.std(arr))
 
     def test_get_significance_overlap_basic(self):

@@ -37,3 +37,8 @@ DEFAULT_EXTRACTED_FEATURES_DIR = os.path.join(DATA_DIR, 'ExtractedFeatures')
 DEFAULT_ANLYSIS_DIR = os.path.join(DATA_DIR, 'Analysis')
 DEFAULT_PREDICTIONS_DIR = os.path.join(DATA_DIR, 'Predictions')
 DEFAULT_MODEL = 'MLP by ROI'
+
+
+class PitecaError(Exception):
+    def __init__(self, message):
+        self.message = message

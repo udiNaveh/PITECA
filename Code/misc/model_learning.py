@@ -51,16 +51,16 @@ TASKS = {Task.MATH_STORY: 0,
 def load_data():
     all_features_raw = np.load(all_features_path)
     spatial_filters_raw, (series, bm) = cifti.read(spatial_filters_path)
-    spatial_filters_raw = np.transpose(spatial_filters_raw[:, STANDART_BM.CORTEX])
+    spatial_filters_raw = np.transpose(spatial_filters_raw[:, STANDARD_BM.CORTEX])
     soft_filters = softmax((spatial_filters_raw).astype(float) * TEMPERATURE)
     soft_filters[soft_filters < FILTERS_EPSILON] = 0.0
     soft_filters[:,2] = 0
-    soft_filters /= np.reshape(np.sum(soft_filters, axis=1), [STANDART_BM.N_CORTEX, 1])
+    soft_filters /= np.reshape(np.sum(soft_filters, axis=1), [STANDARD_BM.N_CORTEX, 1])
     hard_filters = np.round(softmax((spatial_filters_raw).astype(float) * 1000))
     hard_filters[spatial_filters_raw<SPATIAL_FILTERS_THRESHOLD] = 0
     all_features_normalized = demean_and_normalize(all_features_raw, axis=0)
     all_tasks = np.load(tasks_file)
-    all_tasks = all_tasks[:,:, :STANDART_BM.N_CORTEX]
+    all_tasks = all_tasks[:, :, :STANDARD_BM.N_CORTEX]
     return all_features_normalized, all_tasks, soft_filters, hard_filters, spatial_filters_raw # TODO
 
 all_features_normalized, all_tasks, soft_filters, hard_filters, spatial_filters_raw = load_data()
@@ -80,7 +80,7 @@ loss_function = build_loss(y, y_pred, nn_scope_name, REG_LAMBDA, HUBER_DELTA)
 
 
 def get_subject_features_from_matrix(subject):
-    subj_features = all_features_normalized[: STANDART_BM.N_CORTEX, int(subject.subject_id) -1, :]
+    subj_features = all_features_normalized[: STANDARD_BM.N_CORTEX, int(subject.subject_id) - 1, :]
     if USE_RAW_FILTERS_AS_FEATURES:
         subj_features = np.concatenate((subj_features, spatial_filters_raw), axis = 1)
     return subj_features
@@ -109,7 +109,7 @@ def train_by_roi_and_task(subjects_partition, tasks, spatial_filters, tensors, s
         task_values = all_tasks_normalized[task_idx:task_idx + 1, :, :]
         learned_weights = {}
         for j in range(n_filters_):
-            ind = spatial_filters[: STANDART_BM.N_CORTEX, j] > 0
+            ind = spatial_filters[: STANDARD_BM.N_CORTEX, j] > 0
             print("do regression for task {} filter {} with {} vertices".format(task.name, j, np.size(np.nonzero(ind))))
             if np.size(np.nonzero(ind))<30:
                 continue
@@ -174,7 +174,7 @@ def train_tf_by_task(subjects_partition, tasks, tensors, scope_name):
         betas_task = np.zeros([NUM_FEATURES+n_additional_features+1, n_filters_])
         task_values = all_tasks_normalized[task_idx:task_idx + 1, :, :]
         learned_weights = {}
-        ind = soft_filters[: STANDART_BM.N_CORTEX, 0] <10
+        ind = soft_filters[: STANDARD_BM.N_CORTEX, 0] < 10
 
         roi_feats, roi_tasks = get_selected_features_and_tasks(all_features_normalized, ind, task_values, subjects_training)
         roi_feats_val, roi_tasks_val = get_selected_features_and_tasks(all_features_normalized, ind, task_values, subjects_validation)
@@ -220,7 +220,7 @@ def train_linear_original(subjects_partition, spatial_filters):
     task_values = all_tasks_normalized[:, :, :]
     learned_weights = {}
     for j in range(n_filters_):
-        ind = spatial_filters[: STANDART_BM.N_CORTEX, j] > 0
+        ind = spatial_filters[: STANDARD_BM.N_CORTEX, j] > 0
         print("do regression for filter {} with {} vertices".format(j, np.size(np.nonzero(ind))))
         if np.size(np.nonzero(ind))<30:
             continue
@@ -266,7 +266,7 @@ def get_stats(predicted, actual):
 
 def predict_all_subject(subjects, tasks, features_getter, predictor):
     tasks = np.swapaxes(tasks,1,2)
-    tasks = demean_and_normalize(tasks[:,:STANDART_BM.N_CORTEX,:], axis=1) # TODO
+    tasks = demean_and_normalize(tasks[:, :STANDARD_BM.N_CORTEX, :], axis=1) # TODO
     #pred = np.empty([tasks.shape[0], STANDART_BM.N_CORTEX , n_subjects])
     pred = {}
     for i, subject in enumerate(subjects):
@@ -299,14 +299,14 @@ def predict_all_subject(subjects, tasks, features_getter, predictor):
 def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, tasks_predicted, saved_pred =  None):
 
     tasks = np.swapaxes(tasks,1,2)
-    tasks = demean_and_normalize(tasks[:,:STANDART_BM.N_CORTEX,:], axis=1) # TODO
+    tasks = demean_and_normalize(tasks[:, :STANDARD_BM.N_CORTEX, :], axis=1) # TODO
     n_tasks = np.size(tasks, axis=0)
     n_subjects = len(subjects)
-    pred = np.empty([tasks.shape[0], STANDART_BM.N_CORTEX , n_subjects]) if saved_pred is None else saved_pred
+    pred = np.empty([tasks.shape[0], STANDARD_BM.N_CORTEX , n_subjects]) if saved_pred is None else saved_pred
     correlations = np.zeros([n_tasks,n_subjects])
     correlations_with_mean = np.zeros([n_tasks, n_subjects])
     correlations_of_mean_roi = np.zeros([n_tasks,n_subjects])
-    regions_sizes = [np.count_nonzero(hard_filters[: STANDART_BM.N_CORTEX , j] > 0) for j in range(n_filters)]
+    regions_sizes = [np.count_nonzero(hard_filters[: STANDARD_BM.N_CORTEX , j] > 0) for j in range(n_filters)]
     correlations_by_roi = np.zeros([n_tasks,n_subjects, n_filters])
     losses = np.zeros([n_tasks,n_subjects])
     losses2 = np.zeros([n_tasks, n_subjects])
@@ -331,9 +331,9 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
             task_name = [taskname for taskname, idx in TASKS.items() if idx == task_index][0]
             if task_index not in mean_actuals:
                 mean_actuals[task_index] = np.mean(
-                tasks[task_index, :STANDART_BM.N_CORTEX, [int(s.subject_id) - 1 for s in subjects]], axis=0)
+                    tasks[task_index, :STANDARD_BM.N_CORTEX, [int(s.subject_id) - 1 for s in subjects]], axis=0)
             task_subject_pred = pred[task_index, :, i]
-            task_subject_actual = tasks[task_index,:STANDART_BM.N_CORTEX, subject_idx]
+            task_subject_actual = tasks[task_index, :STANDARD_BM.N_CORTEX, subject_idx]
 
             if task_index not in all_arranged_in_dicts:
                 all_arranged_in_dicts[task_index] = {}
@@ -341,7 +341,7 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
             only_mean_roi_actual = np.zeros(np.shape(task_subject_actual))
             all_arranged_in_dicts[task_index][subject] = (task_subject_pred, task_subject_actual)
             for j in range(n_filters):
-                ind = hard_filters[: STANDART_BM.N_CORTEX, j] > 0
+                ind = hard_filters[: STANDARD_BM.N_CORTEX, j] > 0
                 if np.size(np.nonzero(ind)) < 30:
                     continue
                 only_mean_roi_prediction[ind] = np.mean(task_subject_pred[ind])
@@ -408,7 +408,7 @@ def get_correlations_for_subjects(subjects, tasks, features_getter, predictor, t
 def get_corr_by_region(filters, pred, act):
     results = np.zeros([n_filters])
     for j in range(n_filters):
-        ind = filters[: STANDART_BM.N_CORTEX, j] > 0
+        ind = filters[: STANDARD_BM.N_CORTEX, j] > 0
         if np.size(np.nonzero(ind)) < 30:
             continue
         results[j] = np.corrcoef(pred[ind], act[ind])[0, 1]
@@ -423,11 +423,11 @@ def predict_from_linear_betas(arr, betas):
 def predict_by_roi(subject_feats, filters, saved_weights, tasks, prediction_function):
     subject_predictions = {}
     for task in tasks:
-        subject_task_prediction = np.zeros([STANDART_BM.N_CORTEX])
+        subject_task_prediction = np.zeros([STANDARD_BM.N_CORTEX])
         for j in range(np.size(filters, axis=1)):
             if j in saved_weights[task]:
                 weights = saved_weights[task][j]
-                ind = filters[: STANDART_BM.N_CORTEX, j] > 0
+                ind = filters[: STANDARD_BM.N_CORTEX, j] > 0
                 weighting = filters[:,j][ind]
                 features = subject_feats[ind]
                 subject_task_prediction[ind] += weighting * np.squeeze(prediction_function(features, weights))

@@ -49,7 +49,7 @@ def explore_tasks():
     subjects = np.arange(0,200)
     tasks = np.load(all_tasks_200s_new_path)
 
-    task_language = tasks[0,:,:STANDART_BM.N_CORTEX]
+    task_language = tasks[0, :, :STANDARD_BM.N_CORTEX]
     task_mean = np.mean(task_language, axis=1)
     task_std = np.std(task_language, axis=1)
     task_max  = np.percentile(task_language, 95, axis=1)
@@ -73,7 +73,7 @@ def create_tasks_files():
     tasks = np.load(all_tasks_200s)
     full_bm = pickle.load(open(definitions.BM_FULL_PATH, 'rb'))
     for i, task in enumerate(TASKS):
-        mean_data = np.reshape(np.mean(tasks[i, :,:], axis=0), [1, STANDART_BM.N_TOTAL_VERTICES])
+        mean_data = np.reshape(np.mean(tasks[i, :,:], axis=0), [1, STANDARD_BM.N_TOTAL_VERTICES])
         f_name = 'canonical_{}'.format(task.full_name)
         save_to_dtseries(os.path.join(tasks_ciftis_path, f_name), full_bm, mean_data)
         print('saved canonical for {}'.format(task.full_name))
