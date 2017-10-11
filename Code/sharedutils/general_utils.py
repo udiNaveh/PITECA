@@ -18,9 +18,7 @@ def zeropad(i, length):
 def union_dicts(dict1, dict2):
     return dict(list(dict1.items()) + list(dict2.items()))
 
-def safe_open(path, *args):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    return open(path, *args)
+
 #
 #
 # def get_subject_to_feature_index_mapping(path):

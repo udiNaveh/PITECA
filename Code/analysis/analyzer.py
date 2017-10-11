@@ -24,10 +24,9 @@ def _get_task_maps_by_subject(subjects, task, getpath_func):
             raise RuntimeError("no filepath found for subject {} for task {}".format(subject.subject_id, task.name))
         else:
             start = time.time()
-            arr, (ax, bm) = open_cifti(subject_task_path)
+            arr, (ax, bm) = open_1d_file(subject_task_path)
             stop = time.time()
             print("opening {0} took {1:.4f} seconds".format(subject_task_path, stop-start))
-            # @error_handle
             task_maps[subject] = arr
     return task_maps
 
@@ -43,8 +42,7 @@ def get_actual_task_maps_by_subject(subjects, task):
 def __arrays_to_matrix(arrays):
     arrays = list(arrays)
     if not all_same(arrays, lambda arr: np.shape(arr)):
-        # @error_handle
-        raise RuntimeWarning("not all files have the same brain model")
+        raise PitecaError("not all files have the same brain model")
 
     if len(arrays[0].shape)==2:
         axis = 0 if np.size(arrays[0],axis=0)==1 else 1
@@ -52,8 +50,7 @@ def __arrays_to_matrix(arrays):
     elif len(arrays[0].shape)==1:
         return np.stack(arrays, axis=0)
     else:
-        # @error_handle
-        raise Exception("cannot produce matrix for shape {}".format(arrays[0].shape))
+        raise ValueError("cannot produce matrix for shape {}".format(arrays[0].shape))
 
 def get_prediction_statistic(subjects, task, statfunc, outputpath = None):
     prediction_arrays = []
@@ -63,11 +60,11 @@ def get_prediction_statistic(subjects, task, statfunc, outputpath = None):
         if subject_predicted_task_path is None:
             raise RuntimeWarning("no prediction for subject {0} for task {1}".format(subject.subject_id, task.name))
         else:
-            arr, (ax, bm) = open_cifti(subject_predicted_task_path)
+            arr, (ax, bm) = open_1d_file(subject_predicted_task_path)
             prediction_arrays.append(arr)
 
     if not all_same(prediction_arrays, lambda arr : np.shape(arr)):
-        raise RuntimeWarning("not all files have the same brain model")
+        raise PitecaError("Not all files have the same brain model")
 
     # need to verify that all arrays are of shape 1x59282
     res = statfunc(prediction_arrays)
@@ -100,7 +97,7 @@ def get_predictions_correlations(subjects, task, other_path):
         [subjects_predictions[s] for s in subjects])
 
     mean_pred = np.mean(subjects_predictions_matrix, axis=0)
-    other_arr, (ax, bm) = open_cifti(other_path)
+    other_arr, (ax, bm) = open_1d_file(other_path)
 
     # assume other_arr is of shape 1x91282s
     unified_mat = np.concatenate((subjects_predictions_matrix,
@@ -226,7 +223,7 @@ def get_significance_overlap_maps_for_subjects(subjects, task, outputdir):
     iou_negative = []
     for s in subjects:
         map, iou_pos, iou_neg, iou_both = get_significance_maps_overlap(all_maps[s].predicted,
-                                                                        all_maps[s].actual[:, STANDARD_BM.CORTEX])
+                                                                        all_maps[s].actual[:, :STANDARD_BM.N_CORTEX])
         iou_positive.append(iou_pos)
         iou_negative.append(iou_neg)
         filename = generate_file_name(outputdir, task, "{0}_predicted_actual_overlap".format(s.subject_id))

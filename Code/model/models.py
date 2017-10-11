@@ -18,7 +18,7 @@ from sharedutils.subject import *
 import definitions
 from model.model_hyperparams import *
 from model.data_manager import *
-import model.nn_model as nn_models
+from model.nn_model import *
 
 
 
@@ -167,7 +167,7 @@ class NN2lhModel(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-            nn_models.regression_with_two_hidden_layers_build(input_dim= NN2lhModel.input_size, output_dim=1, scope_name='nn1_h2_reg',
+            regression_with_two_hidden_layers_build(input_dim= NN2lhModel.input_size, output_dim=1, scope_name='nn1_h2_reg',
                                                 layer1_size=NN2lhModel.hl1_size, layer2_size=NN2lhModel.hl2_size)
         return x, y_pred
 
@@ -194,7 +194,7 @@ class NN2lhModelWithFiltersAsFeatures(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-            nn_models.regression_with_two_hidden_layers_build(input_dim= NN2lhModelWithFiltersAsFeatures.input_size, output_dim=1, scope_name='nn1_h2_reg_fsf',
+            regression_with_two_hidden_layers_build(input_dim= NN2lhModelWithFiltersAsFeatures.input_size, output_dim=1, scope_name='nn1_h2_reg_fsf',
                                                 layer1_size=NN2lhModelWithFiltersAsFeatures.hl1_size, layer2_size=NN2lhModelWithFiltersAsFeatures.hl2_size)
         return x, y_pred
 
@@ -225,7 +225,7 @@ class TFLinear(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-            nn_models.linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg')
+            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg')
         return x, y_pred
 
     def get_trainable_variables(self):
@@ -258,7 +258,7 @@ class TFLinearAveraged(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-            nn_models.linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg_avg')
+            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg_avg')
         return x, y_pred
 
     def get_trainable_variables(self):
@@ -287,7 +287,7 @@ class TFLinearFSF(TFRoiBasedModel):
 
     def get_placeholders(self):
         x, y, y_pred = \
-            nn_models.linear_regression_build(input_dim=NUM_FEATURES+1+ NUM_SPATIAL_FILTERS, output_dim=1, scope_name='lin_reg_fsf')
+            linear_regression_build(input_dim=NUM_FEATURES+1+ NUM_SPATIAL_FILTERS, output_dim=1, scope_name='lin_reg_fsf')
         return x, y_pred
 
     def get_trainable_variables(self):
@@ -331,6 +331,7 @@ class FeatureExtractor:
 
         if subject.features_exist:
             arr, (series, bm) = open_features_file(subject.features_path)
+
             return arr, self.bm
         else:
             if not self.is_loaded:
