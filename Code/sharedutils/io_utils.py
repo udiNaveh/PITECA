@@ -40,8 +40,8 @@ def open_cifti(path):
                 arr2 = np.copy(arr)
                 del arr
                 return arr2, (ax, bm)
-        else:
-            raise ve
+    except FileNotFoundError as fnfe:
+        raise PitecaError(fnfe.strerror)
 
 
 def open_dtseries(path):
@@ -55,6 +55,8 @@ def open_dtseries(path):
 
 def open_rfmri_input_data(path):
     arr, (series, bm) = open_dtseries(path)
+    if np.size(arr, 1) != STANDARD_BM.N_TOTAL_VERTICES:
+        raise PitecaError("Data in file must include a full standard brain model ({}) vertices".format(STANDARD_BM.N_TOTAL_VERTICES))
     if np.size(arr, 0) < MIN_TIME_UNITS:
         raise PitecaError("Input file must include at least {0} time units".format(MIN_TIME_UNITS))
     return arr, (series, bm)
@@ -64,13 +66,15 @@ def open_features_file(path):
     arr, (series, bm) = open_dtseries(path)
     if np.size(arr, 0) != NUM_FEATURES:
         raise PitecaError("features file must include {} features".format(NUM_FEATURES))
+    if np.size(arr, 1) > STANDARD_BM.N_CORTEX:
+        arr = arr[:,:STANDARD_BM.N_CORTEX]
     return arr, (series, bm)
 
 
 def open_1d_file(path):
     arr, (series, bm) = open_dtseries(path)
     if np.size(arr, 0) > 1:
-        raise ValueError("Input file is in 2D, expected 1D data")
+        raise PitecaError("Input file is in 2D, expected 1D data")
     return arr, (series, bm)
 
 
