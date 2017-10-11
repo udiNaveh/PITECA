@@ -40,5 +40,6 @@ DEFAULT_MODEL = 'MLP by ROI'
 
 
 class PitecaError(Exception):
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, message, path=''):
+        path_message = 'Cannot open file {}. '.format(path) if path else ''
+        self.message = path_message+message
