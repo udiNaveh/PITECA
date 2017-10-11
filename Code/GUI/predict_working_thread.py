@@ -25,7 +25,8 @@ class PredictWorkingThread(QThread):
         self.wait()
 
     def update_progress_bar(self):
-        self.progress_bar.setValue(min(self.progress_bar.value() + math.ceil(100/len(self.subjects)), 100))
+        total = 100
+        self.progress_bar.setValue(min(self.progress_bar.value() + math.ceil(total/len(self.subjects)), total))
 
     def run(self):
         for subject in self.subjects:

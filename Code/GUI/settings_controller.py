@@ -1,7 +1,7 @@
 import configparser
 
 import definitions
-from sharedutils import dialog_utils
+from sharedutils import dialog_utils, constants
 
 """
 This module handles the settings of PITECA enabled for user's change in the settings tab.
@@ -31,6 +31,10 @@ def get_model():
 
 
 class SettingsController:
+    """
+    Controls the settings.ini file, that defines PITECA's setting.
+    Changes this file according to ui events in the settings tab.
+    """
 
     def __init__(self, ui):
         self.ui = ui
@@ -44,21 +48,21 @@ class SettingsController:
         self.config = configparser.ConfigParser()
         self.config.read(definitions.SETTINGS_PATH)
 
-        default_values = {'FeaturesFolder': definitions.DEFAULT_EXTRACTED_FEATURES_DIR,
-                          'PredictionOutputsFolder': definitions.DEFAULT_PREDICTIONS_DIR,
-                          'AnalysisOutputFolder': definitions.DEFAULT_ANLYSIS_DIR,
-                          'Model': definitions.DEFAULT_MODEL
+        default_values = {constants.SETTINGS_FEATURES_FOLDER: definitions.DEFAULT_EXTRACTED_FEATURES_DIR,
+                          constants.SETTINGS_PREDICTIONS_OUTPUT: definitions.DEFAULT_PREDICTIONS_DIR,
+                          constants.SETTINGS_ANALYSIS_OUTPUT: definitions.DEFAULT_ANLYSIS_DIR,
+                          constants.SETTINGS_MODEL: definitions.DEFAULT_MODEL
                           }
 
         for key, value in default_values.items():
-            if key not in self.config['SETTINGS'] or \
-                    not self.config['SETTINGS'][key]:
-                self.config.set('SETTINGS', key, value)
+            if key not in self.config[constants.SETTINGS_TITLE] or \
+                    not self.config[constants.SETTINGS_TITLE][key]:
+                self.config.set(constants.SETTINGS_TITLE, key, value)
 
-        features_folder = self.config['SETTINGS']['FeaturesFolder']
-        prediction_outputs_folder = self.config['SETTINGS']['PredictionOutputsFolder']
-        analysis_results_folder = self.config['SETTINGS']['AnalysisOutputFolder']
-        model = self.config['SETTINGS']['Model']
+        features_folder = self.config[constants.SETTINGS_TITLE][constants.SETTINGS_FEATURES_FOLDER]
+        prediction_outputs_folder = self.config[constants.SETTINGS_TITLE][constants.SETTINGS_PREDICTIONS_OUTPUT]
+        analysis_results_folder = self.config[constants.SETTINGS_TITLE][constants.SETTINGS_ANALYSIS_OUTPUT]
+        model = self.config[constants.SETTINGS_TITLE][constants.SETTINGS_MODEL]
 
         self.ui.featuresFolderLineEdit.setText(features_folder)
         self.ui.predictionOutputFolderLineEdit.setText(prediction_outputs_folder)
@@ -70,33 +74,49 @@ class SettingsController:
 
 
     def set_features_folder(self):
+        """
+        The function to be called when user changes the features folder on the settings tab.
+        """
+
         global features_folder
         dir = features_folder if features_folder is not None else definitions.ROOT_DIR
         features_folder = dialog_utils.browse_dir(self.ui.featuresFolderLineEdit, dir)
-        self.config.set('SETTINGS', 'FeaturesFolder', features_folder)
+        self.config.set(constants.SETTINGS_TITLE, constants.SETTINGS_FEATURES_FOLDER, features_folder)
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)
 
     def set_output_predictions_folder(self):
+        """
+        The function to be called when user changes the output predictions folder on the settings tab.
+        """
+
         global prediction_outputs_folder
         dir = prediction_outputs_folder if prediction_outputs_folder is not None else definitions.ROOT_DIR
         prediction_outputs_folder = dialog_utils.browse_dir(self.ui.predictionOutputFolderLineEdit, dir)
-        self.config.set('SETTINGS', 'PredictionOutputsFolder', prediction_outputs_folder)
+        self.config.set(constants.SETTINGS_TITLE, constants.SETTINGS_PREDICTIONS_OUTPUT, prediction_outputs_folder)
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)
 
     def set_output_analysis_folder(self):
+        """
+        The function to be called when user changes the analysis on the settings tab.
+        """
+
         global analysis_results_folder
         dir = analysis_results_folder if analysis_results_folder is not None else definitions.ROOT_DIR
         analysis_results_folder = dialog_utils.browse_dir(self.ui.analysisOutputFolderLineEdit, dir)
-        self.config.set('SETTINGS', 'AnalysisOutputFolder', analysis_results_folder)
+        self.config.set(constants.SETTINGS_TITLE, constants.SETTINGS_ANALYSIS_OUTPUT, analysis_results_folder)
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)
 
     def set_model(self):
+        """
+        The function to be called when user changes the model in settings tab.
+        """
+
         global model
         key = self.ui.ModelComboBox.currentText()
-        self.config.set('SETTINGS', 'Model', key)
+        self.config.set(constants.SETTINGS_TITLE, constants.SETTINGS_MODEL, key)
         model = key
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)

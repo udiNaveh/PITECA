@@ -14,20 +14,31 @@ from GUI.analyze_working_thread import AnalysisTask
 import definitions
 
 """
-This module provides plotting methods of 4 heatmap graphs:
+This module provides plotting methods of 4 graphs:
 1. Correlation between the predicted activations of all subjects (subj_subj_data)
-2. Correlation between the predicted activations of all subjects to their mean (subj_mean_data)
-3. Correlation between the predicted activations of all subjects to the canonical activation of HCP subjects (subj_canonical_data)
-4. Correlation between the predicted activations of all subjects to their actual activation (subj_subj_data)
+2. Correlation between the predicted activations of all subjects to the canonical activation of HCP subjects (subj_canonical_data)
+3. Correlation between the predicted activations of all subjects to their actual activation (subj_subj_data)
+
+Additionally, it provides method for plotting a graph that indicates the Intersection over Union of the overlap maps 
+between the predicted and actual files.
 """
 
+
+# Constants for this module
 # MEAN_Y_LABEL = "with mean"
 CANONICAL_Y_LABEL = "correlation with\n canonical activation"
 
 min_corr=0
 max_corr=1
+max_width_button=100
+rotation_degree=35
 
 class GraphicDlg(QDialog):
+    """
+    Defines the view of the graph's dialog that shows analysis results,
+    and controls its data and logic.
+    """
+
     def __init__(self, analysis_task, data, subjects, title, parent=None):
         super(GraphicDlg, self).__init__(parent)
 
@@ -44,7 +55,7 @@ class GraphicDlg(QDialog):
 
         # save button
         self.save_button = QtWidgets.QPushButton('Save data')
-        self.save_button.setMaximumWidth(100)
+        self.save_button.setMaximumWidth(max_width_button)
         self.save_button.clicked.connect(self.save_data)
 
         # set the layout
@@ -96,8 +107,8 @@ class GraphicDlg(QDialog):
             self.layout.addWidget(self.correlation_label)
         elif analysis_task == AnalysisTask.Compare_Significance:
             # self.data is 2 dimensional array
-            self.named_data = {'subjects presicted-actual positive significance iou ': self.data[0],
-                               'subjects presicted-actual negative significance iou ': self.data[1]}
+            self.named_data = {'subjects predicted-actual positive significance iou ': self.data[0],
+                               'subjects predicted-actual negative significance iou ': self.data[1]}
             self.plot_barchart()
         else:
             dialog_utils.print_error("Unsupported analysis action")
@@ -112,6 +123,7 @@ class GraphicDlg(QDialog):
         Changes the label that shows the exact correlation if user clicked inside graph borders,
         or do nothing if user clicks elsewhere.
         """
+
         if event.button == 1 and event.xdata and event.ydata:
             subject_x_index = math.floor(event.xdata)
             subject_y_index = math.floor(event.ydata)
@@ -158,6 +170,7 @@ class GraphicDlg(QDialog):
         Opens a browse dialog and saves the data shown in the graph in the format and folder
         the user selected.
         """
+
         dir = definitions.ANALYSIS_DIR
         name, extension = dialog_utils.save_file('*.mat ;; *.npy ;; *.pkl', dir)
         if name == '':
@@ -195,9 +208,9 @@ class GraphicDlg(QDialog):
         subjects_by_subjects_ax.set_xlabel(self.SUBJECTS_X_LABEL)
         subjects_by_subjects_ax.set_ylabel(self.SUBJECTS_Y_LABEL)
         subjects_by_subjects_ax.set_xticks(np.arange(len(self.subj_subj_data)) + 0.5)
-        subjects_by_subjects_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
+        subjects_by_subjects_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=rotation_degree)
         subjects_by_subjects_ax.set_yticks(np.arange(len(self.subj_subj_data)) + 0.5)
-        subjects_by_subjects_ax.set_yticklabels(self.ids, fontsize=self.font_size, rotation=35)
+        subjects_by_subjects_ax.set_yticklabels(self.ids, fontsize=self.font_size, rotation=rotation_degree)
 
         plt.subplots_adjust(top=0.84)
 
@@ -226,7 +239,7 @@ class GraphicDlg(QDialog):
             subjects_by_canonical_ax.set_ylabel(CANONICAL_Y_LABEL, rotation=0)
             subjects_by_canonical_ax.yaxis.set_label_coords(-0.5, 0)
             subjects_by_canonical_ax.set_xticks(np.arange(len(self.subj_canonical_data)) + 0.5)
-            subjects_by_canonical_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=35)
+            subjects_by_canonical_ax.set_xticklabels(self.ids, fontsize=self.font_size, rotation=rotation_degree)
             subjects_by_canonical_ax.set_yticks(np.arange(0))
 
         else:
@@ -236,7 +249,6 @@ class GraphicDlg(QDialog):
         self.canvas.draw()
 
         self.canvas.mpl_connect('button_press_event', self.onClick)
-        # plt.tight_layout()
 
     def plot_barchart(self):
         """

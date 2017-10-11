@@ -18,6 +18,11 @@ class ResultsDlg(QtWidgets.QDialog):
         self.filepath = filepath
 
     def update_ui(self, ui):
+        """
+        Some parameters are set only after the ui element is created.
+        Before showing it, the ui has to be updated according to the new data.
+        :param ui: the ui element to be updated (results dialog ui)
+        """
         if self.filepath:
             ui.viewInWbButton.setEnabled(True)
         ui.msgLabel.setText(self.label_text)
@@ -37,5 +42,8 @@ class ResultsDlg(QtWidgets.QDialog):
             subprocess.Popen(["xdg-open", self.folder])
 
     def open_in_wb(self):
+        """
+        The function to be called when user clicks "open in wb" button.
+        """
         cmd_utils.show_maps_in_wb_view(self.filepath)
 

@@ -11,6 +11,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import definitions
 
 class Ui_ResultsDialog(object):
+    """
+    Defines the UI view of the dialog shown after a CIFTI file/s were created during analysis of prediction.
+    """
+
     def setupUi(self, ResultsDialog):
         ResultsDialog.setObjectName("ResultsDialog")
         ResultsDialog.resize(297, 112)

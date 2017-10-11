@@ -16,6 +16,7 @@ class Ui_MainView(object):
     """
     Defines PITECA's main window UI.
     """
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(453, 573)
