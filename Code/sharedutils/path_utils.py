@@ -43,12 +43,16 @@ def generate_file_name(outputpath, task, file_prefix):
     return os.path.join(task_outputpath, file_prefix)
 
 
-# handle existing files with the same name
 def generate_final_filename(filename):
+    """
+    Handles existing files with the same name.
+    :param filename: the original file name (maybe exists already)
+    :return: the final filename to be used to save the file (does not exits)
+    """
     if not os.path.isfile(filename + DTSERIES_EXT):
         return filename
     i = 1
-    while os.path.isfile(filename + "({})".format(i)):
+    while os.path.isfile(filename + "({})".format(i) + DTSERIES_EXT):
         i += 1
     return filename + "({})".format(i)
 
