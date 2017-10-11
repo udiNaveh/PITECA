@@ -82,7 +82,7 @@ def piteca_excepthook(exctype, value, tb):
         print(exctype)
         traceback.print_tb(tb)
         if exctype == definitions.PitecaError:
-            msg = str(value)
+            msg = str(value.message)
         else:
             msg = constants.UNEXPECTED_EXCEPTION_MSG
         QThread.currentThread().exception_occurred_sig.emit(msg)

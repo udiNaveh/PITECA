@@ -41,31 +41,31 @@ def open_cifti(path):
                 del arr
                 return arr2, (ax, bm)
     except FileNotFoundError as fnfe:
-        raise PitecaError(fnfe.strerror)
+        raise PitecaError(fnfe.strerror, path)
 
 
 def open_dtseries(path):
     arr, (series, bm) = open_cifti(path)
     if not isinstance(series, cifti.axis.Series):
-        raise PitecaError("Input file is not a time series")
+        raise PitecaError("Input file is not a time series", path)
     if np.size(arr, 1) not in (STANDARD_BM.N_CORTEX, STANDARD_BM.N_TOTAL_VERTICES):
-        raise PitecaError("Data in file does not match standard brain model")
+        raise PitecaError("Data in file does not match standard brain model", path)
     return arr, (series, bm)
 
 
 def open_rfmri_input_data(path):
     arr, (series, bm) = open_dtseries(path)
     if np.size(arr, 1) != STANDARD_BM.N_TOTAL_VERTICES:
-        raise PitecaError("Data in file must include a full standard brain model ({}) vertices".format(STANDARD_BM.N_TOTAL_VERTICES))
+        raise PitecaError("Data in file must include a full standard brain model ({} vertices).".format(STANDARD_BM.N_TOTAL_VERTICES), path)
     if np.size(arr, 0) < MIN_TIME_UNITS:
-        raise PitecaError("Input file must include at least {0} time units".format(MIN_TIME_UNITS))
+        raise PitecaError("Input file must include at least {0} time units.".format(MIN_TIME_UNITS), path)
     return arr, (series, bm)
 
 
 def open_features_file(path):
     arr, (series, bm) = open_dtseries(path)
     if np.size(arr, 0) != NUM_FEATURES:
-        raise PitecaError("features file must include {} features".format(NUM_FEATURES))
+        raise PitecaError("features file must include {} features".format(NUM_FEATURES), path)
     if np.size(arr, 1) > STANDARD_BM.N_CORTEX:
         arr = arr[:,:STANDARD_BM.N_CORTEX]
     return arr, (series, bm)
@@ -74,7 +74,7 @@ def open_features_file(path):
 def open_1d_file(path):
     arr, (series, bm) = open_dtseries(path)
     if np.size(arr, 0) > 1:
-        raise PitecaError("Input file is in 2D, expected 1D data")
+        raise PitecaError("Input file is in 2D, expected 1D data", path)
     return arr, (series, bm)
 
 
