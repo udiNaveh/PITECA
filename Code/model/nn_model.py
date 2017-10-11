@@ -133,14 +133,14 @@ def regression_with_two_hidden_layers_build(input_dim, output_dim, scope_name, l
     return x, y, y_pred
 
 
-def regression_with_two_hidden_layers_build_with_dropout(input_dim, output_dim, scope_name, layer1_size = HL1_SIZE,
-                                            layer2_size = HL2_SIZE, dropout_keep_p=1):
+
+def regression_with_two_hidden_layers_build_with_batch_normalization(input_dim, output_dim, scope_name, layer1_size = HL1_SIZE,
+                                                                     layer2_size = HL2_SIZE):
 
     x = tf.placeholder(tf.float32, shape=(None, input_dim), name='x')
     y = tf.placeholder(tf.float32, shape=(None, output_dim), name='y')
-    false_const = tf.constant(False, dtype=tf.bool)
-
-    is_training = tf.placeholder(dtype=tf.bool)
+    m1, v1 = tf.nn.moments(x, axes=[0])
+    x_normed = tf.nn.batch_normalization(x, mean=m1, variance=v1, offset=None, scale=None, variance_epsilon=0.001)
 
     with tf.variable_scope(scope_name) as scope: # nn1_h2_reg
         w1 = tf.get_variable("w1", shape=[input_dim, layer1_size],
@@ -152,17 +152,20 @@ def regression_with_two_hidden_layers_build_with_dropout(input_dim, output_dim, 
         w3 = tf.get_variable('w3', shape = [layer2_size, output_dim], initializer=tf.contrib.layers.xavier_initializer())
         b_output = tf.get_variable('b_output', shape=[output_dim],
                         initializer=tf.contrib.layers.xavier_initializer())
-
-        hidden_layer = tf.nn.relu(tf.matmul(x, w1) + b1)
-        hl1 = tf.layers.dropout(hidden_layer, rate= 1-dropout_keep_p, training=is_training)
-        hidden_layer_2 = tf.nn.relu(tf.matmul(hl1, w2) + b2)
-        hl2 = tf.layers.dropout(hidden_layer_2, rate= 1-dropout_keep_p, training=is_training)
-        y_pred = tf.matmul(hl2, w3)  + b_output
+        h1 = (tf.matmul(x_normed, w1))
+        m2, v2 = tf.nn.moments(h1, axes=[0])
+        hidden_layer_normed = tf.nn.batch_normalization(h1, mean=m2, variance=v2, offset=b1, scale=None, variance_epsilon=0.001)
+        hidden_layer = tf.nn.relu(hidden_layer_normed)
+        h2 = tf.matmul(hidden_layer, w2)
+        m3, v3 = tf.nn.moments(h2, axes=[0])
+        hidden_layer_2_normed = tf.nn.batch_normalization(h2, mean=m3, variance=v3, offset=b2, scale=None, variance_epsilon=0.001)
+        hidden_layer_2 = tf.nn.relu(hidden_layer_2_normed)
+        y_pred = tf.matmul(hidden_layer_2, w3) + b_output
         l2_losses = [tf.nn.l2_loss(v) for v in (w1, w2, w3, b1, b2)]
         regularizer = tf.add_n(l2_losses)
         tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, regularizer)
 
-    return x, y, y_pred, is_training
+    return x, y, y_pred,
 
 
 
@@ -245,7 +248,7 @@ def train_model(tensors, loss, training, validation, max_epochs, batch_size, sco
     check_every = min(2 *int(np.size(training.data, 0) // batch_size), 200)
 
 
-    trained_variables = BestWeightsQueue(max_size=10)
+    trained_variables = BestWeightsQueue(max_size=7)
 
     variables = [v for v in tf.trainable_variables() if v in
                  tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope= scope_name)]
@@ -259,7 +262,7 @@ def train_model(tensors, loss, training, validation, max_epochs, batch_size, sco
         iter =0
         while training.epochs_completed < max_epochs:
             iter+=1
-            x_batch, y_batch, additonal_data_batch = training.next_batch(batch_size= batch_size)
+            x_batch, y_batch = training.next_batch(batch_size= batch_size)
             batch_feed_dict = {x: x_batch, y: y_batch}
             region_feed_dict = {x: training.data, y: training.labels}
             curr_loss, _ = session.run([loss, optimizer], feed_dict=batch_feed_dict)

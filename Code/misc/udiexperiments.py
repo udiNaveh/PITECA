@@ -333,7 +333,23 @@ def plotchartsoverlap(correlation, avg_corr_with_mean, model_names, title):
     return
 
 
+def check_preds_are_different():
+    pathdir = r'C:\Users\ASUS\PycharmProjects\PITECA\Data\Predictions\WM\TWO_BK\temp'
+    filename_format = '000075_WM_TWO_BK_predicted{}.dtseries.nii'
+    other_filename_format = '000074_WM_TWO_BK_predicted{}.dtseries.nii'
+    arrs = []
+    for i in range(1):
+        arr, (ax, bm) = open_1d_file(os.path.join(pathdir, filename_format.format(i)))
+        arrs.append(arr)
+    arr, (ax, bm) = open_1d_file(os.path.join(pathdir, other_filename_format.format(0)))
+    arrs.append(arr)
+
+    d = np.abs(arrs[0] - arrs[1])
+    print()
+
+
+
 if __name__ == "__main__":
-    open_canonical_files()
+    check_preds_are_different()
     #results_path = r'D:\Projects\PITECA\Data\docs\7030_models_results_corrected_test'
     #read_results_text_file_and_plot(results_path)

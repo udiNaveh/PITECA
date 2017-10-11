@@ -32,16 +32,19 @@ NN_WEIGHTS_PATH = os.path.join(definitions.LOCAL_DATA_DIR, 'model', 'nn')
 
 def train_by_roi_and_task(subjects, task, spatial_filters, scope_name):
     task_idx = list.index(TASKS, task)
-    global_features = np.concatenate((spatial_filters_raw_normalized, demean_and_normalize(all_task_mean[:,task_idx:task_idx+1])), axis=1)
+    global_features = np.concatenate((spatial_filters_raw_normalized,
+                                      demean_and_normalize(all_task_mean[:,task_idx:task_idx+1]),
+                                      demean_and_normalize(all_task_std[:, task_idx:task_idx + 1])), axis=1)
     train_subjects = subjects[:100]
     validation_subjects = subjects[100:130]
     learned_weights = {}
-    x, y, y_pred = regression_with_two_hidden_layers_build(input_dim=NUM_FEATURES+NUM_SPATIAL_FILTERS+1, output_dim=1, scope_name='nnhl2fsf')
-    loss_function = build_loss(y, y_pred, 'nnhl2fsf', reg_lambda=REG_LAMBDA, huber_delta=HUBER_DELTA)
+    x, y, y_pred = regression_with_two_hidden_layers_build_with_batch_normalization(input_dim=NUM_FEATURES+np.size(global_features, axis=1), output_dim=1, scope_name=scope_name)
+    loss_function = build_loss(y, y_pred, scope_name, reg_lambda=REG_LAMBDA, huber_delta=HUBER_DELTA)
     try:
         for j in range(NUM_SPATIAL_FILTERS): #
             roi_indices = spatial_filters[: STANDARD_BM.N_CORTEX, j] > ROI_THRESHOLD
-            print("train task {} filter {} with {} vertices".format(task.name, j, np.size(np.nonzero(roi_indices))))
+            roi_size = np.size(np.nonzero(roi_indices))
+            print("train task {} filter {} with {} vertices".format(task.name, j, roi_size))
             #print("train all tasks filter {} with {} vertices".format( j, np.size(np.nonzero(roi_indices))))
             if np.size(np.nonzero(roi_indices))<30:
                 continue
@@ -50,8 +53,7 @@ def train_by_roi_and_task(subjects, task, spatial_filters, scope_name):
             roi_features_val, roi_task_val = get_selected_features_and_tasks(
                 all_features, validation_subjects, roi_indices, task, mem_task_getter, global_features_matrix=global_features)
 
-            np.concatenate([tasks_std[task][roi_indices] for i in range(len(train_subjects))])
-            train_data = Dataset(roi_features_train, roi_task_train, np.concatenate([tasks_std[task][roi_indices] for i in range(len(train_subjects))]))
+            train_data = Dataset(roi_features_train, roi_task_train)
             validation_data = Dataset(roi_features_val, roi_task_val)
 
             strt = time.time()
@@ -64,8 +66,8 @@ def train_by_roi_and_task(subjects, task, spatial_filters, scope_name):
     except Exception as ex:
         print(ex)
     finally:
-        pickle.dump(learned_weights, general_utils.safe_open(
-            os.path.join(NN_WEIGHTS_PATH, "nn_2hl_by_roi_fsf_check3_100s_weights_{0}_all_filters.pkl".
+        pickle.dump(learned_weights, safe_open(
+            os.path.join(NN_WEIGHTS_PATH, "nn_2hl_by_roi_fsf_ms_100s_weights_{0}_all_filters.pkl".
                          format(task.full_name)), 'wb'))
 
     #pickle.dump(learned_weights, safe_open(os.path.join(NN_WEIGHTS_PATH, 'all_tasks',"nn_2hl_by_roi_check_70s_weights_all_tasks_all_filters.pkl"), 'wb'))
@@ -73,6 +75,6 @@ def train_by_roi_and_task(subjects, task, spatial_filters, scope_name):
 
     return
 
-for task in TASKS:
-    train_by_roi_and_task(subjects, task, hard_filters, scope_name='nnhl2fsf')
+for task in [t for t in TASKS if t is not Task.MATCH_REL]:
+    train_by_roi_and_task(subjects, task, hard_filters, scope_name='nnhl2fsf_ms')
     tf.reset_default_graph()
