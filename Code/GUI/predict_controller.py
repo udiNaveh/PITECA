@@ -57,5 +57,6 @@ class PredictController:
             return
         if not tasks:
             dialog_utils.print_error(SELECT_TASKS_MSG)
+            return
         predictModel = PredictTabModel(inputFiles, outputDir, tasks)
         predictModel.run_prediction_flow(self.ui)

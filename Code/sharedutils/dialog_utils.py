@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtCore import Qt, QSize
 
 from GUI.popups.question_dlg import QuestionDialog
 from GUI.popups import results_dlg_controller, results_dlg_view
@@ -30,20 +31,26 @@ def print_error(msg):
     '''
 
     error_dialog = QtWidgets.QMessageBox()
+    error_dialog.setBaseSize(QSize(10000000, 120))
+    error_dialog.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+    error_dialog.setSizeGripEnabled(True)
     error_dialog.setWindowModality(Qt.ApplicationModal)
     error_dialog.setWindowIcon(QtGui.QIcon(definitions.PITECA_ICON_PATH))
     error_dialog.setWindowTitle("Error")
     error_dialog.setText(msg)
-    error_dialog.setFixedWidth(10000000)
+    error_dialog.setMinimumWidth(10000000)
     error_dialog.addButton(QtWidgets.QMessageBox.Ok)
     error_dialog.exec_()
 
 def inform_user(msg):
     msg_box = QtWidgets.QMessageBox()
+    msg_box.setBaseSize(QSize(10000000, 120))
+    msg_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+    msg_box.setSizeGripEnabled(True)
     msg_box.setWindowModality(Qt.ApplicationModal)
     msg_box.setWindowIcon(QtGui.QIcon(definitions.PITECA_ICON_PATH))
     msg_box.setWindowTitle("Message")
-    msg_box.setMinimumSize(10000000, 0)
+    msg_box.setMinimumWidth(10000000)
     msg_box.setText(msg)
     msg_box.addButton(QtWidgets.QMessageBox.Ok)
     msg_box.exec_()
