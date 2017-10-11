@@ -5,6 +5,7 @@ from PyQt5 import QtCore
 from GUI.predict_model import PredictTabModel
 from sharedutils.constants import Domain, Task
 from sharedutils import dialog_utils
+from sharedutils.constants import *
 import definitions
 
 
@@ -51,8 +52,10 @@ class PredictController:
         inputFiles = self.ui.inputFilesLineEdit.text()
         outputDir = get_prediction_outputs_folder()
         tasks = self.findCheckedTasks()
-        if (not inputFiles or not tasks):
-            dialog_utils.print_error("Please provide input.")
+        if not inputFiles:
+            dialog_utils.print_error(PROVIDE_INPUT_FILES_MSG)
             return
+        if not tasks:
+            dialog_utils.print_error(SELECT_TASKS_MSG)
         predictModel = PredictTabModel(inputFiles, outputDir, tasks)
         predictModel.run_prediction_flow(self.ui)

@@ -119,9 +119,12 @@ MAX_SUBJECTS = 25
 # Dialogs
 QUESTION_TITLE = "Question"
 PROVIDE_INPUT_MSG = "Please provide input."
+PROVIDE_INPUT_FILES_MSG = "Please select input files."
+SELECT_TASKS_MSG = "Please select tasks."
+
 SELECT_ACTION_MSG = "Please select an action."
-NAMING_CONVENTION_ERROR = "Some files don't apply naming convention. Please change names and try again."
-DUP_IDS = "Duplicate subjects. Please make sure to have only unique subjects."
+NAMING_CONVENTION_ERROR = "Some files do not follow the naming convention. Please change names and try again."
+DUP_IDS = "Some of the files Please make sure to have only unique subjects."
 
 # Existing features
 EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \
