@@ -78,6 +78,10 @@ def open_1d_file(path):
     return arr, (series, bm)
 
 
+
+
+
+
 def save_to_dtseries(filename, brain_model, mat):
     '''
     save a dtseries.nii file given the data matrix and the brain model.
@@ -140,6 +144,17 @@ def load_ndarray_from_mat(filepath, array_name = None):
         raise ValueError("file must include only one array")
     else:
         return arrays.popitem()[1]
+
+
+def safe_open(path, *args):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    return open(path, *args)
+
+def open_pickle(path):
+    return pickle.load(safe_open(path, 'rb'))
+
+def save_pickle(obj, path):
+    return pickle.dump(obj, safe_open(path, 'wb'))
 
 
 
