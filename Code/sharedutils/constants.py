@@ -126,6 +126,8 @@ SELECT_ACTION_MSG = "Please select an action."
 NAMING_CONVENTION_ERROR = "Some files do not follow the naming convention. Please change names and try again."
 DUP_IDS = "Some of the files Please make sure to have only unique subjects."
 
+DLG_WIDEN = "                                "
+
 # Existing features
 EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \
                   " \nDo you want to use the existing features?"
