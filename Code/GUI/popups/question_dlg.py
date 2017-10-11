@@ -4,17 +4,20 @@ from PyQt5 import QtWidgets, QtGui
 import definitions
 
 
+width = 320
+height = 200
+
 class QuestionDialog(QWidget):
     '''
-    Includes view + controller of a generic dialog shown to get an answer of yes or no from user.
+    Includes view + controller of a generic dialog shown to get an yes or no answer from user.
     '''
 
     def __init__(self, default_ans, title, msg):
         super().__init__()
         self.title = title
         self.msg = msg
-        self.width = 320
-        self.height = 200
+        self.width = width
+        self.height = height
         fg = self.frameGeometry()
         cp = QtWidgets.QDesktopWidget().availableGeometry().center()
         fg.moveCenter(cp)

@@ -67,10 +67,16 @@ def setup_functionality(ui):
     ui.ModelComboBox.currentIndexChanged.connect(lambda: settingsController.set_model())
 
 def piteca_excepthook(exctype, value, tb):
+    """
+    A method to catch all unhandled exception during PITECA's run .
+    :param exctype: the type of exception
+    :param value: the message of the exception (use str(value))
+    :param tb: traceback
+    """
+
     # if not gb.should_exit_on_error:
     # # If we are on main thread but don't want to close PITECA
     #     dialog_utils.print_error(constants.UNEXPECTED_EXCEPTION_MSG[:-1] + ": " + str(value))
-    #     print(value)  # TODO: remove this! Here only for development needs
     #     return
     if int(QThread.currentThreadId()) == main_thread_id:
         traceback.print_tb(tb)
@@ -79,7 +85,7 @@ def piteca_excepthook(exctype, value, tb):
     else:
         # The exception_occurred_sig should be defined in every thread class in PITECA
         print(value) # TODO: remove this! Here only for development needs
-        print(exctype)
+        print(exctype) # TODO: remove this! Here only for development needs
         traceback.print_tb(tb)
         if exctype == definitions.PitecaError:
             msg = str(value.message)
@@ -90,7 +96,6 @@ def piteca_excepthook(exctype, value, tb):
 
 if __name__ == "__main__":
     pass
-    # cmd_utils.show_maps_in_wb_view("C:/Users/User/Sadna/mydata/drive-download-20170925T144453Z-001/predictions_nn/000071_GAMBLING_REWARD_predicted.dtseries.nii")
     main_thread_id = int(QThread.currentThreadId())
     setup_thread_excepthook()
     sys.excepthook = piteca_excepthook

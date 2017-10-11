@@ -10,6 +10,12 @@ This utility gathers functions to specific PITECA string-path manipulation needs
 
 
 def get_id(absolute_path):
+    """
+    Extract id from a filepath if the filepath applies PITECA naming convention.
+    :param absolute_path: an absolute path of a file suppose to have the id on its beginning.
+    :return: id (str) if filename of absolute_path apply naming convention, else None
+    """
+
     id = os.path.basename(absolute_path).split('_')[0]
     try:
         int(id) # validates that id is an integer
@@ -19,11 +25,24 @@ def get_id(absolute_path):
 
 
 def get_features_path(id):
+    """
+    Generates PITECA's features filename for this id.
+    :param id: a string of id
+    :return: a filename string
+    """
+
     filename = id + FEATS_EXT + DTSERIES_EXT
     return os.path.join(get_features_folder(), filename)
 
 
 def extract_filenames(input_files_str):
+    """
+    When user selects files from browser, a string of the concatenated filenames is returned.
+    This function gets such a string and extracts from it a list of pathes.
+    :param input_files_str: a string of the format: '[path1, path2, ...]'
+    :return: a list in the format [path1, path2, ...]
+    """
+
     pathes = []
     filenames = input_files_str[1:-1].split(', ')
     for filename in filenames:
@@ -34,6 +53,14 @@ def extract_filenames(input_files_str):
 
 
 def generate_file_name(outputpath, task, file_prefix):
+    """
+    Generates an absolute path according to the parameters:
+    :param outputpath: the top output folder
+    :param task: a Task object, to define which inner folders the path would contain
+    :param file_prefix: the name of the file
+    :return: "outputpath/domain/task/file_prefix"
+    """
+
     domain_outputpath = os.path.join(outputpath, task.domain().name)
     if not os.path.isdir(domain_outputpath):
         os.mkdir(domain_outputpath)

@@ -8,7 +8,7 @@ from sharedutils import constants
 import definitions
 
 '''
-This utility enables popup from any part of the code. 
+This utility enables generic popups from any part of the code. 
 '''
 
 
@@ -38,18 +38,24 @@ def print_error(msg):
     error_dialog.setWindowIcon(QtGui.QIcon(definitions.PITECA_ICON_PATH))
     error_dialog.setWindowTitle("Error")
     error_dialog.setText(msg + constants.DLG_WIDEN)
-    error_dialog.setMinimumWidth(250)
+    error_dialog.setMinimumWidth(constants.DLG_DEFAULT_WIDTH)
     error_dialog.addButton(QtWidgets.QMessageBox.Ok)
     error_dialog.exec_()
 
 def inform_user(msg):
+    """
+    This function pops up a dialog to inform the user with a message.
+    The user can click "OK" or "X" to close the dialog.
+    :param msg: the message to be shown to the user.
+    """
+
     msg_box = QtWidgets.QMessageBox()
     msg_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     msg_box.setSizeGripEnabled(True)
     msg_box.setWindowModality(Qt.ApplicationModal)
     msg_box.setWindowIcon(QtGui.QIcon(definitions.PITECA_ICON_PATH))
     msg_box.setWindowTitle("Message")
-    msg_box.setMinimumWidth(250)
+    msg_box.setMinimumWidth(constants.DLG_DEFAULT_WIDTH)
     msg_box.setText(msg + constants.DLG_WIDEN)
     msg_box.addButton(QtWidgets.QMessageBox.Ok)
     msg_box.exec_()
@@ -100,4 +106,11 @@ def browse_dir(line_edit, dir):
 
 
 def save_file(filters, dir):
+    """
+    A method to open a file browser in order to enable the user to select a folder
+    in which a file should be saved.
+    :param filters: defines in which formats the file can be saved. Type is: getSaveFileName filters type.
+    :param dir: the root folder to be opened in the browser.
+    :return: the folder selected by the user.
+    """
     return QtWidgets.QFileDialog.getSaveFileName(None, 'Select Files', dir, filters)
