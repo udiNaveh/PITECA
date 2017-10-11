@@ -97,6 +97,7 @@ class SettingsController:
         global model
         key = self.ui.ModelComboBox.currentText()
         self.config.set('SETTINGS', 'Model', key)
+        model = key
         with open(definitions.SETTINGS_PATH, 'w') as configfile:
             self.config.write(configfile)
 
