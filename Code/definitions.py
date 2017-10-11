@@ -24,7 +24,7 @@ CANONICAL_CIFTI_DIR = os.path.join(DATA_DIR, 'Tasks')
 LOCAL_DATA_DIR = r'D:\Projects\PITECA\Data' #TODO
 NN_WEIGHTS_DIR = os.path.join(DATA_DIR, 'Models','NN_Models')
 
-LINEAR_WEIGHTS_DIR = os.path.join(DATA_DIR, 'Models','LinearModels')
+LINEAR_WEIGHTS_DIR = os.path.join(DATA_DIR, 'Models','LinearModels', 'new')
 
 
 #EXTRACTED_FEATURES_DIR = r'D:\Projects\PITECA\Data_for_testing\Features'

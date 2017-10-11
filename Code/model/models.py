@@ -90,6 +90,7 @@ class TFRoiBasedModel(IModel):
         self.variables = self.get_trainable_variables()
         self.load_weights()
         self.spatial_filters_raw = spatial_filters_raw
+        self.global_features = None
         return True
 
     @abstractmethod
@@ -107,6 +108,8 @@ class TFRoiBasedModel(IModel):
     def preprocess_features(self, subject_features):
         subject_features = np.transpose(subject_features)
         subject_features = demean_and_normalize(subject_features)
+        if self.global_features is not None:
+            np.concatenate([subject_features, self.global_features], axis=1)
         return subject_features
 
     def get_spatial_filters(self, subject_feats):
@@ -221,21 +224,21 @@ class TFLinear(TFRoiBasedModel):
                                             task.full_name))
             weights = pickle.load(open(weights_path, 'rb'))
 
-            self._weights[task] = {i : [weights[:,i:i+1]] for i in range(np.size(weights, axis=1)) if i!=2}
+            self._weights[task] = weights
 
     def get_placeholders(self):
         x, y, y_pred = \
-            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg')
+            linear_regression_build(input_dim=NUM_FEATURES, output_dim=1, scope_name='lin_reg')
         return x, y_pred
 
     def get_trainable_variables(self):
         return [v for v in tf.trainable_variables() if v in
-                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg')][:1]
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg')]
 
-    def preprocess_features(self, subject_features):
-        subject_features = np.transpose(subject_features)
-        subject_features = demean_and_normalize(subject_features)
-        return add_ones_column(subject_features)
+    # def preprocess_features(self, subject_features):
+    #     subject_features = np.transpose(subject_features)
+    #     subject_features = demean_and_normalize(subject_features)
+    #     return add_ones_column(subject_features)
 
 
 class TFLinearAveraged(TFRoiBasedModel):

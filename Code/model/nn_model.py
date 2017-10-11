@@ -31,8 +31,10 @@ def linear_regression_build(input_dim, output_dim, scope_name):
     with tf.variable_scope(scope_name) as scope:
         w1 = tf.get_variable("w1", shape=[input_dim, output_dim],
                              initializer=tf.contrib.layers.xavier_initializer())
+        b1 = tf.get_variable("b1", shape=[output_dim],
+                             initializer=tf.contrib.layers.xavier_initializer())
 
-        y_pred = tf.matmul(x, w1)
+        y_pred = tf.matmul(x, w1) + b1
 
     return x, y, y_pred
 
