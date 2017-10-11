@@ -4,11 +4,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 import scipy.io as sio
+import pickle
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QDialog, QVBoxLayout
 
-from sharedutils import dialog_utils, constants
+from sharedutils import dialog_utils, constants, io_utils
 from GUI.analyze_working_thread import AnalysisTask
 import definitions
 
@@ -62,6 +63,7 @@ class GraphicDlg(QDialog):
         self.analysis_task = analysis_task
         self.data = data
         self.title = title
+        self.named_data = {}
 
         # calculate x tick labels font
         num_of_chars = len(''.join(self.ids)) + len(self.ids)
@@ -74,11 +76,15 @@ class GraphicDlg(QDialog):
             self.subj_subj_data = data[0] # 2 dims
             self.subj_mean_data = data[1] # 1 dim
             self.subj_canonical_data = data[2] # 1 dim
+            self.named_data = {'inter-subject predictions correlation' : self.subj_subj_data,
+                               'subjects predictions correlations with canonical' : self.subj_canonical_data}
             self.plot_heatmap()
         elif analysis_task == AnalysisTask.Compare_Correlations:
             self.SUBJECTS_X_LABEL = "subjects: Actual"
             self.SUBJECTS_Y_LABEL = "subjects: Predicted"
             self.subj_subj_data = data # 2 dims
+            self.named_data = {'inter-subject predicted-actual correlations' : self.subj_subj_data,
+                               }
             self.plot_heatmap()
         if analysis_task == AnalysisTask.Analysis_Correlations or analysis_task == AnalysisTask.Compare_Correlations:
             if analysis_task == AnalysisTask.Compare_Correlations:
@@ -90,6 +96,8 @@ class GraphicDlg(QDialog):
             self.layout.addWidget(self.correlation_label)
         elif analysis_task == AnalysisTask.Compare_Significance:
             # self.data is 2 dimensional array
+            self.named_data = {'subjects presicted-actual positive significance iou ': self.data[0],
+                               'subjects presicted-actual negative significance iou ': self.data[1]}
             self.plot_barchart()
         else:
             dialog_utils.print_error("Unsupported analysis action")
@@ -151,7 +159,7 @@ class GraphicDlg(QDialog):
         the user selected.
         """
         dir = definitions.ANALYSIS_DIR
-        name, extension = dialog_utils.save_file('*.mat ;; *.npy', dir)
+        name, extension = dialog_utils.save_file('*.mat ;; *.npy ;; *.pkl', dir)
         if name == '':
             return
         extension = extension.split('.')[1]
@@ -159,9 +167,14 @@ class GraphicDlg(QDialog):
         if extension == 'mat':
             sio.savemat(name, {'data': self.data})
         elif extension == 'npy':
+            self.ids
             np.save(name, np.asarray(self.data))
+        elif extension == 'pkl':
+            data_to_save = self.named_data
+            data_to_save['subjects ids'] = self.ids
+            io_utils.save_pickle(data_to_save, name)
         else:
-            raise Exception('File extension is not supported.')
+            raise ValueError('File extension is not supported.')
 
     def plot_heatmap(self):
         """
