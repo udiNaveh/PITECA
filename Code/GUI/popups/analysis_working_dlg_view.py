@@ -13,7 +13,7 @@ import definitions
 class Ui_AnalysisWorkingDlg(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(193, 94)
+        Dialog.resize(234, 94)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(definitions.PITECA_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         Dialog.setWindowIcon(icon)
