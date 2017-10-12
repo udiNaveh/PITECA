@@ -126,6 +126,8 @@ SELECT_ACTION_MSG = "Please select an action."
 NAMING_CONVENTION_ERROR = "Some files do not follow the naming convention. Please change names and try again."
 DUP_IDS = "Some of the files Please make sure to have only unique subjects."
 
+DLG_DEFAULT_WIDTH = 234
+DLG_DEFAULT_HIGHT = 94
 DLG_WIDEN = "                                "
 
 # Existing features
@@ -134,6 +136,13 @@ EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted featur
 
 UNEXPECTED_EXCEPTION_MSG = "An unexpected exception occurred"
 
+# Settings
+SETTINGS_TITLE = "SETTINGS"
+SETTINGS_FEATURES_FOLDER = "FeaturesFolder"
+SETTINGS_PREDICTIONS_OUTPUT = "PredictionOutputsFolder"
+SETTINGS_ANALYSIS_OUTPUT = "AnalysisOutputFolder"
+SETTINGS_MODEL = "Model"
+
 # Quit prograss
-ARE_YOU_SURE_MSG = "Are you sure you want to quit?"
+#ARE_YOU_SURE_MSG = "Are you sure you want to quit?"
 

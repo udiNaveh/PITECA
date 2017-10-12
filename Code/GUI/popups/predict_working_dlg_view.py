@@ -9,14 +9,19 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import definitions
+from sharedutils import constants
 
 class Ui_PredictWorkingDlg(object):
+    """
+    Defines the UI view of the dialog shown during prediction progress.
+    """
+
     def setupUi(self, PredictWorkingDlg):
         PredictWorkingDlg.setObjectName("PredictWorkingDlg")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(definitions.PITECA_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         PredictWorkingDlg.setWindowIcon(icon)
-        PredictWorkingDlg.resize(234, 64)
+        PredictWorkingDlg.resize(constants.DLG_DEFAULT_WIDTH, 64)
         self.verticalLayout = QtWidgets.QVBoxLayout(PredictWorkingDlg)
         self.verticalLayout.setObjectName("verticalLayout")
         self.progressBar = QtWidgets.QProgressBar(PredictWorkingDlg)

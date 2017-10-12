@@ -19,17 +19,12 @@ class Subject:
         self.predicted = predicted  # type: dict[Task, str]
         self.actual = actual  # type: dict[Task, str]
 
-    def predicted_task_filepath(self, task):
-        for d in Domain:
-            if task in d.value:
-                break
-        return join_path(self.output_dir, "{0}_{1}_{2}_predicted".format(self.subject_id, d.name, task.name))
-
     def get_predicted_task_filepath(self, task):
         filename = path_utils.generate_file_name(self.output_dir, task, "{0}_{1}_predicted".format(self.subject_id, task.full_name))
         return path_utils.generate_final_filename(filename)
 
     def get_actual_task_filepath(self, task, actual_dir):
+        # TODO: seems this function only used in experiments. Remove if this is the situation.
         filename = path_utils.generate_file_name(actual_dir, task, "{0}_{1}".format(self.subject_id, task.full_name))
         return path_utils.generate_final_filename(filename)
 

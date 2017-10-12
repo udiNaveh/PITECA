@@ -9,11 +9,16 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import definitions
+from sharedutils import constants
+
 
 class Ui_AnalysisWorkingDlg(object):
+    """
+    Defines the UI view of the dialog shows during analysis progress.
+    """
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(234, 94)
+        Dialog.resize(constants.DLG_DEFAULT_WIDTH, constants.DLG_DEFAULT_HIGHT)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(definitions.PITECA_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         Dialog.setWindowIcon(icon)
@@ -31,13 +36,4 @@ class Ui_AnalysisWorkingDlg(object):
         Dialog.setWindowTitle(_translate("Dialog", "Analysis"))
         self.label.setText(_translate("Dialog", "Work in progress..."))
 
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    Dialog = QtWidgets.QDialog()
-    ui = Ui_Dialog()
-    ui.setupUi(Dialog)
-    Dialog.show()
-    sys.exit(app.exec_())
 
