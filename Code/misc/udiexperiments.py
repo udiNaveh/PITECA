@@ -116,8 +116,6 @@ def create_features_and_tasks():
             save_to_dtseries(os.path.join(outputdir, '{0}_{1}'.format(subject_id, task.full_name)), full_bm, s_task.transpose())
 
 
-
-
 def load_tasks():
     tasks200 = np.load(all_tasks_200s)
     tasks100 = np.load(tasks_file)
