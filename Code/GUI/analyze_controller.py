@@ -1,7 +1,5 @@
 import os
-
 from PyQt5.QtCore import Qt
-
 from sharedutils import constants, path_utils, subject, dialog_utils
 import GUI.globals as gb
 from GUI.popups import analysis_working_dlg_controller

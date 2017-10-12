@@ -1,16 +1,10 @@
+"""
+This module contains wrapper functions for command line calls
+"""
 
 import os
 import subprocess
-import sharedutils.constants
-import cifti
 import definitions
-
-
-'''
-wrapper functions for command line calls, especially wb_command but not necessarily.
-didn't do much here. Still need to figure out what to do with the return values:
-what happens when the command returned an error mesage, etc.
-'''
 
 
 def system_call(command):
@@ -23,18 +17,12 @@ def run_wb_command(args):
 
 def run_wb_view(args):
     subprocess.Popen(['wb_view'] + args)
-    # return system_call(['Start', 'C:/workbench/bin_windows64/wb_view'] + args)
 
 def run_command(command, args):
     assert isinstance(command, str)
     assert isinstance(args, list)
     line = "{0} {1}".format(command, str.join(args, ' '))
     system_call(line)
-
-
-########
-# useful workbench commands to be added here
-########
 
 
 def convert_to_CIFTI2(input_cifti, output_cifti2):

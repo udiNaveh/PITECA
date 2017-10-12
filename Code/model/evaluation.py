@@ -75,7 +75,7 @@ def get_correlations_for_subjects(subjects, task_getter, model, predictions=None
 def run_evaluation(model):
 
     all_features, all_tasks = load_data()
-    subjects = [Subject(subject_id=zeropad(i + 1, 6)) for i in range(200)]
+    subjects = [Subject(subject_id=zero_pad(i + 1, 6)) for i in range(200)]
     fe = models.MemFeatureExtractor(all_features, subjects)
     model = models.model_factory(model, TASKS, fe)
     #model = models.NN2lhModelWithFiltersAbdMeanAsFeatures([Task.MATH_STORY], fe, means = np.mean(all_tasks, axis=1))
