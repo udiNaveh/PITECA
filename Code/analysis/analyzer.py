@@ -104,9 +104,9 @@ def get_predictions_correlations(subjects, task, other_path):
                                   mean_pred.reshape([1, STANDARD_BM.N_CORTEX]),
                                   other_arr[:, :STANDARD_BM.N_CORTEX]))
     correlation_matrix = np.corrcoef(unified_mat)
-    return (np.asarray(correlation_matrix[:n_subjects, :n_subjects], float),  # subject x subject correlations
-            np.asarray(correlation_matrix[:n_subjects, -2], float),  # correlations with group mean
-            np.asarray(correlation_matrix[:n_subjects, -1]), float)  # correlations with other_arr
+    return (np.asarray(correlation_matrix[:n_subjects, :n_subjects]),  # subject x subject correlations
+            np.asarray(correlation_matrix[:n_subjects, -2]),  # correlations with group mean
+            np.asarray(correlation_matrix[:n_subjects, -1]))  # correlations with other_arr
 
 
 def get_predicted_actual_correlations(subjects, task, subjects_predicted_and_actuak_maps = None):

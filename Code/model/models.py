@@ -71,7 +71,7 @@ class TFRoiBasedModel(IModel):
         soft_filters /= np.reshape(np.sum(soft_filters, axis=1), [STANDARD_BM.N_CORTEX, 1])
         hard_filters = np.round(softmax(spatial_filters_raw.astype(float) * 1000))
         hard_filters[spatial_filters_raw < SPATIAL_FILTERS_THRESHOLD] = 0
-        self.tasks_data = open_pickle(definitions.TASKS_CANONICAL_DATA2)
+        # self.tasks_data = open_pickle(definitions.TASKS_CANONICAL_DATA2)
         self.spatial_filters = soft_filters
         self.spatial_filters_hard = hard_filters
         self.x, self.y_pred = self.get_placeholders()

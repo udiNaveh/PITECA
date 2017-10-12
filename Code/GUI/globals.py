@@ -2,7 +2,10 @@
 should_exit_on_error = True
 
 # last CIFTI file saved
-curr_cifti_filename = None
+curr_cifti_filenames = []
+
+# should open graph after analysis
+open_graph = True
 
 
 

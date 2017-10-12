@@ -85,7 +85,7 @@ class GraphicDlg(QDialog):
             self.SUBJECTS_X_LABEL = "subjects"
             self.SUBJECTS_Y_LABEL = "subjects"
             self.subj_subj_data = data[0] # 2 dims
-            self.subj_mean_data = data[1] # 1 dim
+            # self.subj_mean_data = data[1] # 1 dim
             self.subj_canonical_data = data[2] # 1 dim
             self.named_data = {'inter-subject predictions correlation' : self.subj_subj_data,
                                'subjects predictions correlations with canonical' : self.subj_canonical_data}
@@ -177,17 +177,21 @@ class GraphicDlg(QDialog):
             return
         extension = extension.split('.')[1]
 
+        if self.analysis_task == AnalysisTask.Analysis_Correlations:
+            data_to_save = self.data[0]
+        else:
+            data_to_save = self.data
+
         if extension == 'mat':
-            sio.savemat(name, {'data': self.data})
+            sio.savemat(name, {'data': data_to_save})
         elif extension == 'npy':
-            self.ids
-            np.save(name, np.asarray(self.data))
+            np.save(name, np.asarray(data_to_save))
         elif extension == 'pkl':
             data_to_save = self.named_data
             data_to_save['subjects ids'] = self.ids
             io_utils.save_pickle(data_to_save, name)
         else:
-            raise ValueError('File extension is not supported.')
+            raise definitions.PitecaError('File extension is not supported.')
 
     def plot_heatmap(self):
         """
