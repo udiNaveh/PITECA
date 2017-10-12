@@ -111,7 +111,7 @@ class AnalyzeController:
             graphic_dlg.show()
 
         else:
-            raise Exception('Unsupported action.')
+            raise definitions.PitecaError('Unsupported action.')
 
             gb.should_exit_on_error = True
 

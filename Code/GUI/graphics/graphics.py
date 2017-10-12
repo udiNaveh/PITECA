@@ -191,7 +191,7 @@ class GraphicDlg(QDialog):
             data_to_save['subjects ids'] = self.ids
             io_utils.save_pickle(data_to_save, name)
         else:
-            raise ValueError('File extension is not supported.')
+            raise definitions.PitecaError('File extension is not supported.')
 
     def plot_heatmap(self):
         """
