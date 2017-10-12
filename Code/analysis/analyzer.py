@@ -198,7 +198,8 @@ def get_significance_maps_overlap(arr1_significance, arr2_significance):
     return map, iou_pos, iou_neg, iou_both
 
 
-def get_significance_overlap_maps_for_subjects(subjects, task, outputdir):
+def get_significance_overlap_maps_for_subjects(subjects, task, outputdir, subjects_predicted_maps=None,
+                                               subjects_actual_maps = None, save = True):
     '''
 
     :param subjects: type: List[Subject]
@@ -208,8 +209,10 @@ def get_significance_overlap_maps_for_subjects(subjects, task, outputdir):
     the actual activation of the j'th subject for task.
     '''
 
-    subjects_predicted_maps = get_predicted_task_maps_by_subject(subjects, task)
-    subjects_actual_maps = get_actual_task_maps_by_subject(subjects, task)
+    if subjects_predicted_maps is None:
+        subjects_predicted_maps = get_predicted_task_maps_by_subject(subjects, task)
+    if subjects_actual_maps is None:
+        subjects_actual_maps = get_actual_task_maps_by_subject(subjects, task)
     # need to insure that maps are paired
     subjects = [s for s in subjects if s in subjects_actual_maps and s in subjects_predicted_maps]
     # @error_handel need to decide what to do if the above intersection is different from subjects
@@ -222,13 +225,14 @@ def get_significance_overlap_maps_for_subjects(subjects, task, outputdir):
     iou_positive = []
     iou_negative = []
     for s in subjects:
-        map, iou_pos, iou_neg, iou_both = get_significance_maps_overlap(all_maps[s].predicted,
-                                                                        all_maps[s].actual[:, :STANDARD_BM.N_CORTEX])
+        map, iou_pos, iou_neg, iou_both = get_significance_maps_overlap(np.squeeze(all_maps[s].predicted),
+                                                                        np.squeeze(all_maps[s].actual)[:STANDARD_BM.N_CORTEX])
         iou_positive.append(iou_pos)
         iou_negative.append(iou_neg)
-        filename = generate_file_name(outputdir, task, "{0}_predicted_actual_overlap".format(s.subject_id))
-        bm_cortex = get_bm('cortex')
-        save_to_dtseries(generate_final_filename(filename), bm_cortex, map)
+        if save:
+            filename = generate_file_name(outputdir, task, "{0}_predicted_actual_overlap".format(s.subject_id))
+            bm_cortex = get_bm('cortex')
+            save_to_dtseries(generate_final_filename(filename), bm_cortex, map)
 
     return [iou_positive, iou_negative]
 

@@ -51,29 +51,16 @@ class TFRoiBasedModel(IModel):
     """
 
     # TODO COMPLETE DOCUMENTATION
-    available_tasks = {Task.MATH_STORY : 0,
-                       Task.TOM: 1,
-                       Task.MATCH_REL : 2,
-                       Task.TWO_BK: 3,
-                       Task.REWARD : 4,
-                       Task.FACES_SHAPES : 5,
-                       Task.T : 6
-                       }
+
 
     def __init__(self, tasks, feature_extractor = None):
         super(TFRoiBasedModel, self).__init__(tasks)
         self._weights = {}
         self.feature_extractor = FeatureExtractor() if feature_extractor is None else feature_extractor
         self.is_loaded =  False
+        self.scope_name = ''
 
 
-        missing_tasks = []
-        for task in self.tasks:
-            if task not in TFRoiBasedModel.available_tasks:
-                missing_tasks.append(task)
-                print("no TFRoiBasedModel model for task {}".format(task.name))
-
-        self.tasks = [t for t in self.tasks if t not in missing_tasks]
 
     def _load(self):
         spatial_filters_raw, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
@@ -84,12 +71,14 @@ class TFRoiBasedModel(IModel):
         soft_filters /= np.reshape(np.sum(soft_filters, axis=1), [STANDARD_BM.N_CORTEX, 1])
         hard_filters = np.round(softmax(spatial_filters_raw.astype(float) * 1000))
         hard_filters[spatial_filters_raw < SPATIAL_FILTERS_THRESHOLD] = 0
+        self.tasks_data = open_pickle(definitions.TASKS_CANONICAL_DATA2)
         self.spatial_filters = soft_filters
         self.spatial_filters_hard = hard_filters
         self.x, self.y_pred = self.get_placeholders()
         self.variables = self.get_trainable_variables()
         self.load_weights()
         self.spatial_filters_raw = spatial_filters_raw
+        self.global_features = None
         return True
 
     @abstractmethod
@@ -100,13 +89,19 @@ class TFRoiBasedModel(IModel):
     def get_placeholders(self):
         raise NotImplementedError()
 
-    @abstractmethod
     def get_trainable_variables(self):
-        raise NotImplementedError()
+        return [v for v in tf.trainable_variables() if v in
+                      tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.scope_name)]
+
+
+    def update_feats(self, subject_feats, task):
+        return subject_feats
 
     def preprocess_features(self, subject_features):
         subject_features = np.transpose(subject_features)
         subject_features = demean_and_normalize(subject_features)
+        if self.global_features is not None:
+            subject_features = np.concatenate([subject_features, self.global_features], axis=1)
         return subject_features
 
     def get_spatial_filters(self, subject_feats):
@@ -128,6 +123,7 @@ class TFRoiBasedModel(IModel):
         subject_predictions, prediction_paths = {}, {}
         with tf.Session() as sess:
             for task in self.tasks:
+                subject_feats = self.update_feats(subject_feats, task)
                 subject_task_prediction = np.zeros([1, STANDARD_BM.N_CORTEX])
                 start = time.time()
                 for j in range(np.size(spatial_filters, axis=1)):
@@ -185,6 +181,11 @@ class NN2lhModelWithFiltersAsFeatures(TFRoiBasedModel):
     def __init__(self, tasks, feature_extractor=None):
         super(NN2lhModelWithFiltersAsFeatures, self).__init__(tasks, feature_extractor)
 
+    def _load(self):
+        super(NN2lhModelWithFiltersAsFeatures, self)._load()
+        self.global_features = demean_and_normalize(self.spatial_filters_raw)
+        return True
+
     def load_weights(self):
         for task in self.tasks:
             weights_path = os.path.join(definitions.NN_WEIGHTS_DIR, '2hl_features_as_filters_70s',
@@ -202,15 +203,43 @@ class NN2lhModelWithFiltersAsFeatures(TFRoiBasedModel):
         return [v for v in tf.trainable_variables() if v in
                       tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='nn1_h2_reg_fsf')]
 
-    def preprocess_features(self, subject_features):
-        subject_features = np.transpose(subject_features[:, : STANDARD_BM.N_CORTEX])
-        subject_features = demean_and_normalize(subject_features)
-        subject_features = np.concatenate((subject_features, self.spatial_filters_raw), axis = 1)
-        return subject_features
+
+
+class NN2lhModelWithFiltersAndTaskAsFeatures(TFRoiBasedModel):
+
+
+
+    def __init__(self, tasks, feature_extractor=None):
+        super(NN2lhModelWithFiltersAndTaskAsFeatures, self).__init__(tasks, feature_extractor)
+        self.scope_name = 'nn1_h2_reg_fsf_ms'
+
+    def _load(self):
+        super(NN2lhModelWithFiltersAndTaskAsFeatures, self)._load()
+        self.global_features = demean_and_normalize(self.spatial_filters_raw)
+        return True
+
+    def update_feats(self, subject_feats, task):
+        feats = np.concatenate([subject_feats[:,:158]] + [t[task] for t in self.tasks_data], axis=1)
+        return feats
+
+    def load_weights(self):
+        for task in self.tasks:
+
+            weights_path = os.path.join(definitions.LOCAL_DATA_DIR, 'model', 'nn', "nn_2hl_by_roi_fsf_ms__100s_weights_{0}_all_filters.pkl".
+                         format(task.full_name))
+            weights = pickle.load(open(weights_path, 'rb'))
+            self._weights[task] = weights
+
+    def get_placeholders(self):
+        x, y, y_pred = \
+            regression_with_two_hidden_layers_build(input_dim= 160, output_dim=1, scope_name=self.scope_name ,
+                                                layer1_size=80, layer2_size=50)
+        return x, y_pred
 
 
 
 class TFLinear(TFRoiBasedModel):
+
     def __init__(self, tasks, feature_extractor=None):
         super(TFLinear, self).__init__(tasks, feature_extractor)
 
@@ -221,21 +250,17 @@ class TFLinear(TFRoiBasedModel):
                                             task.full_name))
             weights = pickle.load(open(weights_path, 'rb'))
 
-            self._weights[task] = {i : [weights[:,i:i+1]] for i in range(np.size(weights, axis=1)) if i!=2}
+            self._weights[task] = weights
 
     def get_placeholders(self):
         x, y, y_pred = \
-            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg')
+            linear_regression_build(input_dim=NUM_FEATURES, output_dim=1, scope_name='lin_reg')
         return x, y_pred
 
     def get_trainable_variables(self):
         return [v for v in tf.trainable_variables() if v in
-                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg')][:1]
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg')]
 
-    def preprocess_features(self, subject_features):
-        subject_features = np.transpose(subject_features)
-        subject_features = demean_and_normalize(subject_features)
-        return add_ones_column(subject_features)
 
 
 class TFLinearAveraged(TFRoiBasedModel):
@@ -254,27 +279,27 @@ class TFLinearAveraged(TFRoiBasedModel):
                                             task.full_name))
             weights = pickle.load(open(weights_path, 'rb'))
 
-            self._weights[task] = {i : [weights[:,i:i+1]] for i in range(np.size(weights, axis=1)) if i!=2}
+            self._weights[task] = weights
 
     def get_placeholders(self):
         x, y, y_pred = \
-            linear_regression_build(input_dim=NUM_FEATURES+1, output_dim=1, scope_name='lin_reg_avg')
+            linear_regression_build(input_dim=NUM_FEATURES, output_dim=1, scope_name='lin_reg_avg')
         return x, y_pred
 
     def get_trainable_variables(self):
         return [v for v in tf.trainable_variables() if v in
-                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg_avg')][:1]
-
-    def preprocess_features(self, subject_features):
-        subject_features = np.transpose(subject_features)
-        subject_features = demean_and_normalize(subject_features)
-        return add_ones_column(subject_features)
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg_avg')]
 
 
 class TFLinearFSF(TFRoiBasedModel):
 
     def __init__(self, tasks, feature_extractor=None):
         super(TFLinearFSF, self).__init__(tasks, feature_extractor)
+
+    def _load(self):
+        super(TFLinearFSF, self)._load()
+        self.global_features = demean_and_normalize(self.spatial_filters_raw)
+        return True
 
     def load_weights(self):
         for task in self.tasks:
@@ -283,16 +308,16 @@ class TFLinearFSF(TFRoiBasedModel):
                                             task.full_name))
             weights = pickle.load(open(weights_path, 'rb'))
 
-            self._weights[task] = {i : [weights[:,i:i+1]] for i in range(np.size(weights, axis=1)) if i!=2}
+            self._weights[task] = weights
 
     def get_placeholders(self):
         x, y, y_pred = \
-            linear_regression_build(input_dim=NUM_FEATURES+1+ NUM_SPATIAL_FILTERS, output_dim=1, scope_name='lin_reg_fsf')
+            linear_regression_build(input_dim=NUM_FEATURES+ NUM_SPATIAL_FILTERS, output_dim=1, scope_name='lin_reg_fsf')
         return x, y_pred
 
     def get_trainable_variables(self):
         return [v for v in tf.trainable_variables() if v in
-                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg_fsf')][:1]
+                tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='lin_reg_fsf')]
 
 
     def preprocess_features(self, subject_features):
@@ -300,7 +325,7 @@ class TFLinearFSF(TFRoiBasedModel):
         subject_features = np.concatenate((subject_features, self.spatial_filters_raw), axis=1)
         subject_features = demean_and_normalize(subject_features)
 
-        return add_ones_column(subject_features)
+        return subject_features
 
 
 class FeatureExtractor:

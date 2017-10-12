@@ -32,8 +32,8 @@ def load_data(features_path = all_features_path_200, tasks_path = all_tasks_200s
     assert np.size(all_features, axis=0) == np.size(all_tasks, axis=0)
     assert np.size(all_features, axis=1) == np.size(all_tasks, axis=1)
     assert np.size(all_features, axis=2) == NUM_FEATURES
-    all_features = demean_and_normalize(all_features[:,:200,:], axis=0)
-    all_tasks = demean_and_normalize(all_tasks, axis=0)
+    all_features = demean_and_normalize(all_features[:,:,:], axis=0)
+    all_tasks = demean_and_normalize(all_tasks[:,:,:], axis=0)
     return all_features, all_tasks
 
 
