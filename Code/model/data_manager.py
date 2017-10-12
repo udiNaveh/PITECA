@@ -1,41 +1,37 @@
+"""
+Methods used for loading and handling data in model learning/evaluation.
+Not used in the workflows accessible from PITECA GUI. 
+"""
+
 import numpy as np
 import os
 import pickle
-
 import definitions
 from sharedutils.constants import *
 from sharedutils.linalg_utils import *
-from sharedutils.subject import *
+from sharedutils.subject import Subject
 from analysis.analyzer import get_predicted_actual_correlations
-
 import matplotlib.pyplot as plt
 
-tasks_file = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
-all_tasks_200s_new_path = r'D:\Projects\PITECA\Data_for_testing\time_series\allTasksReordered.npy'
-all_features_path_200 = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order_200.npy")
-all_features_path = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order.npy")
+TASKS_MATRIX_PATH = '' # REPLACE WITH YOUR OWN
+FEATURES_MATRIX_PATH = '' # REPLACE WITH YOUR OWN
+# TODO delete
+TASKS_MATRIX_PATH = r'D:\Projects\PITECA\Data_for_testing\time_series\allTasksReordered.npy'
+FEATURES_MATRIX_PATH = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order_200.npy")
 
 
-TASKS = [Task.MATH_STORY,
-                   Task.TOM,
-                   Task.MATCH_REL,
-                   Task.TWO_BK,
-                   Task.REWARD,
-                   Task.FACES_SHAPES,
-                   Task.T,
-                   ]
 
-def load_data(features_path = all_features_path_200, tasks_path = all_tasks_200s_new_path):
+TASKS = AVAILABLE_TASKS
+def load_data(features_path = FEATURES_MATRIX_PATH, tasks_path = TASKS_MATRIX_PATH):
     all_tasks = np.load(tasks_path, mmap_mode='c')
-    all_tasks = all_tasks[:STANDARD_BM.N_CORTEX,:,:]
+    #all_tasks = all_tasks[:STANDARD_BM.N_CORTEX,:,:] todo
     all_features = np.load(features_path, mmap_mode='c')
-    assert np.size(all_features, axis=0) == np.size(all_tasks, axis=0)
+    #assert np.size(all_features, axis=0) == np.size(all_tasks, axis=0) todo
     assert np.size(all_features, axis=1) == np.size(all_tasks, axis=1)
     assert np.size(all_features, axis=2) == NUM_FEATURES
-    all_features = demean_and_normalize(all_features[:,:,:], axis=0)
-    all_tasks = demean_and_normalize(all_tasks[:,:,:], axis=0)
+    #all_features = demean_and_normalize(all_features[:,:,:], axis=0) TODO
+    #all_tasks = demean_and_normalize(all_tasks[:,:,:], axis=0) todo
     return all_features, all_tasks
-
 
 
 class MemTaskGetter:
@@ -87,10 +83,3 @@ def get_selected_features_and_tasks(individual_features_matrix, subjects, roi_in
     roi_task = np.concatenate([roi_task[:,i,:] for i in range(len(subjects))], axis=0)
 
     return roi_feats, roi_task
-
-
-
-
-#
-# if __name__ == '__main__':
-#     features, tasks = load_data(all_features_path_200, all_tasks_200s_new_path)

@@ -11,6 +11,7 @@ from analysis.analyzer import *
 from sharedutils.cmd_utils import show_maps_in_wb_view
 from sharedutils.general_utils import inverse_dicts
 from sharedutils.linalg_utils import *
+from sharedutils.io_utils import *
 
 tasks_file = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
 all_tasks_200s = r'D:\Projects\PITECA\Data_for_testing\time_series\AllTasks.npy'
@@ -22,6 +23,7 @@ all_features_path = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_
 all_features_path_200 = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order_200.npy")
 all_features_path_mat = r'C:\Users\ASUS\Downloads\AllFeatures.mat'
 
+from model.data_manager import load_data
 
 
 #all_features_raw = np.load(all_features_path)
@@ -98,6 +100,22 @@ def create_features_files():
         filename = os.path.join(path2dir, '{}_features'.format(subjects[j]))
         save_to_dtseries(filename, cortex_bm, data)
         print('saved {}'.format(os.path.basename(filename)))
+
+def create_features_and_tasks():
+    outputdir = r'D:\Projects\PITECA\Data\presentation_samples'
+    subjects_ids = [160, 180, 140 ,198, 177, 144, 145, 132, 166, 171]
+    features, tasks = load_data()
+    cortex_bm = get_bm('cortex')
+    full_bm = get_bm('full')
+    for sid in subjects_ids:
+        subject_id = zero_pad(sid, 6)
+        s_features = features[:,sid-1,:]
+        save_to_dtseries(os.path.join(outputdir, '{}_features'.format(subject_id)), cortex_bm, s_features.transpose())
+        for i, task in enumerate(TASKS):
+            s_task = tasks[:,sid-1,i:i+1]
+            save_to_dtseries(os.path.join(outputdir, '{0}_{1}'.format(subject_id, task.full_name)), full_bm, s_task.transpose())
+
+
 
 
 def load_tasks():
@@ -362,8 +380,26 @@ def check_preds_are_different():
     print()
 
 
+def find_good_subjects():
+    path = r'D:\Projects\PITECA\Data\pedictions_statistics'
+    for task in TASKS[:1]:
+        print (task.full_name)
+        all_corrs, iou_positive, iou_negative, subjects = open_pickle(os.path.join(path, 'stats{}_2.pkl'.format(task.full_name)))
+        all_corrs_nn, iou_positive_nn, iou_negative_nn, subjects_nn = open_pickle(
+            os.path.join(path, 'stats{}_nn.pkl'.format(task.full_name)))
+        mask = np.identity(np.size(all_corrs, axis=0)) <1
+        other_corrs = [np.mean(all_corrs[i, mask[i]]) for i in range(np.size(all_corrs, axis=0))]
+        self_corrs = np.diag(all_corrs)
+
+        other_corrs_nn = [np.mean(all_corrs_nn[i, mask[i]]) for i in range(np.size(all_corrs, axis=0))]
+        self_corrs_nn = np.diag(all_corrs_nn)
+
+        for i in range(len(subjects_nn)):
+            print ("{0}:{1:.6f}:{2:.6f}:{3:.6f}:{4:.6f}".format(subjects_nn[i].subject_id, self_corrs[i], other_corrs[i], self_corrs_nn[i], other_corrs_nn[i]))
+
+
 
 if __name__ == "__main__":
-    pass
+    create_features_and_tasks()
     #results_path = r'D:\Projects\PITECA\Data\docs\7030_models_results_corrected_test'
     #read_results_text_file_and_plot(results_path)
