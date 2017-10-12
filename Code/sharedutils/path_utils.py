@@ -1,13 +1,17 @@
-import os
+"""
+This module contains functions for specific PITECA string-path manipulation needs.
+"""
 
-from sharedutils.constants import FEATS_EXT, PREDICT_OUTPUT_EXT, DTSERIES_EXT
+import os
 from GUI.settings_controller import get_features_folder
 from definitions import CANONICAL_CIFTI_DIR
 
-"""
-This utility gathers functions to specific PITECA string-path manipulation needs.
-"""
 
+
+# Extensions
+DTSERIES_EXT = ".dtseries.nii"
+FEATS_EXT = "_features"
+PREDICT_OUTPUT_EXT = "_predicted"
 
 def get_id(absolute_path):
     """

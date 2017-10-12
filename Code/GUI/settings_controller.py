@@ -1,12 +1,14 @@
-import configparser
+"""
+This module handles the configurable settings of PITECA that can be confidured by user in the settings tab.
+It provides getter functions for other module to know the current settings.
+"""
 
+import configparser
+import os
 import definitions
 from sharedutils import dialog_utils, constants
 
-"""
-This module handles the settings of PITECA enabled for user's change in the settings tab.
-It provides getter functions for other module to know the current settings.
-"""
+
 
 features_folder = None
 prediction_outputs_folder = None
@@ -46,7 +48,10 @@ class SettingsController:
 
         # init current settings
         self.config = configparser.ConfigParser()
-        self.config.read(definitions.SETTINGS_PATH)
+        if os.path.exists(definitions.SETTINGS_PATH):
+            self.config.read(definitions.SETTINGS_PATH)
+        if constants.SETTINGS_TITLE not in self.config:
+            self.config[constants.SETTINGS_TITLE] = {}
 
         default_values = {constants.SETTINGS_FEATURES_FOLDER: definitions.DEFAULT_EXTRACTED_FEATURES_DIR,
                           constants.SETTINGS_PREDICTIONS_OUTPUT: definitions.DEFAULT_PREDICTIONS_DIR,
@@ -55,6 +60,7 @@ class SettingsController:
                           }
 
         for key, value in default_values.items():
+
             if key not in self.config[constants.SETTINGS_TITLE] or \
                     not self.config[constants.SETTINGS_TITLE][key]:
                 self.config.set(constants.SETTINGS_TITLE, key, value)

@@ -14,7 +14,7 @@ tasks_std = {task: all_task_std[:,i:i+1] for i,task in enumerate(TASKS)}
 tasks_mean = {task: all_task_mean[:,i:i+1] for i,task in enumerate(TASKS)}
 save_pickle((tasks_mean, tasks_std), definitions.TASKS_CANONICAL_DATA2)
 
-subjects = [Subject(subject_id=general_utils.zeropad(i+1, 6)) for i in range(200)]
+subjects = [Subject(subject_id=general_utils.zero_pad(i + 1, 6)) for i in range(200)]
 mem_task_getter = MemTaskGetter(all_tasks, subjects)
 
 

@@ -1,23 +1,14 @@
-'''
-A file with all the constants we need for the program.
-I used anonymous objects to divide these constants into contexts (rightt now only
-path constants and brain model constants, but you can ass your own too).
-Not sure if this implementation is best practice for using constants.
-If you find a better way make sure to refractor the code so that the modules
-that use it still work.
-
-'''
+"""
+This modules contains constants that are used by the different modules PITECA.
+It does *not* contain relative paths to data files (found in definitions.py)
+and does *not* contain hyperparameters for the ml models (found in Model\model_hyperparams.py) 
+"""
 
 import numpy as np
+from enum import Enum
 
 
-
-
-MIN_TIME_UNITS = 300
-NUM_FEATURES = 108
-NUM_SPATIAL_FILTERS = 50
-
-# Brain parcellations
+# Brain parcellations according to cifti format
 STANDARD_BM = type('Dummy', (object,), {})
 STANDARD_BM.N_LH = 29696
 STANDARD_BM.N_RH = 29716
@@ -28,8 +19,7 @@ STANDARD_BM.CORTEX = np.array([i < STANDARD_BM.N_CORTEX for i in range(STANDARD_
 STANDARD_BM.SUBCORTEX = np.bitwise_not(STANDARD_BM.CORTEX)
 
 
-from enum import Enum
-
+# tasks of the HCP database
 class Task(Enum):
     FACES = 1
     SHAPES = 2
@@ -91,6 +81,7 @@ class Task(Enum):
 
 
 class Domain(Enum):
+    # task domains of the HCP database
     EMOTION = [Task(i) for i in range(1, 4)]
     GAMBLING = [Task(i) for i in range(4, 7)]
     LANGUAGE = [Task(i) for i in range(7, 10)]
@@ -98,6 +89,8 @@ class Domain(Enum):
     RELATIONAL = [Task(i) for i in range(23, 26)]
     SOCIAL = [Task(i) for i in range(26, 29)]
     WM = [Task(i) for i in range(29, 48)]
+
+# tasks currently available in PITECA
 
 AVAILABLE_TASKS = [Task.MATH_STORY ,
                        Task.TOM,
@@ -108,13 +101,13 @@ AVAILABLE_TASKS = [Task.MATH_STORY ,
                        Task.T
                        ]
 
-# Extensions
-DTSERIES_EXT = ".dtseries.nii"
-FEATS_EXT = "_features"
-PREDICT_OUTPUT_EXT = "_predicted"
 
-# Numbers
+
+# Other definitions
+MIN_TIME_UNITS = 300
+NUM_FEATURES = 108
 MAX_SUBJECTS = 25
+
 
 # Dialogs
 QUESTION_TITLE = "Question"

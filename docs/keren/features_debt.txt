@@ -1,7 +1,0 @@
-'''
-Note here all functionalities that suppose to be but haven't implemented.
-'''
-
-1. Make tasks on Task list checkable - when task is checked, all its contrasts are automatically checked.
-2. Generate config file automatically, based on OS and installation.
-3. Change config file format and adapt the functions who use it.

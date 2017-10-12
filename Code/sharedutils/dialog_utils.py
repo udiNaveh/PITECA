@@ -1,3 +1,7 @@
+"""
+This module contains utility methods to enables generic popups from any part of the code. 
+"""
+
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QSizePolicy, QErrorMessage
 from PyQt5.QtCore import Qt, QSize
@@ -7,9 +11,7 @@ from GUI.popups import results_dlg_controller, results_dlg_view
 from sharedutils import constants
 import definitions
 
-'''
-This utility enables generic popups from any part of the code. 
-'''
+
 
 
 def ask_user(default_ans, title, question):
