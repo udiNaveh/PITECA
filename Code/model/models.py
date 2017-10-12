@@ -390,7 +390,8 @@ class FeatureExtractor:
         T2 = np.dot(np.linalg.pinv(ROIS), rfmri_data_normalized.transpose()) # 108 x time
         # get the features - correlation coefficient for each vertex with each netwrok
         features_map = np.dot(normalize(T2, axis=1), normalize(rfmri_data_normalized, axis=0))
-        features_map = features_map[:, : STANDARD_BM.N_CORTEX]
+        features_map = (features_map[:, : STANDARD_BM.N_CORTEX]).astype(np.float32)
+
         save_to_dtseries(subject.features_path, self.bm, features_map)
 
         end_extraction_time = time.time()
