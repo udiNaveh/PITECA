@@ -54,5 +54,6 @@ class ResultsDlg(QtWidgets.QDialog):
         """
         The function to be called when user clicks "open in wb" button.
         """
+        files_to_show = [file for file in self.filepaths if "features" not in file]
         cmd_utils.show_maps_in_wb_view(self.filepaths)
 
