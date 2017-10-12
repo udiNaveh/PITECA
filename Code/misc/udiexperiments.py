@@ -40,14 +40,13 @@ TASKS = [Task.MATH_STORY,
 def linear_weights_split():
     LINEAR_WEIGHTS_DIR = os.path.join(definitions.LINEAR_WEIGHTS_DIR, 'new')
     for task in TASKS:
-        weights_path = os.path.join(definitions.LINEAR_WEIGHTS_DIR, 'learned_by_roi_70s',
-                                    'linear_weights_{}.pkl'.format(
+        weights_path = os.path.join(definitions.LINEAR_WEIGHTS_DIR, 'learned_by_roi_filters_as_features70s',
+                                    'linear_weights_fsf_{}.pkl'.format(
                                         task.full_name))
         weights = pickle.load(open(weights_path, 'rb'))
 
-
-        weights_path = os.path.join(LINEAR_WEIGHTS_DIR, 'learned_by_roi_70s',
-                                    'linear_weights_{}.pkl'.format(
+        weights_path = os.path.join(LINEAR_WEIGHTS_DIR, 'learned_by_roi_filters_as_features70s',
+                                    'linear_weights_fsf_{}.pkl'.format(
                                         task.full_name))
         weights_by_task = {i: [weights[1:, i:i + 1], weights[0, i:i + 1]] for i in range(np.size(weights, axis=1)) if i != 2}
         save_pickle(weights_by_task, weights_path )
@@ -365,6 +364,6 @@ def check_preds_are_different():
 
 
 if __name__ == "__main__":
-    linear_weights_split()
+    pass
     #results_path = r'D:\Projects\PITECA\Data\docs\7030_models_results_corrected_test'
     #read_results_text_file_and_plot(results_path)

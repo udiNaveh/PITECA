@@ -1,11 +1,7 @@
 """
-All methods that read or write to files.
-These are mainly wrapper functions for third-party io functions 
-(implemented in the cifti package, or other packages we will use).
-This can allow us handle exception in a certain way or add some needed processing stages
-to data. It can also make other code more readable.
-Other methods for reading or saving files can be added here - for example saving graphs created
-in the analysis module.
+Methods for reading or writing to files. These are mainly wrapper functions for third-party io functions 
+(e.g. implemented in the cifti package), that allow exception handling for the diefferent scenarios used
+in PITECA.
 """
 
 import cifti
@@ -23,11 +19,12 @@ import GUI.globals as gb
 
 
 def open_cifti(path):
-    '''
-    This is not properly handled yet
-    :param path:
-    :return: arr, (axis, bm)
-    '''
+    """
+    A wrapper to the cifti.read method, that also allows handling files not in cifti-2 format 
+    (using wb_command convert_to_CIFTI2 command)
+    :param path: a path to a .nii file
+    :return: arr, (axis, bm) - see cifti.read documentation
+    """
     try:
         return cifti.read(path)
 
@@ -78,15 +75,10 @@ def open_1d_file(path):
     return arr, (series, bm)
 
 
-
-
-
-
 def save_to_dtseries(filename, brain_model, mat):
     '''
-    save a dtseries.nii file given the data matrix and the brain model.
+    saves a dtseries.nii file given the data matrix and the brain model.
     The series axis is generated so as to fit the size of the matrix (every row is a time point).
-
 
     :param filename: the file to save
     :param brain_model: a Cifti.Axis.BrainModel object
@@ -114,10 +106,6 @@ def get_bm(bm_type):
         return bm
     else:
         raise ValueError('BM type ""{}"" does not exist'.format(bm_type))
-
-
-def save_to_dscalar(filename, brain_model, mat, names, zeropad = False):
-    raise NotImplementedError
 
 
 def open_mat_file(filepath):

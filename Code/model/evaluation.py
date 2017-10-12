@@ -77,8 +77,8 @@ def run_evaluation(model):
     all_features, all_tasks = load_data()
     subjects = [Subject(subject_id=zeropad(i + 1, 6)) for i in range(200)]
     fe = models.MemFeatureExtractor(all_features, subjects)
-    #model = models.model_factory(model, [Task.MATH_STORY], fe)
-    model = models.NN2lhModelWithFiltersAbdMeanAsFeatures([Task.MATH_STORY], fe, means = np.mean(all_tasks, axis=1))
+    model = models.model_factory(model, TASKS, fe)
+    #model = models.NN2lhModelWithFiltersAbdMeanAsFeatures([Task.MATH_STORY], fe, means = np.mean(all_tasks, axis=1))
     tasks_getter = MemTaskGetter(all_tasks, subjects)
     subjects_training = subjects[:70]
     subjects_validation = subjects[70:100]
@@ -89,4 +89,4 @@ def run_evaluation(model):
 
 if __name__ == '__main__':
 
-    run_evaluation(models.NN2lhModelWithFiltersAsFeatures)
+    run_evaluation(models.NN2lhModelWithFiltersAndTaskAsFeatures)

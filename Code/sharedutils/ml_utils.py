@@ -1,3 +1,7 @@
+"""
+Utilities used in model learning
+"""
+
 import numpy as np
 import random
 
@@ -9,10 +13,11 @@ def random_partition(data, k):
 
 
 class BestWeightsQueue:
-    '''
-    naive queue implementation to hold the best k sets of weights
+    """
+    Naive queue implementation to hold the best k sets of weights
     learned in a SGD process. 
-    '''
+    """
+
 
     def __init__(self, max_size):
         self.max_size = max_size
@@ -64,7 +69,7 @@ class Dataset:
     def labels(self):
         return self._labels
 
-    def next_batch(self,batch_size, use_partial=False):
+    def next_batch(self,batch_size):
         start = self._index_in_epoch
         if start == 0:
             np.random.shuffle(self._idx)  # shuffle index
