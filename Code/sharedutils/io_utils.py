@@ -26,7 +26,8 @@ def open_cifti(path):
     :return: arr, (axis, bm) - see cifti.read documentation
     """
     try:
-        return cifti.read(path)
+        arr, (series, bm) = cifti.read(path)
+        return arr.astype(np.float32), (series, bm)
 
     except ValueError as ve:
         if str(ve) == 'Only CIFTI-2 files are supported':
@@ -36,7 +37,7 @@ def open_cifti(path):
                 arr, (ax, bm) = cifti.read(cifti2path)
                 arr2 = np.copy(arr)
                 del arr
-                return arr2, (ax, bm)
+                return arr2.astype(np.float32), (ax, bm)
     except FileNotFoundError as fnfe:
         raise PitecaError(fnfe.strerror, path)
 
