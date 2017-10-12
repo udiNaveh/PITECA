@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets
 
 from GUI.popups.predict_working_dlg_view import Ui_PredictWorkingDlg
 from GUI.predict_working_thread import PredictWorkingThread
-from sharedutils import dialog_utils
+from sharedutils import dialog_utils, constants
 from GUI import settings_controller
 import GUI.globals as gb
 
@@ -30,14 +30,19 @@ class PredictWorkingDlg(QtWidgets.QDialog):
 
         self.close()
 
-        if len(self.subjects) == 1 and len(self.prediction_model.tasks) == 1:
-            filepath = gb.curr_cifti_filename
+        if len(self.subjects) == 1 or len(self.prediction_model.tasks) == 1:
+            filepaths = gb.curr_cifti_filenames
+            if len(filepaths) > constants.MAX_FILES_FOR_WB:
+                filepaths = []
         else:
-            filepath = None
+            filepaths = []
 
+        constants.RESULTS_NEXT_BUTTON_TEXT = "OK"
         dialog_utils.report_results(
             "Done! Predicted files are saved in {}".format(settings_controller.get_prediction_outputs_folder()),
-            settings_controller.get_prediction_outputs_folder(), filepath)
+            settings_controller.get_prediction_outputs_folder(), filepaths)
+
+        gb.curr_cifti_filenames = []
 
     def onClose(self, event):
         """

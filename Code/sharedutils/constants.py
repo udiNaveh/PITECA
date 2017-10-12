@@ -107,6 +107,7 @@ AVAILABLE_TASKS = [Task.MATH_STORY ,
 MIN_TIME_UNITS = 300
 NUM_FEATURES = 108
 MAX_SUBJECTS = 25
+MAX_FILES_FOR_WB = 5
 
 
 # Dialogs
@@ -122,6 +123,8 @@ DUP_IDS = "Some of the files Please make sure to have only unique subjects."
 DLG_DEFAULT_WIDTH = 234
 DLG_DEFAULT_HIGHT = 94
 DLG_WIDEN = "                                "
+
+RESULTS_NEXT_BUTTON_TEXT = "OK"
 
 # Existing features
 EXIST_FEATS_MSG = "Some of the input scans seem to already have extracted features." \
