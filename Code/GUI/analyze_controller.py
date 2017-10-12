@@ -72,29 +72,35 @@ class AnalyzeController:
         """
         dlg.close()
         gb.should_exit_on_error = False
+        gb.open_graph = True
 
         if analysis_task == AnalysisTask.Analysis_Mean:
 
             analysis_folder = get_analysis_results_folder()
             folder_path = os.path.join(analysis_folder, self.task.domain().name, self.task.name)
-
+            constants.RESULTS_NEXT_BUTTON_TEXT = "OK"
             dialog_utils.report_results("Done! Analysis result is saved in {}".format(folder_path),
-                                        folder_path, gb.curr_cifti_filename)
+                                        folder_path, gb.curr_cifti_filenames)
+
+            gb.curr_cifti_filenames = []
 
         elif analysis_task in [AnalysisTask.Analysis_Correlations, AnalysisTask.Compare_Correlations, AnalysisTask.Compare_Significance]:
 
             if analysis_task == AnalysisTask.Compare_Significance:
 
-                if len(subjects) == 1:
-                    filepath = gb.curr_cifti_filename
+                if len(subjects) <= constants.MAX_FILES_FOR_WB:
+                    filepaths = gb.curr_cifti_filenames
                 else:
-                    filepath = None
+                    filepaths = []
 
                 analysis_folder = get_analysis_results_folder()
                 folder_path = os.path.join(analysis_folder, self.task.domain().name, self.task.name)
-
+                constants.RESULTS_NEXT_BUTTON_TEXT = "Graph"
                 dialog_utils.report_results("Done! Comparison result is saved in {}".format(folder_path),
-                                            folder_path, filepath, False)
+                                            folder_path, filepaths, False)
+
+                gb.curr_cifti_filenames = []
+
                 title_base = "Intersection over Union of subjects overlap maps"
 
             if analysis_task == AnalysisTask.Analysis_Correlations:
@@ -108,7 +114,9 @@ class AnalyzeController:
             )
             graphic_dlg = graphics.GraphicDlg(analysis_task, data, subjects, title)
             graphic_dlg.setWindowModality(Qt.ApplicationModal)
-            graphic_dlg.show()
+
+            if gb.open_graph:
+                graphic_dlg.show()
 
         else:
             raise definitions.PitecaError('Unsupported action.')

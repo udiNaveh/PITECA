@@ -92,7 +92,7 @@ def save_to_dtseries(filename, brain_model, mat):
     series = cifti.Series(start=0, step=1, size=mat.shape[0])
     if not filename.endswith(".dtseries.nii"):
         filename += ".dtseries.nii"
-    gb.curr_cifti_filename = filename
+    gb.curr_cifti_filenames.append(filename)
     cifti.write(filename, mat, (series, brain_model))
     return filename
 

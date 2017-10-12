@@ -63,7 +63,7 @@ def inform_user(msg):
     msg_box.exec_()
 
 
-def report_results(msg, folder, filepath, exit_on_open_folder=True):
+def report_results(msg, folder, filepaths, exit_on_open_folder=True):
     """
     This function pops up a dialog that informs the user about a CIFTI files
     that were created by PITECA and saved in the computer.
@@ -73,7 +73,7 @@ def report_results(msg, folder, filepath, exit_on_open_folder=True):
     was created and the "Open in wb" is enabled.
     :param exit_on_open_folder: a boolean argument defines if dialog should be closed after "Open in..." buttons.
     """
-    dlg = results_dlg_controller.ResultsDlg(msg, folder, exit_on_open_folder, filepath)
+    dlg = results_dlg_controller.ResultsDlg(msg, folder, exit_on_open_folder, filepaths)
     ui = results_dlg_view.Ui_ResultsDialog()
     ui.setupUi(dlg)
     dlg.update_ui(ui)

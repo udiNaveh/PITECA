@@ -9,6 +9,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import definitions
+from sharedutils import constants
 
 class Ui_ResultsDialog(object):
     """
@@ -50,7 +51,7 @@ class Ui_ResultsDialog(object):
         _translate = QtCore.QCoreApplication.translate
         ResultsDialog.setWindowTitle(_translate("ResultsDialog", "Results"))
         self.openInFolderButton.setText(_translate("ResultsDialog", "Open in Folder"))
-        self.okButton.setText(_translate("ResultsDialog", "OK"))
+        self.okButton.setText(_translate("ResultsDialog", constants.RESULTS_NEXT_BUTTON_TEXT))
         self.viewInWbButton.setText(_translate("ResultsDialog", "View in wb"))
 
 
