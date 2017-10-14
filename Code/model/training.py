@@ -8,11 +8,6 @@ import  sharedutils.general_utils as general_utils
 ROI_THRESHOLD = 0.01
 all_features, all_tasks = load_data()
 
-all_task_std = np.std(all_tasks, axis=1)
-all_task_mean = np.mean(all_tasks, axis=1)
-tasks_std = {task: all_task_std[:,i:i+1] for i,task in enumerate(TASKS)}
-tasks_mean = {task: all_task_mean[:,i:i+1] for i,task in enumerate(TASKS)}
-save_pickle((tasks_mean, tasks_std), definitions.TASKS_CANONICAL_DATA2)
 
 subjects = [Subject(subject_id=general_utils.zero_pad(i + 1, 6)) for i in range(200)]
 mem_task_getter = MemTaskGetter(all_tasks, subjects)
@@ -34,13 +29,11 @@ NN_WEIGHTS_PATH = os.path.join(definitions.LOCAL_DATA_DIR, 'model', 'nn')
 
 def train_by_roi_and_task(subjects, task, spatial_filters, scope_name):
     task_idx = list.index(TASKS, task)
-    global_features = np.concatenate((spatial_filters_raw_normalized,
-                                      demean_and_normalize(all_task_mean[:,task_idx:task_idx+1]),
-                                      demean_and_normalize(all_task_std[:, task_idx:task_idx + 1])), axis=1)
+    global_features = None
     train_subjects = subjects[:100]
     validation_subjects = subjects[100:130]
     learned_weights = {}
-    x, y, y_pred = regression_with_two_hidden_layers_build(input_dim=NUM_FEATURES+np.size(global_features, axis=1), output_dim=1, scope_name=scope_name)
+    x, y, y_pred = regression_with_two_hidden_layers_build(input_dim=NUM_FEATURES, output_dim=1, scope_name=scope_name, layer1_size=50)
     loss_function = build_loss(y, y_pred, scope_name, reg_lambda=REG_LAMBDA, huber_delta=HUBER_DELTA)
     try:
         for j in range(NUM_SPATIAL_FILTERS): #
@@ -79,5 +72,5 @@ def train_by_roi_and_task(subjects, task, spatial_filters, scope_name):
     return
 
 for task in  TASKS:
-    train_by_roi_and_task(subjects, task, hard_filters, scope_name='nnhl2fsf_ms')
+    train_by_roi_and_task(subjects, task, hard_filters, scope_name='nnhl2')
     tf.reset_default_graph()

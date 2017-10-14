@@ -26,7 +26,7 @@ def _get_task_maps_by_subject(subjects, task, getpath_func):
             start = time.time()
             arr, (ax, bm) = open_1d_file(subject_task_path)
             stop = time.time()
-            definitions.logger.print("opening {0} took {1:.4f} seconds".format(subject_task_path, stop-start))
+            definitions.print_in_debug("opening {0} took {1:.4f} seconds".format(subject_task_path, stop-start))
             task_maps[subject] = arr
     return task_maps
 

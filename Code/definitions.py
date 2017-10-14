@@ -38,18 +38,13 @@ DEFAULT_MODEL = 'MLP by ROI'
 
 LOCAL_DATA_DIR = r'D:\Projects\PITECA\Data' #TODO delete
 
-
+DEBUG = True
 class PitecaError(Exception):
     def __init__(self, message, path=''):
         path_message = 'Cannot open file {}. '.format(path) if path else ''
         self.message = path_message+message
 
-class PitecaLogger:
-    def __init__(self, debug):
-        self.debug = debug
 
-    def print(self, *args):
-        if self.debug:
-            print(*args)
-
-logger = PitecaLogger(debug = False)
+def print_in_debug(*args):
+    if DEBUG:
+        print(*args)
