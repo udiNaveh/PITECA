@@ -94,7 +94,7 @@ class Domain(Enum):
 
 AVAILABLE_TASKS = [Task.MATH_STORY ,
                        Task.TOM,
-                       Task.MATCH_REL,
+                       Task.MATCH,
                        Task.TWO_BK,
                        Task.REWARD,
                        Task.FACES_SHAPES,
@@ -111,14 +111,14 @@ MAX_FILES_FOR_WB = 10
 
 
 # Dialogs
-QUESTION_TITLE = "Question"
+QUESTION_TITLE = "PITECA"
 PROVIDE_INPUT_MSG = "Please provide input."
 PROVIDE_INPUT_FILES_MSG = "Please select input files."
 SELECT_TASKS_MSG = "Please select tasks."
 
 SELECT_ACTION_MSG = "Please select an action."
 NAMING_CONVENTION_ERROR = "Some files do not follow the naming convention. Please change names and try again."
-DUP_IDS = "Some of the files Please make sure to have only unique subjects."
+DUP_IDS = "Some files have identical ids. Please make sure to have only unique subjects."
 
 DLG_DEFAULT_WIDTH = 234
 DLG_DEFAULT_HIGHT = 94
