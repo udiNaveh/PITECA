@@ -64,7 +64,7 @@ class GraphicDlg(QDialog):
         self.layout.addWidget(self.canvas)
         self.layout.addWidget(self.save_button)
         self.setLayout(self.layout)
-        self.setWindowTitle("Graph")
+        self.setWindowTitle("PITECA")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(definitions.PITECA_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(icon)
@@ -203,7 +203,7 @@ class GraphicDlg(QDialog):
         self.figure.clear()
         self.figure.suptitle(self.title)
 
-        cmap = 'Reds'
+        cmap = 'Spectral_r'
         edgecolors = 'black'
 
         # create an axis
