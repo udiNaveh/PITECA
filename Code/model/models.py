@@ -21,10 +21,6 @@ from model.data_manager import *
 from model.nn_model import *
 
 
-
-
-
-
 class IModel(ABC):
     """
     Base abstract class for all models
@@ -52,15 +48,12 @@ class TFRoiBasedModel(IModel):
 
     # TODO COMPLETE DOCUMENTATION
 
-
     def __init__(self, tasks, feature_extractor = None):
         super(TFRoiBasedModel, self).__init__(tasks)
         self._weights = {}
         self.feature_extractor = FeatureExtractor() if feature_extractor is None else feature_extractor
         self.is_loaded =  False
         self.scope_name = ''
-
-
 
     def _load(self):
         spatial_filters_raw, (series, bm) = cifti.read(definitions.ICA_LOW_DIM_PATH)
@@ -93,7 +86,6 @@ class TFRoiBasedModel(IModel):
         return [v for v in tf.trainable_variables() if v in
                       tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.scope_name)]
 
-
     def update_feats(self, subject_feats, task):
         return subject_feats
 
@@ -123,7 +115,6 @@ class TFRoiBasedModel(IModel):
         subject_predictions, prediction_paths = {}, {}
         with tf.Session() as sess:
             for task in self.tasks:
-                subject_feats = self.update_feats(subject_feats, task)
                 subject_task_prediction = np.zeros([1, STANDARD_BM.N_CORTEX])
                 start = time.time()
                 for j in range(np.size(spatial_filters, axis=1)):
@@ -138,7 +129,8 @@ class TFRoiBasedModel(IModel):
                         subject_task_prediction[:,ind] += weighting * roi_prediction
                 subject_predictions[task] = subject_task_prediction
                 end = time.time()
-                print("preiction of task {0} subject {1} took {2:.3f}seconds".format(task.full_name, subject.subject_id, end-start))
+                definitions.print_in_debug("prediction of task {0} subject {1} took {2:.3f}seconds".format(
+                    task.full_name, subject.subject_id, end-start))
                 if save:
                     prediction_paths[task] = save_to_dtseries(subject.get_predicted_task_filepath(task), bm,
                                                               subject_task_prediction)
@@ -174,7 +166,7 @@ class NN2lhModel(TFRoiBasedModel):
 
 class NN2lhModelWithFiltersAsFeatures(TFRoiBasedModel):
 
-    hl1_size = 50
+    hl1_size = 80
     hl2_size = 50
     input_size = NUM_FEATURES + NUM_SPATIAL_FILTERS
 
@@ -269,6 +261,7 @@ class TFLinearAveraged(TFRoiBasedModel):
 
     def _load(self):
         super(TFLinearAveraged, self)._load()
+        self.spatial_filters = self.spatial_filters_hard # TODO
         return True
 
     def load_weights(self):
