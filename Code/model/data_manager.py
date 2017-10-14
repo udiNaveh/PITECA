@@ -20,17 +20,20 @@ TASKS_MATRIX_PATH = r'D:\Projects\PITECA\Data_for_testing\time_series\allTasksRe
 FEATURES_MATRIX_PATH = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order_200.npy")
 
 
-
 TASKS = AVAILABLE_TASKS
-def load_data(features_path = FEATURES_MATRIX_PATH, tasks_path = TASKS_MATRIX_PATH):
+
+def load_data(features_path = FEATURES_MATRIX_PATH, tasks_path = TASKS_MATRIX_PATH, normalize_features = True, normalize_tasks = True):
     all_tasks = np.load(tasks_path, mmap_mode='c')
-    #all_tasks = all_tasks[:STANDARD_BM.N_CORTEX,:,:] todo
+    all_tasks = all_tasks[:STANDARD_BM.N_CORTEX,:,:]
     all_features = np.load(features_path, mmap_mode='c')
-    #assert np.size(all_features, axis=0) == np.size(all_tasks, axis=0) todo
+    assert np.size(all_features, axis=0) == np.size(all_tasks, axis=0)
     assert np.size(all_features, axis=1) == np.size(all_tasks, axis=1)
     assert np.size(all_features, axis=2) == NUM_FEATURES
-    #all_features = demean_and_normalize(all_features[:,:,:], axis=0) TODO
-    #all_tasks = demean_and_normalize(all_tasks[:,:,:], axis=0) todo
+    if normalize_features:
+        all_features = demean_and_normalize(all_features[:,:,:], axis=0)
+    if normalize_tasks:
+
+        all_tasks = demean_and_normalize(all_tasks[:,:,:], axis=None)
     return all_features, all_tasks
 
 

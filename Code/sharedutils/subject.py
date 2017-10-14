@@ -23,11 +23,6 @@ class Subject:
         filename = path_utils.generate_file_name(self.output_dir, task, "{0}_{1}_predicted".format(self.subject_id, task.full_name))
         return path_utils.generate_final_filename(filename)
 
-    def get_actual_task_filepath(self, task, actual_dir):
-        # TODO: seems this function only used in experiments. Remove if this is the situation.
-        filename = path_utils.generate_file_name(actual_dir, task, "{0}_{1}".format(self.subject_id, task.full_name))
-        return path_utils.generate_final_filename(filename)
-
 
 def create_subjects(input_files_str, output_dir):
     """

@@ -14,8 +14,8 @@ from sharedutils.linalg_utils import *
 from sharedutils.io_utils import *
 from scipy.stats import gamma, norm
 
-
-tasks_file = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
+LOCAL_DATA_DIR = r'D:\Projects\PITECA\Data'
+tasks_file = os.path.join(LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
 all_tasks_200s = r'D:\Projects\PITECA\Data_for_testing\time_series\AllTasks.npy'
 all_tasks_200s_new_path = r'D:\Projects\PITECA\Data_for_testing\time_series\allTasksReordered.npy'
 
@@ -163,23 +163,7 @@ def fit_something():
     param = gamma.fit(y, floc=0)
     print()
 
-def check_this():
-    all_features, all_tasks = load_data()
-    all_tasks_general = demean_and_normalize(all_tasks[:, :, :], axis=None)
-    all_tasks_indnorm = demean_and_normalize(all_tasks[:, :, :], axis=0)
-    all_task_std = np.std(all_tasks_general, axis=1)
-    all_task_mean = np.mean(all_tasks_general, axis=1)
-    tasks_std = {task: all_task_std[:, i:i + 1] for i, task in enumerate(TASKS)}
-    tasks_mean = {task: all_task_mean[:, i:i + 1] for i, task in enumerate(TASKS)}
-    save_pickle((tasks_mean, tasks_std), definitions.TASKS_CANONICAL_DATA2)
-    all_task_std = np.std(all_tasks_indnorm, axis=1)
-    all_task_mean = np.mean(all_tasks_indnorm, axis=1)
-    tasks_std = {task: all_task_std[:, i:i + 1] for i, task in enumerate(TASKS)}
-    tasks_mean = {task: all_task_mean[:, i:i + 1] for i, task in enumerate(TASKS)}
-    save_pickle((tasks_mean, tasks_std), definitions.TASKS_CANONICAL_DATA)
-    t1 = open_pickle(definitions.TASKS_CANONICAL_DATA)
-    t2 = open_pickle(definitions.TASKS_CANONICAL_DATA2)
-    print()
+
 
 def linear_weights_split():
     LINEAR_WEIGHTS_DIR = os.path.join(definitions.LINEAR_WEIGHTS_DIR, 'new')

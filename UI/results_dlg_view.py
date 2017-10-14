@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\User\Sadna\src\git\PITECA\UI\results-dialog.ui'
+
 #
 # Created by: PyQt5 UI code generator 5.6
 #
