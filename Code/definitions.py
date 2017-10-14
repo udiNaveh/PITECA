@@ -16,13 +16,12 @@ EXTRACTED_FEATURES_DIR = os.path.join(DATA_DIR, 'ExtractedFeatures')
 ANALYSIS_DIR = os.path.join(DATA_DIR, 'Analysis')
 LINEAR_MODEL_BETAS_PATH = os.path.join(LINEAR_MODEL_DIR, 'average_betas_100_subjects_7_tasks.npy')
 SC_CLUSTERS_PATH = os.path.join(MODELS_DIR, 'FeatureExtractor', 'SC_clusters.npy')
-BM_CORTEX_PATH = os.path.join(MODELS_DIR, 'FeatureExtractor', 'cortex_bm.pkl')
-BM_FULL_PATH = os.path.join(MODELS_DIR, 'FeatureExtractor', 'full_bm.pkl')
+BM_CORTEX_PATH = os.path.join(MODELS_DIR, 'ROI', 'cortex_bm.pkl')
+BM_FULL_PATH = os.path.join(MODELS_DIR, 'ROI', 'full_bm.pkl')
+ROI_MASK_PATH = os.path.join(MODELS_DIR, 'ROI', 'roi_mask.npy')
 ICA_LR_MATCHED_PATH = os.path.join(MODELS_DIR, 'FeatureExtractor', 'ica_LR_MATCHED.dtseries.nii')
 ICA_LR_MATCHED_PINV_PATH = os.path.join(MODELS_DIR,'FeatureExtractor', 'pinvg.npy')
-ICA_LOW_DIM_PATH = os.path.join(MODELS_DIR,'ica_both_lowdim.dtseries.nii')
-TASKS_CANONICAL_DATA = os.path.join(MODELS_DIR,'tasks_canonical_data.pkl')
-TASKS_CANONICAL_DATA2 = os.path.join(MODELS_DIR,'tasks_canonical_data_no_individual_normalization.pkl')
+ICA_LOW_DIM_PATH = os.path.join(MODELS_DIR,'ROI','ica_both_lowdim.dtseries.nii')
 PITECA_ICON_PATH = os.path.join(os.path.join(ROOT_DIR, 'UI', 'piteca_icon.gif'))
 CANONICAL_CIFTI_PATH = os.path.join(DATA_DIR, 'canonical.dtseries.nii')
 CANONICAL_CIFTI_DIR = os.path.join(DATA_DIR, 'Tasks')
@@ -36,9 +35,9 @@ DEFAULT_ANLYSIS_DIR = os.path.join(DATA_DIR, 'Analysis')
 DEFAULT_PREDICTIONS_DIR = os.path.join(DATA_DIR, 'Predictions')
 DEFAULT_MODEL = 'MLP by ROI'
 
-LOCAL_DATA_DIR = r'D:\Projects\PITECA\Data' #TODO delete
 
-DEBUG = True
+DEBUG = True #TODO change to false
+
 class PitecaError(Exception):
     def __init__(self, message, path=''):
         path_message = 'Cannot open file {}. '.format(path) if path else ''

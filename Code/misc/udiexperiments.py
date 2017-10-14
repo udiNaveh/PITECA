@@ -14,8 +14,8 @@ from sharedutils.linalg_utils import *
 from sharedutils.io_utils import *
 from scipy.stats import gamma, norm
 
-
-tasks_file = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
+LOCAL_DATA_DIR = r'D:\Projects\PITECA\Data'
+tasks_file = os.path.join(LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
 all_tasks_200s = r'D:\Projects\PITECA\Data_for_testing\time_series\AllTasks.npy'
 all_tasks_200s_new_path = r'D:\Projects\PITECA\Data_for_testing\time_series\allTasksReordered.npy'
 
@@ -78,10 +78,15 @@ def scatter_here():
 
     colors = ['b', 'c', 'y', 'm', 'r']
     dir = r'D:\Projects\PITECA\Data\analysis'
+    dir2 = definitions.MODELS_DIR
     for spidx,task in enumerate(TASKS):
         task.full_name
+        try:
 
-        nn = np.load(os.path.join(dir, 'all_corrs_{}_NN2lhModelWithFiltersAsFeatures.npy'.format(task.full_name)))
+            nn = np.load(os.path.join(dir2, 'all_corrs_{}_NN2lhModelWithFiltersAsFeatures.npy'.format(task.full_name)))
+            print("done it")
+        except FileNotFoundError:
+            nn = np.load(os.path.join(dir, 'all_corrs_{}_NN2lhModelWithFiltersAsFeatures.npy'.format(task.full_name)))
         nn_self_cors = np.diag(nn)
         la = np.load(os.path.join(dir, 'all_corrs_{}_TFLinearAveraged.npy'.format(task.full_name)))
 
@@ -163,23 +168,7 @@ def fit_something():
     param = gamma.fit(y, floc=0)
     print()
 
-def check_this():
-    all_features, all_tasks = load_data()
-    all_tasks_general = demean_and_normalize(all_tasks[:, :, :], axis=None)
-    all_tasks_indnorm = demean_and_normalize(all_tasks[:, :, :], axis=0)
-    all_task_std = np.std(all_tasks_general, axis=1)
-    all_task_mean = np.mean(all_tasks_general, axis=1)
-    tasks_std = {task: all_task_std[:, i:i + 1] for i, task in enumerate(TASKS)}
-    tasks_mean = {task: all_task_mean[:, i:i + 1] for i, task in enumerate(TASKS)}
-    save_pickle((tasks_mean, tasks_std), definitions.TASKS_CANONICAL_DATA2)
-    all_task_std = np.std(all_tasks_indnorm, axis=1)
-    all_task_mean = np.mean(all_tasks_indnorm, axis=1)
-    tasks_std = {task: all_task_std[:, i:i + 1] for i, task in enumerate(TASKS)}
-    tasks_mean = {task: all_task_mean[:, i:i + 1] for i, task in enumerate(TASKS)}
-    save_pickle((tasks_mean, tasks_std), definitions.TASKS_CANONICAL_DATA)
-    t1 = open_pickle(definitions.TASKS_CANONICAL_DATA)
-    t2 = open_pickle(definitions.TASKS_CANONICAL_DATA2)
-    print()
+
 
 def linear_weights_split():
     LINEAR_WEIGHTS_DIR = os.path.join(definitions.LINEAR_WEIGHTS_DIR, 'new')
@@ -549,7 +538,7 @@ def find_good_subjects():
 
 
 if __name__ == "__main__":
-    heatmaps()
+    scatter_here()
     # txtsts = r'D:\Projects\PITECA\Data\docs\70 30 100 many stats'
     # read_results_text_file_and_plot(txtsts)
     #results_path = r'D:\Projects\PITECA\Data\docs\7030_models_results_corrected_test'

@@ -1,6 +1,6 @@
 """
 Methods for reading or writing to files. These are mainly wrapper functions for third-party io functions 
-(e.g. implemented in the cifti package), that allow exception handling for the diefferent scenarios used
+(e.g. implemented in the cifti package), that allow exception handling for the different scenarios used
 in PITECA.
 """
 
