@@ -33,7 +33,8 @@ def train_by_roi_and_task(subjects, task, spatial_filters, scope_name):
     train_subjects = subjects[:100]
     validation_subjects = subjects[100:130]
     learned_weights = {}
-    x, y, y_pred = regression_with_two_hidden_layers_build(input_dim=NUM_FEATURES, output_dim=1, scope_name=scope_name, layer1_size=50)
+    x, y, y_pred = regression_with_two_hidden_layers_build(input_dim=NUM_FEATURES, output_dim=1, scope_name=scope_name, layer1_size=50,
+                                                           layer2_size=50)
     loss_function = build_loss(y, y_pred, scope_name, reg_lambda=REG_LAMBDA, huber_delta=HUBER_DELTA)
     try:
         for j in range(NUM_SPATIAL_FILTERS): #

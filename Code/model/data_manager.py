@@ -10,7 +10,6 @@ import definitions
 from sharedutils.constants import *
 from sharedutils.linalg_utils import *
 from sharedutils.subject import Subject
-from model.models import FeatureExtractor
 from analysis.analyzer import get_predicted_actual_correlations
 import matplotlib.pyplot as plt
 
@@ -58,22 +57,6 @@ class MemTaskGetter:
             task_data = task_data[roi_indices,:,:]
         return task_data
 
-
-class MemFeatureExtractor(FeatureExtractor):
-
-    def __init__(self, features_mat, subjects, map={}):
-        super(MemFeatureExtractor, self).__init__()
-        self.matrices['all features'] = features_mat
-        self.subjects_mapping = map if map else {subject : int(subject.subject_id)-1 for subject in subjects}
-
-    def get_features(self,subject):
-        mat = self.matrices['all features']
-        features = np.squeeze(get_subjects_features_from_matrix(mat, [subject], mapping=self.subjects_mapping))
-        if np.size(features, axis=1) == NUM_FEATURES:
-            features = np.transpose(features)
-        if np.size(features, axis=0) != NUM_FEATURES:
-            raise definitions.PitecaError("features file must include {} features".format(NUM_FEATURES))
-        return features, self.bm
 
 
 def get_subjects_features_from_matrix(mat, subjects, roi_indices = None, mapping=None):
