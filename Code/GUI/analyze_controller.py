@@ -257,5 +257,5 @@ class AnalyzeController:
         dlg.setWindowModality(Qt.ApplicationModal)
         dlg.show()
         thread.progress_finished_sig.connect(lambda: self.__handle_results(analysis_task, dlg, thread.results, subjects))
-        thread.exception_occurred_sig.connect(lambda: self.__handle_unexpected_exception(dlg, thread))
+        thread.exception_occurred_sig.connect(lambda value: self.__handle_unexpected_exception(dlg, thread, value))
         thread.start()
