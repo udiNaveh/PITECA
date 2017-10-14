@@ -6,10 +6,14 @@ import numpy as np
 import random
 
 
-def random_partition(data, k):
+def create_partition(data, set_sizes, shuffle = False):
     data_copy = ([d for d in data])
-    random.shuffle(data_copy)
-    return data_copy[:k], data_copy[k:]
+    assert sum(set_sizes) == len(data_copy)
+    indicies = [sum(set_sizes[:i]) for i in range(len(set_sizes)+1)]
+    if shuffle:
+        random.shuffle(data_copy)
+
+    return [data_copy[indicies[j]:indicies[j+1]] for j in range(len(set_sizes))]
 
 
 class BestWeightsQueue:

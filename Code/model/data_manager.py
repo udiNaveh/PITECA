@@ -15,9 +15,7 @@ import matplotlib.pyplot as plt
 
 TASKS_MATRIX_PATH = '' # REPLACE WITH YOUR OWN
 FEATURES_MATRIX_PATH = '' # REPLACE WITH YOUR OWN
-# TODO delete
-TASKS_MATRIX_PATH = r'D:\Projects\PITECA\Data_for_testing\time_series\allTasksReordered.npy'
-FEATURES_MATRIX_PATH = os.path.join(r'D:\Projects\PITECA\Data', "all_features_only_cortex_in_order_200.npy")
+
 
 
 TASKS = AVAILABLE_TASKS

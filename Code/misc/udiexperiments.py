@@ -78,10 +78,15 @@ def scatter_here():
 
     colors = ['b', 'c', 'y', 'm', 'r']
     dir = r'D:\Projects\PITECA\Data\analysis'
+    dir2 = definitions.MODELS_DIR
     for spidx,task in enumerate(TASKS):
         task.full_name
+        try:
 
-        nn = np.load(os.path.join(dir, 'all_corrs_{}_NN2lhModelWithFiltersAsFeatures.npy'.format(task.full_name)))
+            nn = np.load(os.path.join(dir2, 'all_corrs_{}_NN2lhModelWithFiltersAsFeatures.npy'.format(task.full_name)))
+            print("done it")
+        except FileNotFoundError:
+            nn = np.load(os.path.join(dir, 'all_corrs_{}_NN2lhModelWithFiltersAsFeatures.npy'.format(task.full_name)))
         nn_self_cors = np.diag(nn)
         la = np.load(os.path.join(dir, 'all_corrs_{}_TFLinearAveraged.npy'.format(task.full_name)))
 
@@ -533,7 +538,7 @@ def find_good_subjects():
 
 
 if __name__ == "__main__":
-    heatmaps()
+    scatter_here()
     # txtsts = r'D:\Projects\PITECA\Data\docs\70 30 100 many stats'
     # read_results_text_file_and_plot(txtsts)
     #results_path = r'D:\Projects\PITECA\Data\docs\7030_models_results_corrected_test'
