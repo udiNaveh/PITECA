@@ -26,7 +26,7 @@ def _get_task_maps_by_subject(subjects, task, getpath_func):
             start = time.time()
             arr, (ax, bm) = open_1d_file(subject_task_path)
             stop = time.time()
-            print("opening {0} took {1:.4f} seconds".format(subject_task_path, stop-start))
+            definitions.logger.print("opening {0} took {1:.4f} seconds".format(subject_task_path, stop-start))
             task_maps[subject] = arr
     return task_maps
 
@@ -145,18 +145,24 @@ def get_predicted_actual_correlations(subjects, task, subjects_predicted_and_act
 #region functions based on siginificant activation areas
 
 
+def get_significance_thresholds(arr, q=4, z=1.65):
+    """
+    Find the thresholds for significant positive and negative activation.
+    simple huristic implementation to replace FSL's gaussian-2-Gamma mixture model 
+    which is too slow and not avalable in windows.
+    :param arr: a one-dimensional array
+    :param q: percentile of threshold 
+    :param z: z score of threshold
+    :return: low_threshold, high_threshold
+    """
 
-def get_significance_thresholds(arr, q=5):
-    '''
-    stupid implementation
-
-    :param arr: a one-dimensional array 
-    :return: a tuple (low_threshold, high_threshold)
-    '''
     arr = np.array(arr)
     if len(arr.shape) > 1:
         arr = arr.squeeze()
-    return np.percentile(arr, q), np.percentile(arr, 100 - q)
+
+    low_threshold =  max(np.mean(arr) -z *np.std(arr), np.percentile(arr, q))
+    high_threshold = min(np.mean(arr) +z *np.std(arr), np.percentile(arr, 100-q))
+    return low_threshold, high_threshold
 
 
 def get_significance_map(arr, get_thresholds_func = get_significance_thresholds):
@@ -230,7 +236,7 @@ def get_significance_overlap_maps_for_subjects(subjects, task, outputdir, subjec
         iou_positive.append(iou_pos)
         iou_negative.append(iou_neg)
         if save:
-            filename = generate_file_name(outputdir, task, "{0}_predicted_actual_overlap".format(s.subject_id))
+            filename = generate_file_name(outputdir, task, "{0}_{1}_predicted_actual_overlap".format(s.subject_id, task.full_name))
             bm_cortex = get_bm('cortex')
             save_to_dtseries(generate_final_filename(filename), bm_cortex, map)
 
