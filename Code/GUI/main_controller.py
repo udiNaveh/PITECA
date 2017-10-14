@@ -86,14 +86,14 @@ def piteca_excepthook(exctype, value, tb):
         msg = constants.UNEXPECTED_EXCEPTION_MSG
 
     if int(QThread.currentThreadId()) == main_thread_id:
-        print(value)
+        definitions.logger.print(value)
         traceback.print_tb(tb)
         dialog_utils.print_error(msg + ". PITECA will be now closed")
         sys.exit()
     else:
         # The exception_occurred_sig should be defined in every thread class in PITECA
-        print(value) # TODO: remove this! Here only for development needs
-        print(exctype) # TODO: remove this! Here only for development needs
+        definitions.logger.print(value) # TODO: remove this! Here only for development needs
+        definitions.logger.print(exctype) # TODO: remove this! Here only for development needs
         traceback.print_tb(tb)
         QThread.currentThread().exception_occurred_sig.emit(msg)
 
