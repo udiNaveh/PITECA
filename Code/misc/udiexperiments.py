@@ -12,6 +12,8 @@ from sharedutils.cmd_utils import show_maps_in_wb_view
 from sharedutils.general_utils import inverse_dicts
 from sharedutils.linalg_utils import *
 from sharedutils.io_utils import *
+from scipy.stats import gamma, norm
+
 
 tasks_file = os.path.join(definitions.LOCAL_DATA_DIR, 'HCP_200', "moreTasks.npy")
 all_tasks_200s = r'D:\Projects\PITECA\Data_for_testing\time_series\AllTasks.npy'
@@ -32,12 +34,152 @@ from model.data_manager import load_data
 
 TASKS = [Task.MATH_STORY,
                    Task.TOM,
-                   Task.MATCH_REL,
+                   Task.MATCH,
                    Task.TWO_BK,
                    Task.REWARD,
                    Task.FACES_SHAPES,
                    Task.T,
                    ]
+
+def heatmaps():
+
+    min_corr = 0.0
+    max_corr = 0.99
+    cmap = 'Spectral_r'
+    edgecolors = 'black'
+    dir = r'D:\Projects\PITECA\Data\analysis'
+
+    fig, subplts = plt.subplots(ncols=2)
+
+
+
+    task = Task.MATH_STORY
+    nn = np.load(os.path.join(dir, 'all_corrs_{}_NN2lhModelWithFiltersAsFeatures.npy'.format(task.full_name)))
+    la = np.load(os.path.join(dir, 'all_corrs_{}_TFLinearAveraged.npy'.format(task.full_name)))
+
+    nn_all_corrs_normalized = demean_and_normalize(demean_and_normalize(nn, axis=0), axis=1)
+    nn_all_corrs_normalized2 = demean_and_normalize(demean_and_normalize(nn, axis=1), axis=0)
+    la_all_corrs_normalized = demean_and_normalize(demean_and_normalize(la, axis=0), axis=1)
+    la_all_corrs_normalized2 = demean_and_normalize(demean_and_normalize(la, axis=1), axis=0)
+
+    subplts[0].imshow(la, cmap=cmap, vmin=min_corr, vmax=max_corr)
+    subplts[1].imshow(nn, cmap=cmap, vmin=min_corr, vmax=max_corr)
+
+    plt.suptitle('Predicted-actual Pearson correlation')
+    plt.show()
+
+
+def scatter_here():
+
+    fig, subplts = plt.subplots(ncols=7)
+
+
+    # Plot non-ordered points
+
+    colors = ['b', 'c', 'y', 'm', 'r']
+    dir = r'D:\Projects\PITECA\Data\analysis'
+    for spidx,task in enumerate(TASKS):
+        task.full_name
+
+        nn = np.load(os.path.join(dir, 'all_corrs_{}_NN2lhModelWithFiltersAsFeatures.npy'.format(task.full_name)))
+        nn_self_cors = np.diag(nn)
+        la = np.load(os.path.join(dir, 'all_corrs_{}_TFLinearAveraged.npy'.format(task.full_name)))
+
+
+        la_self_corrs = np.diag(la)
+
+        la_self_corrs_inds = la_self_corrs.argsort()
+        la_self_corrs = la_self_corrs[la_self_corrs_inds]
+        nn_self_cors = nn_self_cors[la_self_corrs_inds]
+
+        lo = subplts[spidx].scatter(nn_self_cors,range(0,100) , s=10, color=colors[0])
+        ll = subplts[spidx].scatter(la_self_corrs,range(0,100), s=10, color=colors[1])
+
+        subplts[spidx].set_xlim(0.15, 0.92)
+        subplts[spidx].set_ylim(99, -1)
+        subplts[spidx].set_xticks(np.linspace(0.2, 0.9 ,8))
+        for tick in subplts[spidx].xaxis.get_major_ticks():
+            tick.label.set_fontsize(5)
+        for tick in subplts[spidx].yaxis.get_major_ticks():
+            tick.label.set_fontsize(7)
+        subplts[spidx].set_title(task.full_name,fontsize=9)
+        subplts[spidx].grid(alpha=0.5)
+
+
+
+
+
+        for i in range(len(la_self_corrs)):
+            subplts[spidx].plot([la_self_corrs[i], nn_self_cors[i]], [i,i], color = 'grey')
+
+    fig.legend((lo, ll),
+               ('mlp', 'original'),
+               scatterpoints=1,
+               loc='lower center',
+               ncol=3,
+               fontsize=10)
+
+
+    fig.text(0.08, 0.5, 'Subjects', ha='center', va='center', rotation='vertical', fontsize= 11)
+    plt.suptitle('Predicted-actual Pearson correlation')
+    plt.show()
+
+
+def ido_mask():
+    fetaures, tasks = load_data(normalize_features=True)
+    spatial_filters_raw, (series, bm) = open_cifti(definitions.ICA_LOW_DIM_PATH)
+    spatial_filters_raw = np.transpose(spatial_filters_raw[:, STANDARD_BM.CORTEX])
+    hard_filters = np.round(softmax(spatial_filters_raw.astype(float) * 1000))
+
+    hard_filters[spatial_filters_raw < 2.1] = 0
+    mask = np.sum(hard_filters, axis=1)
+    print()
+
+
+
+
+def fit_something():
+    all_features, all_tasks = load_data()
+    for j in range(7):
+        for i in range(10):
+            cont = all_tasks[:,i, j]
+            m = np.mean(cont)
+            sd = np.std(cont)
+            pos = np.count_nonzero(cont> m+1.65*sd) / np.size(cont)
+            neg = np.count_nonzero(cont< m-1.65*sd) / np.size(cont)
+            print(pos,neg)
+            print()
+
+    y, x = np.histogram(all_tasks[:,0, 0], bins=50, density=True)
+    mu, std = norm.fit(all_tasks[:,0, 0])
+    n, bins, patches = plt.hist(all_tasks[:,0, 0])
+    a= 2
+    a, loc, scale = 3, 0, 2
+    size = 50
+    y = gamma.rvs(a, loc, scale, size=size)
+
+    x = np.linspace(0, y.max(), 100)
+    # fit
+    param = gamma.fit(y, floc=0)
+    print()
+
+def check_this():
+    all_features, all_tasks = load_data()
+    all_tasks_general = demean_and_normalize(all_tasks[:, :, :], axis=None)
+    all_tasks_indnorm = demean_and_normalize(all_tasks[:, :, :], axis=0)
+    all_task_std = np.std(all_tasks_general, axis=1)
+    all_task_mean = np.mean(all_tasks_general, axis=1)
+    tasks_std = {task: all_task_std[:, i:i + 1] for i, task in enumerate(TASKS)}
+    tasks_mean = {task: all_task_mean[:, i:i + 1] for i, task in enumerate(TASKS)}
+    save_pickle((tasks_mean, tasks_std), definitions.TASKS_CANONICAL_DATA2)
+    all_task_std = np.std(all_tasks_indnorm, axis=1)
+    all_task_mean = np.mean(all_tasks_indnorm, axis=1)
+    tasks_std = {task: all_task_std[:, i:i + 1] for i, task in enumerate(TASKS)}
+    tasks_mean = {task: all_task_mean[:, i:i + 1] for i, task in enumerate(TASKS)}
+    save_pickle((tasks_mean, tasks_std), definitions.TASKS_CANONICAL_DATA)
+    t1 = open_pickle(definitions.TASKS_CANONICAL_DATA)
+    t2 = open_pickle(definitions.TASKS_CANONICAL_DATA2)
+    print()
 
 def linear_weights_split():
     LINEAR_WEIGHTS_DIR = os.path.join(definitions.LINEAR_WEIGHTS_DIR, 'new')
@@ -290,11 +432,11 @@ def read_results_text_file_and_plot(path):
                 break
             else:
                 line = line.strip()
-                if '=' not in line:
+                if ':' not in line:
                     current_model_name = line[:3] +'_' + line[-5:]
                     results[current_model_name] = {}
                 else:
-                    rh_lh = line.split('=')
+                    rh_lh = line.split(':')
                     rh = rh_lh[0].strip(); lh = rh_lh[1].strip()
                     if rh == 'task':
                         current_task_name = lh.split('.')[-1]
@@ -309,12 +451,16 @@ def read_results_text_file_and_plot(path):
     results = inverse_dicts(results)
 
     for task in results:
+        print(task)
         models_names  = [k for k in results[task].keys()]
         models_names = sorted(models_names, key = lambda  name : results[task][name]['mean corr with self'])
-        corrs = [results[task][k]['mean corr with self'] for k in models_names]
-        corrs_with_mean = [results[task][k]['mean corr with other'] for k in models_names]
-
-        plotchartsoverlap(corrs, corrs_with_mean, [name for name in models_names], title=task)
+        print ('names',' ; ', str.join(' ; ', models_names))
+        for key in results[task]['NN2_Model']:
+            stats = [str(results[task][k][key]) for k in models_names]
+            print(key, ' ; ', str.join(' ; ', stats))
+        # corrs = [results[task][k]['mean corr with self'] for k in models_names]
+        # corrs_with_mean = [results[task][k]['mean corr with other'] for k in models_names]
+        #plotchartsoverlap(corrs, corrs_with_mean, [name for name in models_names], title=task)
 
 
 
@@ -377,6 +523,11 @@ def check_preds_are_different():
     d = np.abs(arrs[0] - arrs[1])
     print()
 
+def dlabel():
+    path = r'D:\Projects\HCP_WB_Tutorial_1.0\HCP_WB_Tutorial_1.0\parcellations_VGD11b2.32k_fs_LR.dlabel.nii'
+    arr, (ax, bm) = open_cifti(path)
+    print()
+
 
 def find_good_subjects():
     path = r'D:\Projects\PITECA\Data\pedictions_statistics'
@@ -398,6 +549,8 @@ def find_good_subjects():
 
 
 if __name__ == "__main__":
-    create_features_and_tasks()
+    heatmaps()
+    # txtsts = r'D:\Projects\PITECA\Data\docs\70 30 100 many stats'
+    # read_results_text_file_and_plot(txtsts)
     #results_path = r'D:\Projects\PITECA\Data\docs\7030_models_results_corrected_test'
     #read_results_text_file_and_plot(results_path)
