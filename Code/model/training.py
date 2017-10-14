@@ -16,7 +16,7 @@ mem_task_getter = MemTaskGetter(all_tasks, subjects)
 
 spatial_filters_raw, (series, bm) = open_cifti(definitions.ICA_LOW_DIM_PATH)
 spatial_filters_raw = np.transpose(spatial_filters_raw[:, STANDARD_BM.CORTEX])
-soft_filters = softmax(spatial_filters_raw.astype(float) * TEMPERATURE)
+soft_filters = softmax(spatial_filters_raw.astype(float) / TEMPERATURE)
 soft_filters[soft_filters < FILTERS_EPSILON] = 0.0
 soft_filters[:, 2] = 0
 soft_filters /= np.reshape(np.sum(soft_filters, axis=1), [STANDARD_BM.N_CORTEX, 1])
