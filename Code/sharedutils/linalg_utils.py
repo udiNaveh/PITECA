@@ -118,8 +118,8 @@ def bounded_svd_fast(x, n):
     x_squared = np.dot(x, x_t)
     if n < np.size(x,0):
         eigenvalues, eigenvectors = eigs(x_squared, n)
-        eigenvalues = eigenvalues.astype('float')
-        eigenvectors = eigenvectors.astype('float')
+        eigenvalues = eigenvalues.real.astype('float')
+        eigenvectors = eigenvectors.real.astype('float')
     else:
         eigenvalues, eigenvectors = np.linalg.eig(x_squared)
     eigenvalues_inds = np.argsort(eigenvalues)
@@ -167,8 +167,3 @@ def rmse_loss(prediction, actual, use_normalization=False):
         actual = demean_and_normalize(actual)
 
     return np.sqrt(np.mean(np.square(prediction - actual)))
-
-if __name__ == '__main__':
-    x = np.random.random([10000, 90])
-    n=30
-    bounded_svd_fast(x, n)

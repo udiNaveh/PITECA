@@ -1,26 +1,33 @@
+"""
+This module contains the methods used to perform the operations in the Analysis tab in PITECA
+"""
+
 import numpy as np
 import time
 from collections import namedtuple
-
 from sharedutils.subject import *
 from sharedutils.io_utils import *
 from sharedutils.general_utils import *
-from sharedutils.path_utils import *
+from sharedutils.path_utils import generate_file_name, generate_final_filename
 
 #region utility functions
 
 SubjectTaskMaps = namedtuple('SubjectTaskMaps', ['predicted', 'actual'])
 
+
 def _get_task_maps_by_subject(subjects, task, getpath_func):
+    """
+    :param subjects: a collection of objects of type Subject 
+    :param task: Task chosen
+    :param getpath_func: a function that returns a path to file given a subject and a task
+    :return: task_maps - a dictionary mapping subjects to their task maps 
+    """
     task_maps = {}
     for subject in subjects:
         assert type(subject) == Subject
 
         subject_task_path = getpath_func(subject, task)
-        #subject.predicted.get(task, None)
         if subject_task_path is None:
-            # @error_handle - for development. In release we should guarantee that every subject
-            # has the prediction?
             raise RuntimeError("no filepath found for subject {} for task {}".format(subject.subject_id, task.name))
         else:
             start = time.time()
@@ -66,7 +73,6 @@ def get_prediction_statistic(subjects, task, statfunc, outputpath = None):
     if not all_same(prediction_arrays, lambda arr : np.shape(arr)):
         raise PitecaError("Not all files have the same brain model")
 
-    # need to verify that all arrays are of shape 1x59282
     res = statfunc(prediction_arrays)
     if outputpath is not None:
         filename = generate_file_name(outputpath, task, 'mean_of_predictions')
@@ -99,7 +105,6 @@ def get_predictions_correlations(subjects, task, other_path):
     mean_pred = np.mean(subjects_predictions_matrix, axis=0)
     other_arr, (ax, bm) = open_1d_file(other_path)
 
-    # assume other_arr is of shape 1x91282s
     unified_mat = np.concatenate((subjects_predictions_matrix,
                                   mean_pred.reshape([1, STANDARD_BM.N_CORTEX]),
                                   other_arr[:, :STANDARD_BM.N_CORTEX]))
@@ -127,12 +132,10 @@ def get_predicted_actual_correlations(subjects, task, subjects_predicted_and_act
 
     # need to insure that maps are paired
     subjects = [s for s in subjects if s in subjects_actual_maps and s in subjects_predicted_maps]
-    # @error_handel need to decide what to do if the above intersection is different from subjects
-    # i.e. some subjects don't have actual and predicted maps
+
     n_subjects = len(subjects)
     predicted_matrix = __arrays_to_matrix([subjects_predicted_maps[s] for s in subjects])
     actual_matrix = __arrays_to_matrix([subjects_actual_maps[s] for s in subjects])
-
     correlation_matrix = np.corrcoef(actual_matrix[:, :STANDARD_BM.N_CORTEX],
                                      predicted_matrix)[n_subjects:, :n_subjects]
 
@@ -166,18 +169,35 @@ def get_significance_thresholds(arr, q=4, z=1.65):
 
 
 def get_significance_map(arr, get_thresholds_func = get_significance_thresholds):
+    """
+    
+    :param arr: activation map
+    :param get_thresholds_func: function to decide begative and positive activation thresholds
+    :return: a map with 1s in the significantly positive vertices, -1s in the negative, and 0s elsewhere.
+    """
     low_threshold1, high_threshold1 = (get_thresholds_func(arr))
     return 1 * (arr > high_threshold1) - 1 * (arr < low_threshold1)
 
 
-def get_significance_overlap_map(arr1, arr2, get_thresholds_func):
-    assert np.shape(arr1) == np.shape(arr2)
-    return get_significance_maps_overlap(get_significance_map(arr1, get_thresholds_func),
-                                         get_significance_map(arr2, get_thresholds_func))
-
-
 def get_significance_maps_overlap(arr1_significance, arr2_significance):
-    assert np.shape(arr1_significance) == np.shape(arr2_significance)
+    """
+    finds the positive and negative overlap between two maps, and return a map
+    representing the overlap and the Intersection-Over-union measures.
+    :param arr1_significance: 
+    :param arr2_significance: 
+    :return: map - a new map with the following coding:
+                4,-4  : only in arr1_significance (positive and negative, repectively)
+                2, -2 : only in arr2_significance (positive and negative, repectively)
+                3, -3 : overlap of both maps (positive and negative, repectively)
+                0 : neither
+            iou_pos - the Intersection over union of positive significance
+            iou_neg - the Intersection over union of negative significance
+            iou_both - the Intersection over union of significance in general
+    """
+
+    if np.shape(arr1_significance) != np.shape(arr2_significance):
+        raise ValueError("Cannot overlap arrays of shapes {0} and {1}".format(np.shape(arr1_significance),
+                                                                              np.shape(arr2_significance)))
 
     overlap_pos = np.logical_and(arr1_significance > 0, arr2_significance > 0)
     overlap_neg = np.logical_and(arr1_significance < 0, arr2_significance < 0)
@@ -188,11 +208,6 @@ def get_significance_maps_overlap(arr1_significance, arr2_significance):
     iou_pos = np.count_nonzero(overlap_pos) / np.count_nonzero(union_pos)
     iou_neg = np.count_nonzero(overlap_neg) / np.count_nonzero(union_neg)
     iou_both = np.count_nonzero(overlap_both) / np.count_nonzero(union_both)
-    map = 1 * arr1_significance + 3 * arr2_significance
-
-
-    ##
-
     map = np.zeros_like(arr1_significance)
     map[np.logical_and(arr1_significance==1 , arr2_significance==1)] = 3
     map[np.logical_and(arr1_significance == -1 , arr2_significance == -1)] = -3
