@@ -257,7 +257,7 @@ class TFLinearAveraged(TFRoiBasedModel):
 
     def _load(self):
         super(TFLinearAveraged, self)._load()
-        self.spatial_filters = self.spatial_filters_hard # TODO
+        self.spatial_filters = self.spatial_filters_hard
         return True
 
     def load_weights(self):

@@ -36,7 +36,7 @@ DEFAULT_PREDICTIONS_DIR = os.path.join(DATA_DIR, 'Predictions')
 DEFAULT_MODEL = 'MLP by ROI'
 
 
-DEBUG = True #TODO change to false
+DEBUG = False
 
 class PitecaError(Exception):
     def __init__(self, message, path=''):
