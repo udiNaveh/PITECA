@@ -92,8 +92,8 @@ def piteca_excepthook(exctype, value, tb):
         sys.exit()
     else:
         # The exception_occurred_sig should be defined in every thread class in PITECA
-        definitions.print_in_debug(value) # TODO: remove this! Here only for development needs
-        definitions.print_in_debug(exctype) # TODO: remove this! Here only for development needs
+        definitions.print_in_debug(value)
+        definitions.print_in_debug(exctype)
         traceback.print_tb(tb)
         QThread.currentThread().exception_occurred_sig.emit(msg)
 
